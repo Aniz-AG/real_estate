@@ -1,0 +1,10 @@
+# Ignore separate backend and frontend folders
+backend/
+frontend/
+
+# Other files to ignore
+*.md
+!README.md
+.env
+.env.local
+.env.example
