@@ -58,6 +58,32 @@ const useCounter = (end, duration = 2000) => {
     return { count, ref };
 };
 
+// Stat Card Component - extracted to properly use hooks
+const StatCard = ({ stat, index }) => {
+    const { count, ref } = useCounter(stat.value);
+    const suffix = stat.value.includes('+') ? '+' : stat.value.includes('%') ? '%' : '';
+
+    return (
+        <motion.div key={index} variants={scaleIn} whileHover={{ y: -5 }}>
+            <Card className="text-center border-0 shadow-lg hover:shadow-xl transition-all overflow-hidden group" ref={ref}>
+                <div className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-0 group-hover:opacity-5 transition-opacity`} />
+                <CardContent className="pt-8 pb-6 relative">
+                    <motion.div
+                        className={`w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br ${stat.gradient} flex items-center justify-center shadow-lg`}
+                        whileHover={{ rotate: [0, -10, 10, 0] }}
+                    >
+                        <Building2 className="h-8 w-8 text-white" />
+                    </motion.div>
+                    <h3 className="text-4xl font-bold mb-2 bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+                        {count}{suffix}
+                    </h3>
+                    <p className="text-muted-foreground">{stat.label}</p>
+                </CardContent>
+            </Card>
+        </motion.div>
+    );
+};
+
 // Testimonial Card Component
 const TestimonialCard = ({ testimonial, index }) => (
     <motion.div
@@ -305,29 +331,9 @@ export default function About({ initialTestimonials = [] }) {
                         whileInView="visible"
                         viewport={{ once: true, margin: "-100px" }}
                     >
-                        {stats.map((stat, index) => {
-                            const { count, ref } = useCounter(stat.value);
-                            const suffix = stat.value.includes('+') ? '+' : stat.value.includes('%') ? '%' : '';
-                            return (
-                                <motion.div key={index} variants={scaleIn} whileHover={{ y: -5 }}>
-                                    <Card className="text-center border-0 shadow-lg hover:shadow-xl transition-all overflow-hidden group" ref={ref}>
-                                        <div className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-0 group-hover:opacity-5 transition-opacity`} />
-                                        <CardContent className="pt-8 pb-6 relative">
-                                            <motion.div
-                                                className={`w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-br ${stat.gradient} flex items-center justify-center shadow-lg`}
-                                                whileHover={{ rotate: [0, -10, 10, 0] }}
-                                            >
-                                                <Building2 className="h-8 w-8 text-white" />
-                                            </motion.div>
-                                            <h3 className="text-4xl font-bold mb-2 bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-                                                {count}{suffix}
-                                            </h3>
-                                            <p className="text-muted-foreground">{stat.label}</p>
-                                        </CardContent>
-                                    </Card>
-                                </motion.div>
-                            );
-                        })}
+                        {stats.map((stat, index) => (
+                            <StatCard key={index} stat={stat} index={index} />
+                        ))}
                     </motion.div>
                 </div>
             </section>
@@ -624,8 +630,8 @@ export default function About({ initialTestimonials = [] }) {
                                                         >
                                                             <Star
                                                                 className={`h-8 w-8 transition-colors ${star <= formData.rating
-                                                                        ? 'text-amber-400 fill-amber-400'
-                                                                        : 'text-gray-300 hover:text-amber-300'
+                                                                    ? 'text-amber-400 fill-amber-400'
+                                                                    : 'text-gray-300 hover:text-amber-300'
                                                                     }`}
                                                             />
                                                         </button>
