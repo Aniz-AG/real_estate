@@ -22,10 +22,19 @@ const sendToken = (res, user, code, message) => {
     process.env.JWT_SECRET,
   );
 
+  // Set token as HTTP-only, Secure cookie for mobile compatibility
+  res.cookie('token', token, {
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    httpOnly: true,
+    sameSite: 'lax', // Better for mobile, allows cross-site requests
+    secure: false, // Set to true in production with HTTPS
+    path: '/',
+  });
+
   res.status(code).json({
     success: true,
     message,
-    token
+    token // Also send token for fallback support
   });
 };
 
@@ -77,8 +86,8 @@ const deletFilesFromCloudinary = async (publicIds = []) => {
   await Promise.all(promises);
 };
 
-const invalidCache = async ()=> ({
- 
+const invalidCache = async () => ({
+
 
 
 });

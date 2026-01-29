@@ -40,7 +40,7 @@ import { uploadFilesToCloudinary } from '../utils/features.js'
 //     to: `+91${phone}`,
 //   });
 
-  
+
 //   console.log("OTP sent created:", message.sid);
 
 //   // Save OTP to the database
@@ -131,7 +131,7 @@ const verifyOtp = TryCatch(async (req, res, next) => {
   if (!existingOtp) {
     return next(new ErrorHandler("OTP not found. Please request a new one.", 404));
   }
-   
+
   console.log("Otp object: ", existingOtp);
 
 
@@ -140,7 +140,7 @@ const verifyOtp = TryCatch(async (req, res, next) => {
     return next(new ErrorHandler("Invalid OTP. Please try again.", 400));
   }
 
-  
+
   if (existingOtp.expireTime.getTime() <= Date.now()) {
     console.log("OTP has expired");
     return next(new ErrorHandler("OTP has expired. Please request a new one.", 400));
@@ -206,10 +206,23 @@ const registerHandler = TryCatch(async (req, res, next) => {
   });
 });
 
+const logoutHandler = TryCatch(async (req, res, next) => {
+  res.clearCookie('token', {
+    path: '/',
+    sameSite: 'lax',
+    httpOnly: true,
+    secure: false,
+  });
 
+  res.status(200).json({
+    success: true,
+    message: "Logged out successfully",
+  });
+});
 
 export {
   registerHandler,
   sendOtp,
-  verifyOtp
+  verifyOtp,
+  logoutHandler
 }

@@ -10,6 +10,20 @@ const API_VERSION = '/api/v1';
 
 export const axiosInstance = axios.create({
   baseURL: `${BASE_HOST}${API_VERSION}`,
-  withCredentials: true,
+  withCredentials: true, // Enable cookies for all requests
   headers: token ? { Authorization: `Bearer ${token}` } : {},
 });
+
+// Add interceptor to include token in headers if needed (fallback for mobile)
+axiosInstance.interceptors.request.use(
+  (config) => {
+    const storedToken = localStorage.getItem('token');
+    if (storedToken && !config.headers.Authorization) {
+      config.headers.Authorization = `Bearer ${storedToken}`;
+    }
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
