@@ -3,11 +3,12 @@ import { useDispatch, useSelector } from 'react-redux';
 import { useRouter } from 'next/router';
 import Layout from '@/components/Layout';
 import SeoHead from '@/components/SeoHead';
+import EditProfileModal from '@/components/EditProfileModal';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { getMyProfile, logout } from '@/redux/slices/userSlice';
-import { Mail, Phone, MapPin, User, LogOut, Heart, Loader2 } from 'lucide-react';
+import { Mail, Phone, MapPin, User, LogOut, Heart, Loader2, Edit } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import Loader from '@/components/Loader';
@@ -17,6 +18,7 @@ export default function Profile() {
     const dispatch = useDispatch();
     const { user, isAuthenticated, loading } = useSelector((state) => state.user);
     const [logoutLoading, setLogoutLoading] = useState(false);
+    const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
     useEffect(() => {
         if (!isAuthenticated) {
@@ -116,6 +118,15 @@ export default function Profile() {
                             </div>
 
                             <div className="mt-8 flex flex-wrap gap-4 justify-center">
+                                <Button
+                                    variant="default"
+                                    size="lg"
+                                    onClick={() => setIsEditModalOpen(true)}
+                                    className="gap-2"
+                                >
+                                    <Edit className="h-4 w-4" />
+                                    Edit Profile
+                                </Button>
                                 <Link href="/browse">
                                     <Button variant="outline" size="lg">
                                         Browse Properties
@@ -140,6 +151,9 @@ export default function Profile() {
                     </Card>
                 </div>
             </div>
+
+            {/* Edit Profile Modal */}
+            <EditProfileModal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} />
         </Layout>
     );
 }

@@ -51,7 +51,6 @@ const updateUser = TryCatch(async (req, res, next) => {
   const userId = req.params.id;
   const { username, email, phone, city, state, role } = req.body;
 
-
   if (!username || !email || !phone || !city || !state) {
     return next(new ErrorHandler("Not provided fields", 400));
   }
@@ -78,13 +77,29 @@ const updateUser = TryCatch(async (req, res, next) => {
   user.phone = phone;
   user.city = city;
   user.state = state;
-  if(role) user.role = role;
+  if (role) user.role = role;
+
+  // Handle optional photo upload
+  if (req.file) {
+    // Delete old photo if it exists
+    if (user.photo?.public_id) {
+      await deletFilesFromCloudinary([user.photo.public_id]);
+    }
+
+    // Upload new photo
+    const photo = await uploadFilesToCloudinary([req.file]);
+    user.photo = {
+      public_id: photo[0].public_id,
+      url: photo[0].url,
+    };
+  }
 
   await user.save();
 
   res.status(200).json({
     success: true,
     message: "User updated successfully",
+    user,
   });
 });
 
@@ -154,15 +169,15 @@ const getAdminUser = TryCatch(async (req, res, next) => {
   // If keyword is provided, apply OR search on multiple fields
   const baseQuery = keywords
     ? {
-        $or: [
-          { username: { $regex: regEx } },
-          { role: { $regex: regEx } },
-          { email: { $regex: regEx } },
-          { phone: { $regex: regEx } },
-          { city: { $regex: regEx } },
-          { state: { $regex: regEx } },
-        ],
-      }
+      $or: [
+        { username: { $regex: regEx } },
+        { role: { $regex: regEx } },
+        { email: { $regex: regEx } },
+        { phone: { $regex: regEx } },
+        { city: { $regex: regEx } },
+        { state: { $regex: regEx } },
+      ],
+    }
     : {};
 
 

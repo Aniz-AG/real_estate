@@ -61,6 +61,21 @@ export const verifyOtp = createAsyncThunk(
     }
 );
 
+// Update Profile
+export const updateProfile = createAsyncThunk(
+    'user/updateProfile',
+    async (formData, { rejectWithValue }) => {
+        try {
+            const { data } = await axios.put(`${API_URL}/user/profile`, formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+            });
+            return data.user;
+        } catch (error) {
+            return rejectWithValue(error.response?.data?.message || 'Failed to update profile');
+        }
+    }
+);
+
 // Logout
 export const logout = createAsyncThunk('user/logout', async (_, { rejectWithValue }) => {
     try {
@@ -133,6 +148,20 @@ const userSlice = createSlice({
                 state.isAuthenticated = true;
             })
             .addCase(verifyOtp.rejected, (state, action) => {
+                state.loading = false;
+                state.error = action.payload;
+            })
+            // Update Profile
+            .addCase(updateProfile.pending, (state) => {
+                state.loading = true;
+                state.error = null;
+            })
+            .addCase(updateProfile.fulfilled, (state, action) => {
+                state.loading = false;
+                state.user = action.payload;
+                state.isAuthenticated = true;
+            })
+            .addCase(updateProfile.rejected, (state, action) => {
                 state.loading = false;
                 state.error = action.payload;
             })
