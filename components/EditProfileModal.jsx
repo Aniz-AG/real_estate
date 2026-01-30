@@ -11,11 +11,9 @@ import toast from 'react-hot-toast';
 import { z } from 'zod';
 
 const profileSchema = z.object({
-    username: z.string().min(2, 'Username must be at least 2 characters').max(40, 'Username is too long'),
-    email: z.string().email('Enter a valid email'),
-    phone: z.string().regex(/^\d{10}$/, 'Phone must be 10 digits'),
-    city: z.string().min(2, 'City must be at least 2 characters').max(40, 'City is too long'),
-    state: z.string().min(2, 'State must be at least 2 characters').max(40, 'State is too long'),
+    username: z.string().min(2, 'Username must be at least 2 characters').max(50, 'Username is too long'),
+    city: z.string().min(2, 'City must be at least 2 characters').max(50, 'City is too long'),
+    state: z.string().min(2, 'State must be at least 2 characters').max(50, 'State is too long'),
 });
 
 export default function EditProfileModal({ isOpen, onClose }) {
@@ -73,7 +71,11 @@ export default function EditProfileModal({ isOpen, onClose }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        const validation = profileSchema.safeParse(formData);
+        const validation = profileSchema.safeParse({
+            username: formData.username,
+            city: formData.city,
+            state: formData.state,
+        });
         if (!validation.success) {
             toast.error(validation.error.errors[0]?.message || 'Invalid profile details');
             return;
@@ -82,8 +84,6 @@ export default function EditProfileModal({ isOpen, onClose }) {
         try {
             const data = new FormData();
             data.append('username', formData.username);
-            data.append('email', formData.email);
-            data.append('phone', formData.phone);
             data.append('city', formData.city);
             data.append('state', formData.state);
 
