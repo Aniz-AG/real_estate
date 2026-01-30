@@ -11,6 +11,15 @@ import { registerUser } from '@/redux/slices/userSlice';
 import { User, Mail, Phone, MapPin, Upload, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
+import { z } from 'zod';
+
+const registerSchema = z.object({
+    username: z.string().min(2, 'Name must be at least 2 characters').max(50, 'Name is too long'),
+    email: z.string().email('Enter a valid email address'),
+    phone: z.string().regex(/^\d{10}$/, 'Phone must be exactly 10 digits'),
+    city: z.string().min(2, 'City must be at least 2 characters').max(50, 'City is too long'),
+    state: z.string().min(2, 'State must be at least 2 characters').max(50, 'State is too long'),
+});
 
 export default function Register() {
     const router = useRouter();
@@ -53,6 +62,13 @@ export default function Register() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        // Validate form data with Zod
+        const validation = registerSchema.safeParse(formData);
+        if (!validation.success) {
+            toast.error(validation.error.errors[0]?.message || 'Invalid form data');
+            return;
+        }
 
         if (!photo) {
             toast.error('Please upload your photo');

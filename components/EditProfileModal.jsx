@@ -8,6 +8,15 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { updateProfile } from '@/redux/slices/userSlice';
 import { Loader2, X } from 'lucide-react';
 import toast from 'react-hot-toast';
+import { z } from 'zod';
+
+const profileSchema = z.object({
+    username: z.string().min(2, 'Username must be at least 2 characters').max(40, 'Username is too long'),
+    email: z.string().email('Enter a valid email'),
+    phone: z.string().regex(/^\d{10}$/, 'Phone must be 10 digits'),
+    city: z.string().min(2, 'City must be at least 2 characters').max(40, 'City is too long'),
+    state: z.string().min(2, 'State must be at least 2 characters').max(40, 'State is too long'),
+});
 
 export default function EditProfileModal({ isOpen, onClose }) {
     const dispatch = useDispatch();
@@ -64,9 +73,9 @@ export default function EditProfileModal({ isOpen, onClose }) {
     const handleSubmit = async (e) => {
         e.preventDefault();
 
-        // Validate required fields
-        if (!formData.username || !formData.email || !formData.phone || !formData.city || !formData.state) {
-            toast.error('Please fill all required fields');
+        const validation = profileSchema.safeParse(formData);
+        if (!validation.success) {
+            toast.error(validation.error.errors[0]?.message || 'Invalid profile details');
             return;
         }
 
@@ -149,28 +158,31 @@ export default function EditProfileModal({ isOpen, onClose }) {
                             />
                         </div>
                         <div>
-                            <Label htmlFor="email">Email *</Label>
+                            <Label htmlFor="email">Email (locked)</Label>
                             <Input
                                 id="email"
                                 name="email"
                                 type="email"
                                 value={formData.email}
-                                onChange={handleInputChange}
-                                placeholder="Enter email"
-                                required
+                                readOnly
+                                disabled
                             />
+                            <p className="text-xs text-muted-foreground mt-1">
+                                To change email, contact support.
+                            </p>
                         </div>
                         <div>
-                            <Label htmlFor="phone">Phone *</Label>
+                            <Label htmlFor="phone">Phone (locked)</Label>
                             <Input
                                 id="phone"
                                 name="phone"
                                 value={formData.phone}
-                                onChange={handleInputChange}
-                                placeholder="Enter phone (10 digits)"
-                                maxLength="10"
-                                required
+                                readOnly
+                                disabled
                             />
+                            <p className="text-xs text-muted-foreground mt-1">
+                                To change phone, contact support.
+                            </p>
                         </div>
                         <div>
                             <Label htmlFor="city">City *</Label>
