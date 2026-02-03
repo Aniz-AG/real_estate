@@ -250,12 +250,12 @@ export default function BrowseProperty() {
 
     useEffect(() => {
         if (typeof document === 'undefined') return;
-        const shouldLock = moreFiltersOpen || mobileFiltersOpen;
+        const shouldLock = moreFiltersOpen || mobileFiltersOpen || openDropdown !== null;
         document.body.style.overflow = shouldLock ? 'hidden' : '';
         return () => {
             document.body.style.overflow = '';
         };
-    }, [moreFiltersOpen, mobileFiltersOpen]);
+    }, [moreFiltersOpen, mobileFiltersOpen, openDropdown]);
 
     const normalizeCity = (value) => (value || '').toString().trim().toLowerCase();
     const effectiveCity = (filters.city || selectedCity || '').trim();
