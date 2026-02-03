@@ -4,7 +4,7 @@ import { useRouter } from 'next/router';
 import Layout from '@/components/Layout';
 import SeoHead from '@/components/SeoHead';
 import { Button } from '@/components/ui/button';
-import { searchProperties, setSelectedCity } from '@/redux/slices/propertySlice';
+import { searchProperties, setSelectedCity, INDIA_CITIES } from '@/redux/slices/propertySlice';
 import {
     Bed, Bath, Maximize, MapPin, Search, Loader2,
     X, ChevronDown, ChevronUp, Grid3X3, List,
@@ -17,6 +17,11 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 // Filter Options Data
 const FILTER_OPTIONS = {
+    propertyCategories: [
+        { label: 'Residential', value: 'residential' },
+        { label: 'Commercial', value: 'commercial' },
+        { label: 'Other', value: 'other' },
+    ],
     propertyTypes: {
         residential: [
             { label: 'Flat', value: 'flat' },
@@ -154,7 +159,8 @@ export default function BrowseProperty() {
 
     // Filter states
     const [filters, setFilters] = useState({
-        city: '',
+        cities: [],
+        propertyCategory: 'residential',
         propertyTypes: [],
         bhkTypes: [],
         minPrice: '',
@@ -178,6 +184,7 @@ export default function BrowseProperty() {
 
     // Dropdown states
     const [openDropdown, setOpenDropdown] = useState(null);
+    const [cityInput, setCityInput] = useState('');
     const [budgetTab, setBudgetTab] = useState('min');
     const [expandedFilters, setExpandedFilters] = useState({
         coveredArea: true,
@@ -203,10 +210,14 @@ export default function BrowseProperty() {
     useEffect(() => {
         const query = router.query;
         const cityFromQuery = query.city || selectedCity || '';
+        const cityListFromQuery = cityFromQuery
+            ? cityFromQuery.split(',').map((c) => c.trim()).filter(Boolean)
+            : [];
 
         setFilters(prev => ({
             ...prev,
-            city: cityFromQuery,
+            cities: cityListFromQuery,
+            propertyCategory: query.category || 'residential',
             propertyTypes: query.type ? query.type.split(',') : [],
             bhkTypes: query.bhk ? query.bhk.split(',') : [],
             minPrice: query.minPrice || '',
@@ -214,8 +225,8 @@ export default function BrowseProperty() {
         }));
 
         // Sync redux selectedCity with URL city
-        if (query.city && query.city !== selectedCity) {
-            dispatch(setSelectedCity(query.city));
+        if (cityListFromQuery.length > 0 && cityListFromQuery[0] !== selectedCity) {
+            dispatch(setSelectedCity(cityListFromQuery[0]));
         }
     }, [router.query]);
 
@@ -224,7 +235,7 @@ export default function BrowseProperty() {
         if (selectedCity && selectedCity !== prevSelectedCityRef.current) {
             setFilters(prev => ({
                 ...prev,
-                city: selectedCity,
+                cities: [selectedCity],
             }));
             prevSelectedCityRef.current = selectedCity;
         }
@@ -232,11 +243,9 @@ export default function BrowseProperty() {
 
     // Trigger search on initial load and when filters.city changes
     useEffect(() => {
-        if (filters.city || initialLoad) {
-            handleSearch();
-            setInitialLoad(false);
-        }
-    }, [filters.city]);
+        handleSearch();
+        setInitialLoad(false);
+    }, [filters.cities]);
 
     useEffect(() => {
         const handleClickOutside = (event) => {
@@ -258,11 +267,20 @@ export default function BrowseProperty() {
     }, [moreFiltersOpen, mobileFiltersOpen, openDropdown]);
 
     const normalizeCity = (value) => (value || '').toString().trim().toLowerCase();
-    const effectiveCity = (filters.city || selectedCity || '').trim();
+    const effectiveCities = filters.cities;
+    const displayCity = effectiveCities.length > 1 ? 'Multiple Cities' : (effectiveCities[0] || 'India');
+    const matchesCity = (property) => {
+        if (effectiveCities.length === 0) return true;
+        const propCity = normalizeCity(property?.address?.city);
+        return effectiveCities.some((c) => normalizeCity(c) === propCity);
+    };
+    const visibleProperties = (effectiveCities.length > 0 ? properties?.filter(matchesCity) : properties) || [];
+    const visibleCount = visibleProperties.length;
 
     const handleSearch = async () => {
         const searchFilters = {
-            city: effectiveCity,
+            city: effectiveCities.join(','),
+            property_category: filters.propertyCategory,
             property_type: filters.propertyTypes.join(','),
             bhk_type: filters.bhkTypes.join(','),
             minPrice: filters.minPrice,
@@ -291,7 +309,8 @@ export default function BrowseProperty() {
 
     const handleClearAll = () => {
         setFilters({
-            city: filters.city,
+            cities: filters.cities,
+            propertyCategory: filters.propertyCategory,
             propertyTypes: [],
             bhkTypes: [],
             minPrice: '',
@@ -521,8 +540,8 @@ export default function BrowseProperty() {
     return (
         <Layout>
             <SeoHead
-                title={`Properties for Sale in ${filters.city || 'India'} | EstateHub`}
-                description={`Find ${properties?.length || 0}+ properties for sale in ${filters.city || 'India'}.`}
+                title={`Properties for Sale in ${displayCity} | EstateHub`}
+                description={`Find ${properties?.length || 0}+ properties for sale in ${displayCity}.`}
             />
 
             {/* Top Search Bar */}
@@ -533,16 +552,118 @@ export default function BrowseProperty() {
                             Buy <ChevronDown className="h-4 w-4" />
                         </button>
 
-                        <div className="flex items-center gap-2 bg-gray-100 rounded-xl md:rounded-full px-3 py-2 w-full md:w-auto">
-                            <span className="text-sm font-medium">{filters.city || 'Select City'}</span>
-                            {filters.city && (
-                                <button onClick={() => setFilters(prev => ({ ...prev, city: '' }))} className="hover:bg-gray-200 rounded-full p-0.5">
-                                    <X className="h-3 w-3" />
-                                </button>
-                            )}
+                        <div className="relative w-full md:w-auto">
+                            <div
+                                role="button"
+                                tabIndex={0}
+                                onClick={() => setOpenDropdown(openDropdown === 'cities' ? null : 'cities')}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' || e.key === ' ') {
+                                        e.preventDefault();
+                                        setOpenDropdown(openDropdown === 'cities' ? null : 'cities');
+                                    }
+                                }}
+                                className="flex items-center gap-2 bg-gray-100 rounded-xl md:rounded-full px-3 py-2 w-full md:w-auto flex-wrap cursor-pointer"
+                            >
+                                {filters.cities.length === 0 ? (
+                                    <span className="text-sm font-medium">Select City</span>
+                                ) : (
+                                    filters.cities.map((city) => (
+                                        <span key={city} className="flex items-center gap-1 bg-white border border-gray-200 rounded-full px-2 py-1 text-xs">
+                                            {city}
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    setFilters(prev => ({
+                                                        ...prev,
+                                                        cities: prev.cities.filter((c) => c !== city)
+                                                    }));
+                                                }}
+                                                className="hover:bg-gray-100 rounded-full p-0.5"
+                                            >
+                                                <X className="h-3 w-3" />
+                                            </button>
+                                        </span>
+                                    ))
+                                )}
+                                <ChevronDown className="h-4 w-4 text-gray-500" />
+                            </div>
+
+                            <AnimatePresence>
+                                {openDropdown === 'cities' && (
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 6 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        exit={{ opacity: 0, y: 6 }}
+                                        className="absolute z-50 mt-2 w-full md:w-64 bg-white border border-gray-200 rounded-xl shadow-lg max-h-64 overflow-y-auto"
+                                    >
+                                        {INDIA_CITIES
+                                            .filter((city) => city.name.toLowerCase().includes(cityInput.toLowerCase()))
+                                            .slice(0, 100)
+                                            .map((city) => (
+                                                <button
+                                                    type="button"
+                                                    key={city.name}
+                                                    onClick={() => {
+                                                        setFilters((prev) => ({
+                                                            ...prev,
+                                                            cities: prev.cities.includes(city.name)
+                                                                ? prev.cities
+                                                                : [...prev.cities, city.name],
+                                                        }));
+                                                        setOpenDropdown(null);
+                                                    }}
+                                                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
+                                                >
+                                                    {city.name}, {city.state}
+                                                </button>
+                                            ))}
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
                         </div>
 
-                        <input type="text" placeholder="Add More..." className="w-full md:flex-1 text-sm border border-gray-200 md:border-none rounded-xl md:rounded-none px-3 py-2 focus:outline-none" />
+                        <div className="w-full md:w-auto">
+                            <select
+                                value={filters.propertyCategory}
+                                onChange={(e) => setFilters(prev => ({
+                                    ...prev,
+                                    propertyCategory: e.target.value,
+                                    propertyTypes: [],
+                                }))}
+                                className="w-full md:w-auto text-sm border border-gray-200 rounded-xl md:rounded-lg px-3 py-2 focus:outline-none"
+                            >
+                                {FILTER_OPTIONS.propertyCategories.map((option) => (
+                                    <option key={option.value} value={option.value}>{option.label}</option>
+                                ))}
+                            </select>
+                        </div>
+
+                        <input
+                            type="text"
+                            placeholder="Add More Cities..."
+                            value={cityInput}
+                            onChange={(e) => setCityInput(e.target.value)}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter') {
+                                    e.preventDefault();
+                                    const value = cityInput.trim();
+                                    if (value && !filters.cities.includes(value)) {
+                                        setFilters(prev => ({ ...prev, cities: [...prev.cities, value] }));
+                                    }
+                                    setCityInput('');
+                                }
+                            }}
+                            onBlur={() => {
+                                const value = cityInput.trim();
+                                if (value && !filters.cities.includes(value)) {
+                                    setFilters(prev => ({ ...prev, cities: [...prev.cities, value] }));
+                                }
+                                setCityInput('');
+                            }}
+                            className="w-full md:flex-1 text-sm border border-gray-200 md:border-none rounded-xl md:rounded-none px-3 py-2 focus:outline-none"
+                        />
 
                         <div className="hidden md:block border-l border-gray-200 h-8" />
 
@@ -626,7 +747,7 @@ export default function BrowseProperty() {
                     <div className="text-sm text-gray-500">
                         <Link href="/" className="hover:text-primary">Home</Link>
                         <span className="mx-2">›</span>
-                        <span>Properties for Sale in {effectiveCity || 'India'}</span>
+                        <span>Properties for Sale in {displayCity}</span>
                     </div>
                 </div>
             </div>
@@ -640,7 +761,7 @@ export default function BrowseProperty() {
                             <div className="bg-white rounded-lg border border-gray-200 sticky top-24">
                                 <div className="flex border-b border-gray-200">
                                     <button onClick={() => setActiveTab('properties')} className={`flex-1 py-3 text-sm font-medium ${activeTab === 'properties' ? 'text-primary border-b-2 border-primary bg-red-50' : 'text-gray-600'}`}>
-                                        Properties ({(effectiveCity ? properties?.filter(p => normalizeCity(p?.address?.city) === normalizeCity(effectiveCity)) : properties)?.length || 0})
+                                        Properties ({visibleCount})
                                     </button>
                                     <button onClick={() => setActiveTab('projects')} className={`flex-1 py-3 text-sm font-medium ${activeTab === 'projects' ? 'text-primary border-b-2 border-primary bg-red-50' : 'text-gray-600'}`}>
                                         New Projects
@@ -670,7 +791,7 @@ export default function BrowseProperty() {
 
                                     <FilterSection title="Sub Property Type" name="subPropertyType" hasActiveFilters={filters.propertyTypes.length > 0}>
                                         <div className="flex flex-wrap gap-2">
-                                            {FILTER_OPTIONS.propertyTypes.residential.map(option => (
+                                            {FILTER_OPTIONS.propertyTypes[filters.propertyCategory || 'residential'].map(option => (
                                                 <ToggleChip key={option.value} label={option.label} selected={filters.propertyTypes.includes(option.value)} onClick={() => toggleArrayFilter('propertyTypes', option.value)} />
                                             ))}
                                         </div>
@@ -748,7 +869,7 @@ export default function BrowseProperty() {
 
                                 <div className="p-4 border-t border-gray-200 flex gap-3">
                                     <button onClick={handleClearAll} className="flex-1 py-2 text-primary font-medium hover:bg-red-50 rounded-lg">Clear All</button>
-                                    <Button onClick={handleSearch} className="flex-1 bg-primary hover:bg-primary/90">View {properties?.length || 0} Properties</Button>
+                                    <Button onClick={handleSearch} className="flex-1 bg-primary hover:bg-primary/90">View {visibleCount} Properties</Button>
                                 </div>
                             </div>
                         </div>
@@ -758,7 +879,7 @@ export default function BrowseProperty() {
                             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
                                 <div>
                                     <h1 className="text-xl font-semibold text-gray-800">
-                                        {(effectiveCity ? properties?.filter(p => normalizeCity(p?.address?.city) === normalizeCity(effectiveCity)) : properties)?.length || 0} results | Properties for Sale in {effectiveCity || 'India'}
+                                        {visibleCount} results | Properties for Sale in {displayCity}
                                     </h1>
                                     <button className="text-sm text-primary flex items-center gap-1 mt-1">
                                         <MapPin className="h-4 w-4" />Add Localities for more relevant results<ArrowRight className="h-4 w-4" />
@@ -798,7 +919,7 @@ export default function BrowseProperty() {
                                 <div className="flex justify-center items-center py-20">
                                     <Loader2 className="h-8 w-8 animate-spin text-primary" />
                                 </div>
-                            ) : (effectiveCity ? properties?.filter(p => normalizeCity(p?.address?.city) === normalizeCity(effectiveCity)) : properties)?.length === 0 ? (
+                            ) : visibleCount === 0 ? (
                                 <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
                                     <Building2 className="h-16 w-16 text-gray-300 mx-auto mb-4" />
                                     <h3 className="text-xl font-semibold text-gray-800 mb-2">No Properties Found</h3>
@@ -807,7 +928,7 @@ export default function BrowseProperty() {
                                 </div>
                             ) : (
                                 <div className={viewMode === 'grid' ? 'grid grid-cols-1 md:grid-cols-2 gap-4' : 'space-y-4'}>
-                                    {(effectiveCity ? properties?.filter(p => normalizeCity(p?.address?.city) === normalizeCity(effectiveCity)) : properties)?.map((property) => (
+                                    {visibleProperties.map((property) => (
                                         <PropertyCard key={property._id} property={property} />
                                     ))}
                                 </div>
@@ -861,7 +982,7 @@ export default function BrowseProperty() {
                             </div>
                             <div className="sticky bottom-0 bg-white border-t border-gray-200 p-4 flex gap-3">
                                 <button onClick={handleClearAll} className="flex-1 py-3 text-primary font-medium border border-primary rounded-lg">Clear All</button>
-                                <Button onClick={handleSearch} className="flex-1 bg-primary hover:bg-primary/90 py-3">View Properties</Button>
+                                <Button onClick={handleSearch} className="flex-1 bg-primary hover:bg-primary/90 py-3">View {visibleCount} Properties</Button>
                             </div>
                         </motion.div>
                     </>
@@ -872,8 +993,8 @@ export default function BrowseProperty() {
             <AnimatePresence>
                 {moreFiltersOpen && (
                     <>
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 z-50" onClick={() => setMoreFiltersOpen(false)} />
-                        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="fixed inset-0 p-3 sm:p-6 z-50">
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 z-[70]" onClick={() => setMoreFiltersOpen(false)} />
+                        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="fixed inset-0 p-3 sm:p-6 z-[80]">
                             <div className="w-full h-full max-w-4xl mx-auto bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col">
                                 <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center justify-between">
                                     <h2 className="text-lg font-semibold">More Filters</h2>
@@ -957,7 +1078,7 @@ export default function BrowseProperty() {
                                 </div>
                                 <div className="sticky bottom-0 bg-white border-t border-gray-200 p-4 flex justify-end gap-3">
                                     <button onClick={handleClearAll} className="px-6 py-2 text-primary font-medium hover:bg-red-50 rounded-lg">Clear All</button>
-                                    <Button onClick={handleSearch} className="px-8 bg-primary hover:bg-primary/90">View {properties?.length || 0} Properties</Button>
+                                    <Button onClick={handleSearch} className="px-8 bg-primary hover:bg-primary/90">View {visibleCount} Properties</Button>
                                 </div>
                             </div>
                         </motion.div>

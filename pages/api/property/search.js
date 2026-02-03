@@ -18,6 +18,7 @@ const searchProperties = asyncHandler(async (req, res) => {
         city,
         state,
         locality,
+        property_category,
         property_type,
         bhk_type,
         usage_type,
@@ -47,11 +48,26 @@ const searchProperties = asyncHandler(async (req, res) => {
 
     // Location filters - Use exact case-insensitive match for city to avoid partial matches
     if (city) {
-        const cityName = city.split(',')[0].trim();
-        filter['address.city'] = { $regex: new RegExp(`^${cityName}$`, 'i') };
+        const escapeRegExp = (value) => value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const cityList = city
+            .split(',')
+            .map((value) => value.trim())
+            .filter(Boolean);
+
+        if (cityList.length === 1) {
+            filter['address.city'] = { $regex: new RegExp(`^${escapeRegExp(cityList[0])}$`, 'i') };
+        } else if (cityList.length > 1) {
+            filter['address.city'] = {
+                $in: cityList.map((value) => new RegExp(`^${escapeRegExp(value)}$`, 'i')),
+            };
+        }
     }
     if (state) filter['address.state'] = new RegExp(state, 'i');
     if (locality) filter['address.locality'] = new RegExp(locality, 'i');
+
+    if (property_category) {
+        filter.property_category = property_category;
+    }
 
     // Property type filter (can be comma-separated)
     if (property_type) {
