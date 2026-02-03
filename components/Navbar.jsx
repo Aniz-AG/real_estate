@@ -30,11 +30,12 @@ const Navbar = () => {
 
     useEffect(() => {
         if (typeof document === 'undefined') return;
-        document.body.style.overflow = isMobileMenuOpen ? 'hidden' : '';
+        const shouldLock = isMobileMenuOpen || !!activeDropdown;
+        document.body.style.overflow = shouldLock ? 'hidden' : '';
         return () => {
             document.body.style.overflow = '';
         };
-    }, [isMobileMenuOpen]);
+    }, [isMobileMenuOpen, activeDropdown]);
 
     const toggleDropdown = (dropdown) => {
         setActiveDropdown(activeDropdown === dropdown ? null : dropdown);
