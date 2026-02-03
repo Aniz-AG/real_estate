@@ -145,6 +145,7 @@ export default function BrowseProperty() {
     const router = useRouter();
     const dispatch = useDispatch();
     const { properties, loading, selectedCity } = useSelector((state) => state.property);
+    const { isAuthenticated } = useSelector((state) => state.user);
     const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
     const [moreFiltersOpen, setMoreFiltersOpen] = useState(false);
     const [viewMode, setViewMode] = useState('list');
@@ -246,6 +247,15 @@ export default function BrowseProperty() {
         document.addEventListener('mousedown', handleClickOutside);
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
+
+    useEffect(() => {
+        if (typeof document === 'undefined') return;
+        const shouldLock = moreFiltersOpen || mobileFiltersOpen;
+        document.body.style.overflow = shouldLock ? 'hidden' : '';
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [moreFiltersOpen, mobileFiltersOpen]);
 
     const normalizeCity = (value) => (value || '').toString().trim().toLowerCase();
     const effectiveCity = (filters.city || selectedCity || '').trim();
@@ -486,10 +496,20 @@ export default function BrowseProperty() {
                                 </div>
                             </div>
                             <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-                                <Button className="bg-primary hover:bg-primary/90 text-white w-full sm:w-auto">Contact Agent</Button>
-                                <Button variant="outline" className="border-primary text-primary hover:bg-red-50 w-full sm:w-auto">
-                                    <Phone className="h-4 w-4 mr-1" />Get Phone No.
-                                </Button>
+                                {isAuthenticated ? (
+                                    <>
+                                        <Button className="bg-primary hover:bg-primary/90 text-white w-full sm:w-auto">Contact Agent</Button>
+                                        <Button variant="outline" className="border-primary text-primary hover:bg-red-50 w-full sm:w-auto">
+                                            <Phone className="h-4 w-4 mr-1" />Get Phone No.
+                                        </Button>
+                                    </>
+                                ) : (
+                                    <Link href={`/login?redirect=/property/${property._id}`} className="w-full sm:w-auto">
+                                        <Button className="bg-primary hover:bg-primary/90 text-white w-full sm:w-auto">
+                                            Login to Contact
+                                        </Button>
+                                    </Link>
+                                )}
                             </div>
                         </div>
                     </div>
@@ -868,90 +888,92 @@ export default function BrowseProperty() {
                 {moreFiltersOpen && (
                     <>
                         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 bg-black/50 z-50" onClick={() => setMoreFiltersOpen(false)} />
-                        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-4xl bg-white rounded-xl shadow-2xl z-50 max-h-[80vh] overflow-hidden">
-                            <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center justify-between">
-                                <h2 className="text-lg font-semibold">More Filters</h2>
-                                <button onClick={() => setMoreFiltersOpen(false)}><X className="h-6 w-6" /></button>
-                            </div>
-                            <div className="p-6 overflow-y-auto max-h-[60vh]">
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="space-y-4">
-                                        <div>
-                                            <h3 className="font-medium text-gray-800 mb-3">Covered Area (sqft)</h3>
-                                            <div className="flex items-center gap-2">
-                                                <select value={filters.minArea} onChange={(e) => setFilters(prev => ({ ...prev, minArea: e.target.value }))} className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm">
-                                                    {FILTER_OPTIONS.areaOptions.min.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                                                </select>
-                                                <span className="text-gray-400">to</span>
-                                                <select value={filters.maxArea} onChange={(e) => setFilters(prev => ({ ...prev, maxArea: e.target.value }))} className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm">
-                                                    {FILTER_OPTIONS.areaOptions.max.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                                                </select>
+                        <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="fixed inset-0 p-3 sm:p-6 z-50">
+                            <div className="w-full h-full max-w-4xl mx-auto bg-white rounded-xl shadow-2xl overflow-hidden flex flex-col">
+                                <div className="sticky top-0 bg-white border-b border-gray-200 p-4 flex items-center justify-between">
+                                    <h2 className="text-lg font-semibold">More Filters</h2>
+                                    <button onClick={() => setMoreFiltersOpen(false)}><X className="h-6 w-6" /></button>
+                                </div>
+                                <div className="p-6 overflow-y-auto flex-1">
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                        <div className="space-y-4">
+                                            <div>
+                                                <h3 className="font-medium text-gray-800 mb-3">Covered Area (sqft)</h3>
+                                                <div className="flex items-center gap-2">
+                                                    <select value={filters.minArea} onChange={(e) => setFilters(prev => ({ ...prev, minArea: e.target.value }))} className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                                                        {FILTER_OPTIONS.areaOptions.min.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                                                    </select>
+                                                    <span className="text-gray-400">to</span>
+                                                    <select value={filters.maxArea} onChange={(e) => setFilters(prev => ({ ...prev, maxArea: e.target.value }))} className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm">
+                                                        {FILTER_OPTIONS.areaOptions.max.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <h3 className="font-medium text-gray-800 mb-3">Possession Status</h3>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {FILTER_OPTIONS.possessionStatus.map(option => (
+                                                        <ToggleChip key={option.value} label={option.label} selected={filters.possessionStatus.includes(option.value)} onClick={() => toggleArrayFilter('possessionStatus', option.value)} />
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <h3 className="font-medium text-gray-800 mb-3">Ownership</h3>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {FILTER_OPTIONS.ownership.map(option => (
+                                                        <ToggleChip key={option.value} label={option.label} selected={filters.ownership.includes(option.value)} onClick={() => toggleArrayFilter('ownership', option.value)} />
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            <div>
+                                                <h3 className="font-medium text-gray-800 mb-3">Amenities</h3>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {FILTER_OPTIONS.amenities.map(option => (
+                                                        <ToggleChip key={option.value} label={option.label} selected={filters.amenities.includes(option.value)} onClick={() => toggleArrayFilter('amenities', option.value)} />
+                                                    ))}
+                                                </div>
                                             </div>
                                         </div>
-                                        <div>
-                                            <h3 className="font-medium text-gray-800 mb-3">Possession Status</h3>
-                                            <div className="flex flex-wrap gap-2">
-                                                {FILTER_OPTIONS.possessionStatus.map(option => (
-                                                    <ToggleChip key={option.value} label={option.label} selected={filters.possessionStatus.includes(option.value)} onClick={() => toggleArrayFilter('possessionStatus', option.value)} />
-                                                ))}
+                                        <div className="space-y-4">
+                                            <div>
+                                                <h3 className="font-medium text-gray-800 mb-3">Facing</h3>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {FILTER_OPTIONS.facing.map(option => (
+                                                        <ToggleChip key={option.value} label={option.label} selected={filters.facing.includes(option.value)} onClick={() => toggleArrayFilter('facing', option.value)} />
+                                                    ))}
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div>
-                                            <h3 className="font-medium text-gray-800 mb-3">Ownership</h3>
-                                            <div className="flex flex-wrap gap-2">
-                                                {FILTER_OPTIONS.ownership.map(option => (
-                                                    <ToggleChip key={option.value} label={option.label} selected={filters.ownership.includes(option.value)} onClick={() => toggleArrayFilter('ownership', option.value)} />
-                                                ))}
+                                            <div>
+                                                <h3 className="font-medium text-gray-800 mb-3">Floor</h3>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {FILTER_OPTIONS.floor.map(option => (
+                                                        <ToggleChip key={option.value} label={option.label} selected={filters.floor.includes(option.value)} onClick={() => toggleArrayFilter('floor', option.value)} />
+                                                    ))}
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div>
-                                            <h3 className="font-medium text-gray-800 mb-3">Amenities</h3>
-                                            <div className="flex flex-wrap gap-2">
-                                                {FILTER_OPTIONS.amenities.map(option => (
-                                                    <ToggleChip key={option.value} label={option.label} selected={filters.amenities.includes(option.value)} onClick={() => toggleArrayFilter('amenities', option.value)} />
-                                                ))}
+                                            <div>
+                                                <h3 className="font-medium text-gray-800 mb-3">Furnishing</h3>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {FILTER_OPTIONS.furnishing.map(option => (
+                                                        <ToggleChip key={option.value} label={option.label} selected={filters.furnishing.includes(option.value)} onClick={() => toggleArrayFilter('furnishing', option.value)} />
+                                                    ))}
+                                                </div>
                                             </div>
-                                        </div>
-                                    </div>
-                                    <div className="space-y-4">
-                                        <div>
-                                            <h3 className="font-medium text-gray-800 mb-3">Facing</h3>
-                                            <div className="flex flex-wrap gap-2">
-                                                {FILTER_OPTIONS.facing.map(option => (
-                                                    <ToggleChip key={option.value} label={option.label} selected={filters.facing.includes(option.value)} onClick={() => toggleArrayFilter('facing', option.value)} />
-                                                ))}
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <h3 className="font-medium text-gray-800 mb-3">Floor</h3>
-                                            <div className="flex flex-wrap gap-2">
-                                                {FILTER_OPTIONS.floor.map(option => (
-                                                    <ToggleChip key={option.value} label={option.label} selected={filters.floor.includes(option.value)} onClick={() => toggleArrayFilter('floor', option.value)} />
-                                                ))}
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <h3 className="font-medium text-gray-800 mb-3">Furnishing</h3>
-                                            <div className="flex flex-wrap gap-2">
-                                                {FILTER_OPTIONS.furnishing.map(option => (
-                                                    <ToggleChip key={option.value} label={option.label} selected={filters.furnishing.includes(option.value)} onClick={() => toggleArrayFilter('furnishing', option.value)} />
-                                                ))}
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <h3 className="font-medium text-gray-800 mb-3">Posted By</h3>
-                                            <div className="flex flex-wrap gap-2">
-                                                {FILTER_OPTIONS.postedBy.map(option => (
-                                                    <ToggleChip key={option.value} label={option.label} selected={filters.postedBy.includes(option.value)} onClick={() => toggleArrayFilter('postedBy', option.value)} />
-                                                ))}
+                                            <div>
+                                                <h3 className="font-medium text-gray-800 mb-3">Posted By</h3>
+                                                <div className="flex flex-wrap gap-2">
+                                                    {FILTER_OPTIONS.postedBy.map(option => (
+                                                        <ToggleChip key={option.value} label={option.label} selected={filters.postedBy.includes(option.value)} onClick={() => toggleArrayFilter('postedBy', option.value)} />
+                                                    ))}
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                            <div className="sticky bottom-0 bg-white border-t border-gray-200 p-4 flex justify-end gap-3">
-                                <button onClick={handleClearAll} className="px-6 py-2 text-primary font-medium hover:bg-red-50 rounded-lg">Clear All</button>
-                                <Button onClick={handleSearch} className="px-8 bg-primary hover:bg-primary/90">View {properties?.length || 0} Properties</Button>
+                                <div className="sticky bottom-0 bg-white border-t border-gray-200 p-4 flex justify-end gap-3">
+                                    <button onClick={handleClearAll} className="px-6 py-2 text-primary font-medium hover:bg-red-50 rounded-lg">Clear All</button>
+                                    <Button onClick={handleSearch} className="px-8 bg-primary hover:bg-primary/90">View {properties?.length || 0} Properties</Button>
+                                </div>
                             </div>
                         </motion.div>
                     </>

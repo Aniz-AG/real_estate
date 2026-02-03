@@ -253,31 +253,47 @@ export default function PropertyDetails() {
                                 </div>
 
                                 <div className="space-y-3">
-                                    <div className="flex items-center gap-3">
-                                        <Phone className="h-5 w-5 text-primary" />
-                                        <span className="text-sm">{property.uploaded_by?.phone}</span>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <Mail className="h-5 w-5 text-primary" />
-                                        <span className="text-sm">{property.uploaded_by?.email}</span>
-                                    </div>
-                                    <div className="flex items-center gap-3">
-                                        <MapPin className="h-5 w-5 text-primary" />
-                                        <span className="text-sm">
-                                            {property.uploaded_by?.city}, {property.uploaded_by?.state}
-                                        </span>
-                                    </div>
+                                    {isAuthenticated ? (
+                                        <>
+                                            <div className="flex items-center gap-3">
+                                                <Phone className="h-5 w-5 text-primary" />
+                                                <span className="text-sm">{property.uploaded_by?.phone}</span>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <Mail className="h-5 w-5 text-primary" />
+                                                <span className="text-sm">{property.uploaded_by?.email}</span>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <MapPin className="h-5 w-5 text-primary" />
+                                                <span className="text-sm">
+                                                    {property.uploaded_by?.city}, {property.uploaded_by?.state}
+                                                </span>
+                                            </div>
+                                        </>
+                                    ) : (
+                                        <div className="text-sm text-muted-foreground">
+                                            Login to view contact details.
+                                        </div>
+                                    )}
                                 </div>
 
                                 <div className="space-y-2 pt-4">
-                                    <Button className="w-full" size="lg">
-                                        <Phone className="h-5 w-5 mr-2" />
-                                        Call Agent
-                                    </Button>
-                                    <Button variant="outline" className="w-full" size="lg">
-                                        <Mail className="h-5 w-5 mr-2" />
-                                        Email Agent
-                                    </Button>
+                                    {isAuthenticated ? (
+                                        <>
+                                            <Button className="w-full" size="lg">
+                                                <Phone className="h-5 w-5 mr-2" />
+                                                Call Agent
+                                            </Button>
+                                            <Button variant="outline" className="w-full" size="lg">
+                                                <Mail className="h-5 w-5 mr-2" />
+                                                Email Agent
+                                            </Button>
+                                        </>
+                                    ) : (
+                                        <Button className="w-full" size="lg" onClick={() => router.push(`/login?redirect=/property/${id}`)}>
+                                            Login to Contact
+                                        </Button>
+                                    )}
                                 </div>
                             </CardContent>
                         </Card>

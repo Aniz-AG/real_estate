@@ -102,21 +102,98 @@ const updateProperty = async (req, res) => {
 
             // Get single values from fields
             const getValue = (field) => Array.isArray(field) ? field[0] : field;
+            const parseBool = (field) => {
+                const value = getValue(field);
+                if (value === undefined || value === null || value === '') return undefined;
+                if (typeof value === 'boolean') return value;
+                return value === 'true' || value === 'on' || value === '1';
+            };
+            const parseNumber = (field) => {
+                const value = getValue(field);
+                if (value === undefined || value === null || value === '') return undefined;
+                const num = Number(value);
+                return Number.isFinite(num) ? num : undefined;
+            };
 
             // Update property fields
+            property.title = getValue(fields.title) || property.title;
+            property.description = getValue(fields.description) || property.description;
+            property.property_category = getValue(fields.property_category) || property.property_category;
+            property.property_type = getValue(fields.property_type) || property.property_type;
+            property.bhk_type = getValue(fields.bhk_type) || property.bhk_type;
+            property.usage_type = getValue(fields.usage_type) || property.usage_type;
+
             property.address = {
                 property_address: getValue(fields.property_address) || property.address.property_address,
+                locality: getValue(fields.locality) || property.address.locality,
                 city: getValue(fields.city) || property.address.city,
                 state: getValue(fields.state) || property.address.state,
                 pincode: getValue(fields.pincode) || property.address.pincode,
             };
-            property.property_type = getValue(fields.property_type) || property.property_type;
-            property.usage_type = getValue(fields.usage_type) || property.usage_type;
-            property.price = parseInt(getValue(fields.price)) || property.price;
-            property.square_feet = parseInt(getValue(fields.square_feet)) || property.square_feet;
-            property.nums_bedrooms = parseInt(getValue(fields.nums_bedrooms)) || property.nums_bedrooms;
-            property.nums_bathrooms = parseInt(getValue(fields.nums_bathrooms)) || property.nums_bathrooms;
-            property.description = getValue(fields.description) || property.description;
+
+            const price = parseNumber(fields.price);
+            if (price !== undefined) property.price = price;
+            const pricePerSqft = parseNumber(fields.price_per_sqft);
+            if (pricePerSqft !== undefined) property.price_per_sqft = pricePerSqft;
+            const maintenance = parseNumber(fields.maintenance_charges);
+            if (maintenance !== undefined) property.maintenance_charges = maintenance;
+            const negotiable = parseBool(fields.is_negotiable);
+            if (negotiable !== undefined) property.is_negotiable = negotiable;
+
+            const coveredArea = parseNumber(fields.covered_area);
+            if (coveredArea !== undefined) property.covered_area = coveredArea;
+            const carpetArea = parseNumber(fields.carpet_area);
+            if (carpetArea !== undefined) property.carpet_area = carpetArea;
+            const plotArea = parseNumber(fields.plot_area);
+            if (plotArea !== undefined) property.plot_area = plotArea;
+            const sqft = parseNumber(fields.square_feet);
+            if (sqft !== undefined) property.square_feet = sqft;
+            const bedrooms = parseNumber(fields.nums_bedrooms);
+            if (bedrooms !== undefined) property.nums_bedrooms = bedrooms;
+            const bathrooms = parseNumber(fields.nums_bathrooms);
+            if (bathrooms !== undefined) property.nums_bathrooms = bathrooms;
+            const balconies = parseNumber(fields.nums_balconies);
+            if (balconies !== undefined) property.nums_balconies = balconies;
+
+            property.floor_number = getValue(fields.floor_number) || property.floor_number;
+            const totalFloors = parseNumber(fields.total_floors);
+            if (totalFloors !== undefined) property.total_floors = totalFloors;
+
+            property.possession_status = getValue(fields.possession_status) || property.possession_status;
+            const possessionDate = getValue(fields.possession_date);
+            if (possessionDate) property.possession_date = new Date(possessionDate);
+            property.status = getValue(fields.status) || property.status;
+            property.sale_type = getValue(fields.sale_type) || property.sale_type;
+            property.facing = getValue(fields.facing) || property.facing;
+            property.property_age = getValue(fields.property_age) || property.property_age;
+            property.ownership = getValue(fields.ownership) || property.ownership;
+            property.furnishing = getValue(fields.furnishing) || property.furnishing;
+            property.posted_by_type = getValue(fields.posted_by_type) || property.posted_by_type;
+
+            property.project_name = getValue(fields.project_name) || property.project_name;
+            property.builder_name = getValue(fields.builder_name) || property.builder_name;
+
+            property.contact_phone = getValue(fields.contact_phone) || property.contact_phone;
+            property.contact_email = getValue(fields.contact_email) || property.contact_email;
+
+            property.video_url = getValue(fields.video_url) || property.video_url;
+
+            const isVerified = parseBool(fields.is_verified);
+            if (isVerified !== undefined) property.is_verified = isVerified;
+            const isFeatured = parseBool(fields.is_featured);
+            if (isFeatured !== undefined) property.is_featured = isFeatured;
+            const isTopProject = parseBool(fields.is_top_project);
+            if (isTopProject !== undefined) property.is_top_project = isTopProject;
+            const isPremium = parseBool(fields.is_premium);
+            if (isPremium !== undefined) property.is_premium = isPremium;
+
+            if (fields.amenities) {
+                try {
+                    property.amenities = JSON.parse(getValue(fields.amenities));
+                } catch (e) {
+                    // ignore malformed amenities
+                }
+            }
 
             // Handle photos to remove
             if (fields.photosToRemove) {
@@ -156,6 +233,9 @@ const updateProperty = async (req, res) => {
                     }
                 }
             }
+
+            property.has_photos = property.photos?.length > 0;
+            property.has_videos = !!property.video_url;
 
             await property.save();
 

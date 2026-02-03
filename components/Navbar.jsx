@@ -28,6 +28,14 @@ const Navbar = () => {
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
+    useEffect(() => {
+        if (typeof document === 'undefined') return;
+        document.body.style.overflow = isMobileMenuOpen ? 'hidden' : '';
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [isMobileMenuOpen]);
+
     const toggleDropdown = (dropdown) => {
         setActiveDropdown(activeDropdown === dropdown ? null : dropdown);
     };
@@ -487,20 +495,20 @@ const Navbar = () => {
                                     )}
                                 </div>
                             ) : (
-                            <div className="flex flex-wrap gap-2">
-                                {TOP_CITIES.slice(0, 6).map((city, i) => (
-                                    <button
-                                        key={i}
-                                        onClick={() => { handleCityChange(city.name); }}
-                                        className={`px-3 py-1.5 rounded-full text-sm transition-colors ${selectedCity === city.name
-                                            ? 'bg-[#C4302B] text-white font-medium'
-                                            : 'bg-white border border-gray-200 text-gray-600'
-                                            }`}
-                                    >
-                                        {city.name}
-                                    </button>
-                                ))}
-                            </div>
+                                <div className="flex flex-wrap gap-2">
+                                    {TOP_CITIES.slice(0, 6).map((city, i) => (
+                                        <button
+                                            key={i}
+                                            onClick={() => { handleCityChange(city.name); }}
+                                            className={`px-3 py-1.5 rounded-full text-sm transition-colors ${selectedCity === city.name
+                                                ? 'bg-[#C4302B] text-white font-medium'
+                                                : 'bg-white border border-gray-200 text-gray-600'
+                                                }`}
+                                        >
+                                            {city.name}
+                                        </button>
+                                    ))}
+                                </div>
                             )}
                         </div>
 
