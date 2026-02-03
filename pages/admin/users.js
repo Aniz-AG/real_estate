@@ -33,7 +33,7 @@ const Toast = ({ message, type, onClose }) => (
         initial={{ opacity: 0, y: 50, scale: 0.9 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 20, scale: 0.9 }}
-        className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl backdrop-blur-sm ${type === 'success'
+        className={`fixed bottom-6 right-6 z-[99999] flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl backdrop-blur-sm ${type === 'success'
             ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white'
             : 'bg-gradient-to-r from-red-500 to-rose-500 text-white'
             }`}
@@ -76,6 +76,7 @@ const cardHover = {
 export default function AdminUsers() {
     const router = useRouter();
     const { isAuthenticated, user } = useSelector((state) => state.user);
+    const [mounted, setMounted] = useState(false);
     const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -102,12 +103,17 @@ export default function AdminUsers() {
     }, [searchTerm]);
 
     useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    useEffect(() => {
+        if (!mounted) return;
         if (!isAuthenticated) {
             router.replace('/login');
         } else if (user?.role !== 'admin') {
             router.replace('/');
         }
-    }, [isAuthenticated, user, router]);
+    }, [isAuthenticated, user, router, mounted]);
 
     useEffect(() => {
         if (isAuthenticated && user?.role === 'admin') {
@@ -225,7 +231,7 @@ export default function AdminUsers() {
                                 Back to Dashboard
                             </motion.div>
                         </Link>
-                        <div className="flex items-center gap-4">
+                        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                             <motion.div
                                 className="p-3 rounded-2xl bg-gradient-to-br from-violet-500 to-purple-500 text-white shadow-lg shadow-violet-500/25"
                                 whileHover={{ rotate: [0, -10, 10, 0] }}
@@ -256,7 +262,7 @@ export default function AdminUsers() {
                                         />
                                     </div>
                                     <motion.div
-                                        className="flex items-center gap-2 text-sm text-muted-foreground bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-full"
+                                        className="flex items-center gap-2 text-sm text-muted-foreground bg-gray-100 dark:bg-gray-700 px-4 py-2 rounded-full w-full md:w-auto justify-center md:justify-start"
                                         initial={{ scale: 0.9 }}
                                         animate={{ scale: 1 }}
                                     >
@@ -320,7 +326,7 @@ export default function AdminUsers() {
                                             : 'bg-gradient-to-r from-gray-400 to-gray-500'
                                             }`} />
                                         <CardContent className="p-6">
-                                            <div className="flex items-start justify-between mb-4">
+                                            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
                                                 <div className="flex items-center gap-4">
                                                     <motion.div whileHover={{ scale: 1.1 }}>
                                                         <Avatar className="h-14 w-14 ring-2 ring-offset-2 ring-primary/20">
@@ -367,7 +373,7 @@ export default function AdminUsers() {
                                                 )}
                                             </div>
 
-                                            <div className="flex gap-2 pt-4 border-t border-gray-100 dark:border-gray-700">
+                                            <div className="flex flex-col sm:flex-row gap-2 pt-4 border-t border-gray-100 dark:border-gray-700">
                                                 {u._id !== user._id ? (
                                                     <>
                                                         <motion.div className="flex-1" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
@@ -385,10 +391,11 @@ export default function AdminUsers() {
                                                                 )}
                                                             </Button>
                                                         </motion.div>
-                                                        <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
+                                                        <motion.div className="flex-1" whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
                                                             <Button
                                                                 variant="destructive"
                                                                 size="sm"
+                                                                className="w-full"
                                                                 onClick={() => handleDeleteUser(u._id)}
                                                                 disabled={actionLoading === u._id}
                                                             >
@@ -413,7 +420,7 @@ export default function AdminUsers() {
                     {/* Pagination */}
                     {!loading && totalPages > 1 && (
                         <motion.div
-                            className="flex justify-center items-center gap-4 mt-8"
+                            className="flex flex-col sm:flex-row justify-center items-center gap-4 mt-8"
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                         >
@@ -421,19 +428,19 @@ export default function AdminUsers() {
                                 variant="outline"
                                 onClick={() => setPage(p => Math.max(1, p - 1))}
                                 disabled={page === 1}
-                                className="gap-2"
+                                className="gap-2 w-full sm:w-auto"
                             >
                                 <ChevronLeft className="h-4 w-4" />
                                 Previous
                             </Button>
-                            <span className="text-sm text-muted-foreground">
+                            <span className="text-sm text-muted-foreground text-center">
                                 Page {page} of {totalPages} ({total} users)
                             </span>
                             <Button
                                 variant="outline"
                                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                                 disabled={page === totalPages}
-                                className="gap-2"
+                                className="gap-2 w-full sm:w-auto"
                             >
                                 Next
                                 <ChevronRight className="h-4 w-4" />

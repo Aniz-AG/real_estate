@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { registerUser } from '@/redux/slices/userSlice';
+import { INDIA_CITIES } from '@/redux/slices/propertySlice';
 import { User, Mail, Phone, MapPin, Upload, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
@@ -37,7 +38,7 @@ export default function Register() {
         username: '',
         email: '',
         phone: '',
-        city: '',
+        city: 'Jaipur',
         state: '',
     });
     const [photo, setPhoto] = useState(null);
@@ -163,20 +164,24 @@ export default function Register() {
                                     </div>
 
                                     <div className="space-y-2">
-                                        <Label htmlFor="city">City</Label>
+                                        <Label htmlFor="city">Preferred City</Label>
                                         <div className="relative">
                                             <MapPin className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                                            <Input
+                                            <select
                                                 id="city"
                                                 name="city"
-                                                type="text"
-                                                placeholder="Your city"
                                                 value={formData.city}
                                                 onChange={handleChange}
-                                                className="pl-10"
-                                                required
-                                            />
+                                                className="w-full h-11 rounded-md border border-input bg-background px-3 py-2 pl-10 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                            >
+                                                {INDIA_CITIES.map((city) => (
+                                                    <option key={city.name} value={city.name}>
+                                                        {city.name}
+                                                    </option>
+                                                ))}
+                                            </select>
                                         </div>
+                                        <p className="text-xs text-muted-foreground">This will be your default city after login.</p>
                                     </div>
 
                                     <div className="space-y-2 md:col-span-2">

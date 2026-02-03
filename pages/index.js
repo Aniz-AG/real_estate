@@ -5,14 +5,14 @@ import Layout from '@/components/Layout';
 import SeoHead from '@/components/SeoHead';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { getLatestProperties } from '@/redux/slices/propertySlice';
+import { getLatestProperties, getPropertiesByCity, TOP_CITIES, setSelectedCity, INDIA_CITIES } from '@/redux/slices/propertySlice';
 import axios from 'axios';
-import { Building2, MapPin, Bed, Bath, Maximize, Search, TrendingUp, Users, Award, Star, ChevronRight, Home as HomeIcon, ArrowRight, Sparkles, Quote } from 'lucide-react';
+import { Building2, MapPin, Bed, Bath, Maximize, Search, TrendingUp, Users, Award, Star, ChevronRight, Home as HomeIcon, ArrowRight, ChevronDown, X, Clock, ChevronLeft } from 'lucide-react';
 import Link from 'next/link';
-import { motion, useInView, useScroll, useTransform } from 'framer-motion';
+import { motion, useInView } from 'framer-motion';
+import Slider from 'react-slick';
 
-// Animation variants for performance - defined outside component
+// Animation variants
 const fadeInUp = {
     hidden: { opacity: 0, y: 30 },
     visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } }
@@ -50,72 +50,79 @@ const useCounter = (end, duration = 2000, startOnView = true) => {
     return { count, ref };
 };
 
-// Testimonials data
-const testimonials = [
-    { name: "Sarah Johnson", role: "Homeowner", image: "https://randomuser.me/api/portraits/women/1.jpg", text: "Found my dream home in just 2 weeks! The team was incredibly helpful throughout the entire process.", rating: 5 },
-    { name: "Michael Chen", role: "Property Investor", image: "https://randomuser.me/api/portraits/men/2.jpg", text: "Best real estate platform I've used. The property listings are accurate and the agents are professional.", rating: 5 },
-    { name: "Emily Rodriguez", role: "First-time Buyer", image: "https://randomuser.me/api/portraits/women/3.jpg", text: "As a first-time buyer, I was nervous. This team made everything smooth and stress-free!", rating: 5 },
-    { name: "David Kim", role: "Homeowner", image: "https://randomuser.me/api/portraits/men/4.jpg", text: "Excellent service and great selection of properties. Highly recommend to everyone!", rating: 5 },
-    { name: "Lisa Thompson", role: "Property Seller", image: "https://randomuser.me/api/portraits/women/5.jpg", text: "Sold my property above asking price in record time. Amazing marketing and support!", rating: 5 },
-    { name: "James Wilson", role: "Investor", image: "https://randomuser.me/api/portraits/men/6.jpg", text: "The investment insights and market analysis helped me make smart decisions.", rating: 5 },
+// Property Types Data
+const propertyTypes = [
+    { label: 'Flat', value: 'flat', selected: false },
+    { label: 'House/Villa', value: 'house', selected: false },
+    { label: 'Plot', value: 'plot', selected: false },
+    { label: 'Office Space', value: 'office', selected: false },
+    { label: 'Shop', value: 'shop', selected: false },
 ];
 
-// Infinite Scroll Testimonial Carousel
-const TestimonialCarousel = () => {
-    return (
-        <div className="relative overflow-hidden py-4">
-            <div className="absolute left-0 top-0 bottom-0 w-20 bg-gradient-to-r from-slate-50 to-transparent z-10" />
-            <div className="absolute right-0 top-0 bottom-0 w-20 bg-gradient-to-l from-slate-50 to-transparent z-10" />
-            <motion.div
-                className="flex gap-6"
-                animate={{ x: [0, -1920] }}
-                transition={{ duration: 30, repeat: Infinity, ease: "linear" }}
-            >
-                {[...testimonials, ...testimonials].map((t, i) => (
-                    <motion.div
-                        key={i}
-                        className="flex-shrink-0 w-[350px]"
-                        whileHover={{ scale: 1.02, y: -5 }}
-                        transition={{ type: "spring", stiffness: 300 }}
-                    >
-                        <Card className="h-full bg-white/80 backdrop-blur-sm border-0 shadow-xl hover:shadow-2xl transition-shadow">
-                            <CardContent className="p-6">
-                                <div className="flex items-center gap-1 mb-4">
-                                    {[...Array(t.rating)].map((_, i) => (
-                                        <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                                    ))}
-                                </div>
-                                <Quote className="h-8 w-8 text-primary/20 mb-2" />
-                                <p className="text-gray-600 mb-4 line-clamp-3">{t.text}</p>
-                                <div className="flex items-center gap-3 pt-4 border-t">
-                                    <img src={t.image} alt={t.name} className="w-12 h-12 rounded-full object-cover ring-2 ring-primary/20" />
-                                    <div>
-                                        <p className="font-semibold">{t.name}</p>
-                                        <p className="text-sm text-muted-foreground">{t.role}</p>
-                                    </div>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </motion.div>
-                ))}
-            </motion.div>
-        </div>
-    );
+const bhkOptions = ['1 BHK', '2 BHK', '3 BHK', '4 BHK', '5 BHK', '5+ BHK'];
+
+// Budget Options
+const budgetOptions = {
+    min: [
+        { label: 'Min', value: '' },
+        { label: '₹5 Lac', value: '500000' },
+        { label: '₹10 Lac', value: '1000000' },
+        { label: '₹20 Lac', value: '2000000' },
+        { label: '₹30 Lac', value: '3000000' },
+        { label: '₹40 Lac', value: '4000000' },
+        { label: '₹50 Lac', value: '5000000' },
+        { label: '₹60 Lac', value: '6000000' },
+        { label: '₹70 Lac', value: '7000000' },
+        { label: '₹80 Lac', value: '8000000' },
+        { label: '₹90 Lac', value: '9000000' },
+        { label: '₹1 Cr', value: '10000000' },
+    ],
+    max: [
+        { label: 'Max', value: '' },
+        { label: '₹10 Lac', value: '1000000' },
+        { label: '₹20 Lac', value: '2000000' },
+        { label: '₹30 Lac', value: '3000000' },
+        { label: '₹50 Lac', value: '5000000' },
+        { label: '₹75 Lac', value: '7500000' },
+        { label: '₹1 Cr', value: '10000000' },
+        { label: '₹1.5 Cr', value: '15000000' },
+        { label: '₹2 Cr', value: '20000000' },
+        { label: '₹3 Cr', value: '30000000' },
+        { label: '₹5 Cr', value: '50000000' },
+    ]
 };
 
 export default function Home({ latestProperties = [], initialTopCities = [] }) {
     const router = useRouter();
     const dispatch = useDispatch();
-    const { properties, loading } = useSelector((state) => state.property);
+    const { properties, loading, cityProperties, cityLoading, selectedCity } = useSelector((state) => state.property);
     const [ssrProperties] = useState(latestProperties);
     const [topCities, setTopCities] = useState(initialTopCities);
-    const [searchQuery, setSearchQuery] = useState('');
-    const heroRef = useRef(null);
-    const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
-    const heroY = useTransform(scrollYProgress, [0, 1], [0, 150]);
-    const heroOpacity = useTransform(scrollYProgress, [0, 0.5], [1, 0]);
 
-    // Stats with animated counters
+    // Search State
+    const [activeTab, setActiveTab] = useState('buy');
+    const [locationInput, setLocationInput] = useState('');
+    const [selectedLocations, setSelectedLocations] = useState([]);
+    const [showLocationDropdown, setShowLocationDropdown] = useState(false);
+    const [showPropertyTypeDropdown, setShowPropertyTypeDropdown] = useState(false);
+    const [showBudgetDropdown, setShowBudgetDropdown] = useState(false);
+    const [selectedPropertyTypes, setSelectedPropertyTypes] = useState([]);
+    const [selectedBHK, setSelectedBHK] = useState([]);
+    const [minBudget, setMinBudget] = useState('');
+    const [maxBudget, setMaxBudget] = useState('');
+    const [budgetTab, setBudgetTab] = useState('min');
+    const [recentSearches] = useState([
+        { query: 'Buy in Mumbai', type: 'House/Villa' },
+        { query: 'Buy in Bangalore', type: 'Flat' },
+    ]);
+    const [citySuggestions, setCitySuggestions] = useState(INDIA_CITIES);
+
+    // Refs for click outside
+    const locationRef = useRef(null);
+    const propertyTypeRef = useRef(null);
+    const budgetRef = useRef(null);
+
+    // Stats counters
     const stat1 = useCounter(10000, 2000);
     const stat2 = useCounter(5000, 2000);
     const stat3 = useCounter(500, 2000);
@@ -125,11 +132,51 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
         if (!properties?.length) {
             dispatch(getLatestProperties());
         }
-
         if (!initialTopCities.length) {
             fetchTopCities();
         }
     }, [dispatch, properties?.length, initialTopCities.length]);
+
+    // Fetch properties when city changes
+    useEffect(() => {
+        if (selectedCity) {
+            dispatch(getPropertiesByCity(selectedCity));
+        }
+    }, [selectedCity, dispatch]);
+
+    useEffect(() => {
+        if (!selectedCity) return;
+        setSelectedLocations((prev) => (prev.length > 0 ? prev : [selectedCity]));
+    }, [selectedCity]);
+
+    useEffect(() => {
+        const handleClickOutside = (event) => {
+            if (locationRef.current && !locationRef.current.contains(event.target)) {
+                setShowLocationDropdown(false);
+            }
+            if (propertyTypeRef.current && !propertyTypeRef.current.contains(event.target)) {
+                setShowPropertyTypeDropdown(false);
+            }
+            if (budgetRef.current && !budgetRef.current.contains(event.target)) {
+                setShowBudgetDropdown(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    useEffect(() => {
+        const term = locationInput.trim().toLowerCase();
+        if (!term) {
+            setCitySuggestions(INDIA_CITIES);
+            return;
+        }
+        setCitySuggestions(
+            INDIA_CITIES.filter((city) =>
+                `${city.name} ${city.state}`.toLowerCase().includes(term)
+            )
+        );
+    }, [locationInput]);
 
     const fetchTopCities = async () => {
         try {
@@ -140,139 +187,602 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
         }
     };
 
-    const handleSearch = (e) => {
-        e.preventDefault();
-        if (searchQuery.trim()) {
-            router.push(`/browse?search=${searchQuery}`);
+    const handleAddLocation = (location) => {
+        if (!selectedLocations.includes(location)) {
+            setSelectedLocations([...selectedLocations, location]);
+        }
+        setLocationInput('');
+        setShowLocationDropdown(false);
+    };
+
+    const handleRemoveLocation = (location) => {
+        setSelectedLocations(selectedLocations.filter(l => l !== location));
+    };
+
+    const togglePropertyType = (type) => {
+        if (selectedPropertyTypes.includes(type)) {
+            setSelectedPropertyTypes(selectedPropertyTypes.filter(t => t !== type));
+        } else {
+            setSelectedPropertyTypes([...selectedPropertyTypes, type]);
         }
     };
 
+    const toggleBHK = (bhk) => {
+        if (selectedBHK.includes(bhk)) {
+            setSelectedBHK(selectedBHK.filter(b => b !== bhk));
+        } else {
+            setSelectedBHK([...selectedBHK, bhk]);
+        }
+    };
+
+    const handleSearch = () => {
+        const params = new URLSearchParams();
+        if (selectedLocations.length > 0) {
+            params.set('city', selectedLocations.join(','));
+        } else if (selectedCity) {
+            params.set('city', selectedCity);
+        }
+        if (selectedPropertyTypes.length > 0) {
+            params.set('type', selectedPropertyTypes.join(','));
+        }
+        if (minBudget) params.set('minPrice', minBudget);
+        if (maxBudget) params.set('maxPrice', maxBudget);
+        if (selectedBHK.length > 0) {
+            params.set('bhk', selectedBHK.join(','));
+        }
+
+        const destination = activeTab === 'buy' ? '/browse' : '/new-projects';
+        router.push(`${destination}?${params.toString()}`);
+    };
+
+    const getPropertyTypeLabel = () => {
+        if (selectedPropertyTypes.length === 0) return 'Property Type';
+        if (selectedPropertyTypes.length === 1) {
+            const type = propertyTypes.find(t => t.value === selectedPropertyTypes[0]);
+            return type?.label || 'Property Type';
+        }
+        return `${propertyTypes.find(t => t.value === selectedPropertyTypes[0])?.label} +${selectedPropertyTypes.length - 1}`;
+    };
+
+    const getBudgetLabel = () => {
+        if (!minBudget && !maxBudget) return 'Budget';
+        if (minBudget && maxBudget) {
+            const minLabel = budgetOptions.min.find(b => b.value === minBudget)?.label || '';
+            const maxLabel = budgetOptions.max.find(b => b.value === maxBudget)?.label || '';
+            return `${minLabel} - ${maxLabel}`;
+        }
+        if (minBudget) {
+            const minLabel = budgetOptions.min.find(b => b.value === minBudget)?.label || '';
+            return `${minLabel}+`;
+        }
+        if (maxBudget) {
+            const maxLabel = budgetOptions.max.find(b => b.value === maxBudget)?.label || '';
+            return `Upto ${maxLabel}`;
+        }
+        return 'Budget';
+    };
+
     const features = [
-        { icon: Building2, title: stat1.count.toLocaleString() + '+', description: 'Properties Listed', ref: stat1.ref, gradient: 'from-blue-500 to-cyan-500' },
-        { icon: Users, title: stat2.count.toLocaleString() + '+', description: 'Happy Customers', ref: stat2.ref, gradient: 'from-violet-500 to-purple-500' },
+        { icon: Building2, title: stat1.count.toLocaleString() + '+', description: 'Properties Listed', ref: stat1.ref, gradient: 'from-red-500 to-rose-500' },
+        { icon: Users, title: stat2.count.toLocaleString() + '+', description: 'Happy Customers', ref: stat2.ref, gradient: 'from-red-600 to-red-500' },
         { icon: Award, title: stat3.count.toLocaleString() + '+', description: 'Expert Agents', ref: stat3.ref, gradient: 'from-orange-500 to-amber-500' },
         { icon: TrendingUp, title: stat4.count + '%', description: 'Success Rate', ref: stat4.ref, gradient: 'from-green-500 to-emerald-500' },
     ];
+
+    // Carousel slider settings
+    const sliderSettings = {
+        dots: false,
+        infinite: false,
+        speed: 500,
+        slidesToShow: 4,
+        slidesToScroll: 1,
+        arrows: false,
+        responsive: [
+            {
+                breakpoint: 1280,
+                settings: { slidesToShow: 3 }
+            },
+            {
+                breakpoint: 1024,
+                settings: { slidesToShow: 2 }
+            },
+            {
+                breakpoint: 640,
+                settings: { slidesToShow: 1 }
+            }
+        ]
+    };
+
+    // Slider refs for custom arrows
+    const featuredSliderRef = useRef(null);
+    const latestSliderRef = useRef(null);
+    const topProjectsSliderRef = useRef(null);
+
+    // Filter properties for different sections (you can update this logic later based on your categories)
+    const cityFilteredProperties = cityProperties || [];
+    const featuredProperties = cityFilteredProperties.filter(p => p.featured || p.price > 10000000).slice(0, 10);
+    const latestCityProperties = cityFilteredProperties.slice(0, 10);
+    const topProjects = cityFilteredProperties.filter(p => p.property_type === 'apartment' || p.property_type === 'flat').slice(0, 10);
 
     const displayedProperties = (properties && properties.length ? properties : ssrProperties)?.slice(0, 6) || [];
 
     return (
         <Layout>
             <SeoHead
-                title="Find Your Dream Home"
+                title="Find Your Dream Home | EstateHub"
                 description="Browse the latest apartments, villas, and homes across top cities. Find your dream property today."
             />
 
-            {/* Hero Section with Parallax */}
-            <section ref={heroRef} className="relative min-h-[90vh] flex items-center overflow-hidden bg-gradient-to-br from-slate-900 via-primary to-blue-900">
-                {/* Animated Background Elements */}
-                <div className="absolute inset-0">
-                    <div className="absolute top-20 left-10 w-72 h-72 bg-blue-500/30 rounded-full blur-[100px] animate-pulse" />
-                    <div className="absolute bottom-20 right-10 w-96 h-96 bg-violet-500/20 rounded-full blur-[120px] animate-pulse delay-1000" />
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-cyan-500/10 rounded-full blur-[150px]" />
-                </div>
-
-                {/* Grid Pattern Overlay */}
-                <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:50px_50px]" />
-
-                <motion.div
-                    className="container relative mx-auto px-4 py-24 md:py-32"
-                    style={{ y: heroY, opacity: heroOpacity }}
-                >
-                    <div className="max-w-4xl">
+            {/* Hero Search Section - Magic Bricks Style */}
+            <section className="bg-white py-12 md:py-16 overflow-visible">
+                <div className="container mx-auto px-4 overflow-visible">
+                    <div className="max-w-5xl mx-auto overflow-visible">
+                        {/* Tagline */}
                         <motion.div
-                            initial={{ opacity: 0, y: 30 }}
+                            className="text-center mb-8"
+                            initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.6 }}
-                            className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-4 py-2 mb-6"
+                            transition={{ duration: 0.5 }}
                         >
-                            <Sparkles className="h-4 w-4 text-yellow-400" />
-                            <span className="text-white/90 text-sm">Trusted by 10,000+ Happy Homeowners</span>
+                            <h1 className="text-3xl md:text-4xl font-light text-gray-800 mb-2">
+                                Start your <span className="font-bold">#PropertySearch</span> Journey
+                            </h1>
                         </motion.div>
 
-                        <motion.h1
-                            className="text-5xl md:text-7xl font-bold mb-6 leading-tight text-white"
-                            initial={{ opacity: 0, y: 40 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.6, delay: 0.1 }}
-                        >
-                            Find Your
-                            <span className="block bg-gradient-to-r from-cyan-400 via-blue-400 to-violet-400 bg-clip-text text-transparent">
-                                Dream Home
-                            </span>
-                        </motion.h1>
+                        {/* Tabs */}
+                        <div className="flex justify-center gap-8 mb-6">
+                            <button
+                                onClick={() => setActiveTab('buy')}
+                                className={`relative pb-2 text-lg font-medium transition-colors ${activeTab === 'buy' ? 'text-[#C4302B]' : 'text-gray-600 hover:text-gray-800'
+                                    }`}
+                            >
+                                Buy
+                                {activeTab === 'buy' && (
+                                    <motion.div
+                                        layoutId="activeTab"
+                                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#C4302B]"
+                                    />
+                                )}
+                            </button>
+                            <button
+                                onClick={() => setActiveTab('new-projects')}
+                                className={`relative pb-2 text-lg font-medium transition-colors ${activeTab === 'new-projects' ? 'text-[#C4302B]' : 'text-gray-600 hover:text-gray-800'
+                                    }`}
+                            >
+                                New Projects
+                                {activeTab === 'new-projects' && (
+                                    <motion.div
+                                        layoutId="activeTab"
+                                        className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#C4302B]"
+                                    />
+                                )}
+                            </button>
+                        </div>
 
-                        <motion.p
-                            className="text-xl md:text-2xl mb-10 text-blue-100/80 max-w-2xl"
-                            initial={{ opacity: 0, y: 40 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.6, delay: 0.2 }}
-                        >
-                            Discover the perfect property from our extensive collection of homes, apartments, and villas across India
-                        </motion.p>
-
-                        {/* Animated Search Bar */}
-                        <motion.form
-                            onSubmit={handleSearch}
-                            className="flex flex-col sm:flex-row gap-3 max-w-2xl"
-                            initial={{ opacity: 0, y: 40 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.6, delay: 0.3 }}
-                        >
-                            <div className="relative flex-1">
-                                <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
-                                <Input
-                                    type="text"
-                                    placeholder="Search by city, state, or property type..."
-                                    value={searchQuery}
-                                    onChange={(e) => setSearchQuery(e.target.value)}
-                                    className="h-14 pl-12 text-lg bg-white/95 backdrop-blur-sm text-gray-900 border-0 shadow-xl rounded-xl focus:ring-2 focus:ring-cyan-400"
-                                />
-                            </div>
-                            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                                <Button type="submit" size="lg" className="h-14 px-8 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white shadow-xl shadow-cyan-500/25 rounded-xl">
-                                    <Search className="h-5 w-5 mr-2" />
-                                    Search
-                                </Button>
-                            </motion.div>
-                        </motion.form>
-
-                        {/* Quick Stats in Hero */}
+                        {/* Search Bar Container */}
                         <motion.div
-                            className="flex flex-wrap gap-8 mt-12 pt-8 border-t border-white/10"
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{ duration: 0.6, delay: 0.5 }}
+                            className="bg-white rounded-2xl md:rounded-full shadow-lg border border-gray-200 p-2 flex flex-col md:flex-row items-stretch md:items-center gap-2 overflow-visible"
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.5, delay: 0.1 }}
                         >
-                            {[
-                                { value: '10K+', label: 'Properties' },
-                                { value: '5K+', label: 'Customers' },
-                                { value: '50+', label: 'Cities' },
-                            ].map((stat, i) => (
-                                <div key={i} className="text-center">
-                                    <p className="text-3xl font-bold text-white">{stat.value}</p>
-                                    <p className="text-blue-200/70 text-sm">{stat.label}</p>
+                            {/* Location Input */}
+                            <div className="relative flex-1 w-full" ref={locationRef}>
+                                <div
+                                    className="flex items-center gap-2 px-4 py-3 cursor-text rounded-xl md:rounded-full"
+                                    onClick={() => setShowLocationDropdown(true)}
+                                >
+                                    <MapPin className="h-5 w-5 text-[#C4302B] flex-shrink-0" />
+                                    <div className="flex items-center gap-2 flex-wrap flex-1">
+                                        {selectedLocations.map((loc, i) => (
+                                            <span
+                                                key={i}
+                                                className="inline-flex items-center gap-1 bg-red-50 text-gray-700 px-3 py-1 rounded-full text-sm"
+                                            >
+                                                {loc}
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); handleRemoveLocation(loc); }}
+                                                    className="hover:text-[#C4302B]"
+                                                >
+                                                    <X className="h-3.5 w-3.5" />
+                                                </button>
+                                            </span>
+                                        ))}
+                                        <input
+                                            type="text"
+                                            value={locationInput}
+                                            onChange={(e) => setLocationInput(e.target.value)}
+                                            onFocus={() => setShowLocationDropdown(true)}
+                                            placeholder={selectedLocations.length === 0 ? "Add more..." : "Add more..."}
+                                            className="flex-1 min-w-[100px] outline-none text-gray-700 placeholder-gray-400"
+                                        />
+                                    </div>
                                 </div>
-                            ))}
+
+                                {/* Location Dropdown */}
+                                {showLocationDropdown && (
+                                    <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-2xl border border-gray-100 py-3 z-[9999]">
+                                        {recentSearches.length > 0 && (
+                                            <div className="px-4 pb-3 border-b">
+                                                <p className="text-sm font-semibold text-gray-800 mb-2">Recent Searches</p>
+                                                {recentSearches.map((search, i) => (
+                                                    <button
+                                                        key={i}
+                                                        onClick={() => handleAddLocation(search.query.split(' in ')[1])}
+                                                        className="flex items-center gap-3 w-full text-left py-2 hover:bg-gray-50 rounded"
+                                                    >
+                                                        <Clock className="h-4 w-4 text-gray-400" />
+                                                        <div>
+                                                            <p className="text-sm text-gray-700">{search.query}</p>
+                                                            <p className="text-xs text-gray-500">{search.type}</p>
+                                                        </div>
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        )}
+                                        <div className="px-4 pt-3">
+                                            <p className="text-sm font-semibold text-gray-800 mb-2">Popular Cities</p>
+                                            <div className="flex flex-wrap gap-2">
+                                                {TOP_CITIES.map((city, i) => (
+                                                    <button
+                                                        key={i}
+                                                        onClick={() => handleAddLocation(city.name)}
+                                                        className={`px-3 py-1.5 rounded-full text-sm border transition-colors ${selectedLocations.includes(city.name)
+                                                            ? 'bg-red-50 border-[#C4302B] text-[#C4302B]'
+                                                            : 'border-gray-200 text-gray-600 hover:border-[#C4302B] hover:text-[#C4302B]'
+                                                            }`}
+                                                    >
+                                                        {city.name}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div className="px-4 pt-4 border-t">
+                                            <p className="text-sm font-semibold text-gray-800 mb-2">All Cities</p>
+                                            <div className="max-h-56 overflow-y-auto">
+                                                <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+                                                    {citySuggestions.map((city) => (
+                                                        <button
+                                                            key={`${city.name}-${city.state}`}
+                                                            onClick={() => handleAddLocation(city.name)}
+                                                            className={`px-3 py-2 rounded-lg text-sm border transition-colors text-left ${selectedLocations.includes(city.name)
+                                                                ? 'bg-red-50 border-[#C4302B] text-[#C4302B]'
+                                                                : 'border-gray-200 text-gray-600 hover:border-[#C4302B] hover:text-[#C4302B]'
+                                                                }`}
+                                                        >
+                                                            {city.name}
+                                                        </button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Divider */}
+                            <div className="hidden md:block w-px h-10 bg-gray-200" />
+
+                            {/* Property Type Dropdown */}
+                            <div className="relative" ref={propertyTypeRef}>
+                                <button
+                                    onClick={() => setShowPropertyTypeDropdown(!showPropertyTypeDropdown)}
+                                    className="flex items-center gap-2 px-4 py-3 hover:bg-gray-50 rounded-xl md:rounded-full transition-colors w-full md:w-auto md:min-w-[160px] justify-between"
+                                >
+                                    <HomeIcon className="h-5 w-5 text-gray-500" />
+                                    <span className="text-gray-700">{getPropertyTypeLabel()}</span>
+                                    <ChevronDown className={`h-4 w-4 text-gray-400 ml-auto transition-transform ${showPropertyTypeDropdown ? 'rotate-180' : ''}`} />
+                                </button>
+
+                                {showPropertyTypeDropdown && (
+                                    <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-2xl border border-gray-100 py-4 px-4 z-[9999] w-full md:min-w-[280px] md:w-auto">
+                                        <div className="mb-4">
+                                            <p className="text-sm font-semibold text-gray-800 mb-3">Residential</p>
+                                            <div className="flex flex-wrap gap-2">
+                                                {propertyTypes.slice(0, 3).map((type, i) => (
+                                                    <button
+                                                        key={i}
+                                                        onClick={() => togglePropertyType(type.value)}
+                                                        className={`px-4 py-2 rounded-full text-sm border transition-colors ${selectedPropertyTypes.includes(type.value)
+                                                            ? 'bg-red-50 border-[#C4302B] text-[#C4302B]'
+                                                            : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                                                            }`}
+                                                    >
+                                                        {type.label}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div className="mb-4">
+                                            <p className="text-sm font-semibold text-gray-800 mb-3">BHK Type</p>
+                                            <div className="flex flex-wrap gap-2">
+                                                {bhkOptions.map((bhk, i) => (
+                                                    <button
+                                                        key={i}
+                                                        onClick={() => toggleBHK(bhk)}
+                                                        className={`px-4 py-2 rounded-full text-sm border transition-colors ${selectedBHK.includes(bhk)
+                                                            ? 'bg-red-50 border-[#C4302B] text-[#C4302B] font-medium'
+                                                            : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                                                            }`}
+                                                    >
+                                                        {bhk}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <p className="text-sm font-semibold text-gray-800 mb-3">Commercial</p>
+                                            <div className="flex flex-wrap gap-2">
+                                                {propertyTypes.slice(3).map((type, i) => (
+                                                    <button
+                                                        key={i}
+                                                        onClick={() => togglePropertyType(type.value)}
+                                                        className={`px-4 py-2 rounded-full text-sm border transition-colors ${selectedPropertyTypes.includes(type.value)
+                                                            ? 'bg-red-50 border-[#C4302B] text-[#C4302B]'
+                                                            : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                                                            }`}
+                                                    >
+                                                        {type.label}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Divider */}
+                            <div className="hidden md:block w-px h-10 bg-gray-200" />
+
+                            {/* Budget Dropdown */}
+                            <div className="relative" ref={budgetRef}>
+                                <button
+                                    onClick={() => setShowBudgetDropdown(!showBudgetDropdown)}
+                                    className="flex items-center gap-2 px-4 py-3 hover:bg-gray-50 rounded-xl md:rounded-full transition-colors w-full md:w-auto md:min-w-[140px] justify-between"
+                                >
+                                    <span className="text-[#C4302B] font-bold">₹</span>
+                                    <span className="text-gray-700">{getBudgetLabel()}</span>
+                                    <ChevronDown className={`h-4 w-4 text-gray-400 ml-auto transition-transform ${showBudgetDropdown ? 'rotate-180' : ''}`} />
+                                </button>
+
+                                {showBudgetDropdown && (
+                                    <div className="absolute top-full left-0 right-0 md:right-0 md:left-auto mt-2 bg-white rounded-lg shadow-2xl border border-gray-100 py-4 z-[9999] w-full md:min-w-[280px] md:w-auto">
+                                        <div className="flex border-b mb-3">
+                                            <button
+                                                onClick={() => setBudgetTab('min')}
+                                                className={`flex-1 py-2 text-sm font-medium border-b-2 transition-colors ${budgetTab === 'min'
+                                                    ? 'border-[#C4302B] text-[#C4302B]'
+                                                    : 'border-transparent text-gray-500'
+                                                    }`}
+                                            >
+                                                Min Price
+                                            </button>
+                                            <button
+                                                onClick={() => setBudgetTab('max')}
+                                                className={`flex-1 py-2 text-sm font-medium border-b-2 transition-colors ${budgetTab === 'max'
+                                                    ? 'border-[#C4302B] text-[#C4302B]'
+                                                    : 'border-transparent text-gray-500'
+                                                    }`}
+                                            >
+                                                Max Price
+                                            </button>
+                                        </div>
+                                        <div className="max-h-60 overflow-y-auto px-2">
+                                            {(budgetTab === 'min' ? budgetOptions.min : budgetOptions.max).map((option, i) => (
+                                                <button
+                                                    key={i}
+                                                    onClick={() => {
+                                                        if (budgetTab === 'min') {
+                                                            setMinBudget(option.value);
+                                                        } else {
+                                                            setMaxBudget(option.value);
+                                                        }
+                                                    }}
+                                                    className={`w-full text-left px-4 py-2.5 text-sm rounded hover:bg-gray-50 transition-colors ${(budgetTab === 'min' ? minBudget : maxBudget) === option.value
+                                                        ? 'bg-red-50 text-[#C4302B] font-medium'
+                                                        : 'text-gray-700'
+                                                        }`}
+                                                >
+                                                    {option.label}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Search Button */}
+                            <button
+                                onClick={handleSearch}
+                                className="bg-[#C4302B] hover:bg-[#A52521] text-white px-8 py-3 rounded-full font-semibold flex items-center gap-2 transition-colors shadow-lg shadow-red-500/20"
+                            >
+                                <Search className="h-5 w-5" />
+                                Search
+                            </button>
                         </motion.div>
                     </div>
-                </motion.div>
-
-                {/* Scroll Indicator */}
-                <motion.div
-                    className="absolute bottom-8 left-1/2 -translate-x-1/2"
-                    animate={{ y: [0, 10, 0] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                >
-                    <div className="w-6 h-10 border-2 border-white/30 rounded-full flex justify-center pt-2">
-                        <div className="w-1 h-2 bg-white/50 rounded-full" />
-                    </div>
-                </motion.div>
+                </div>
             </section>
 
-            {/* Features Section with Animated Counters */}
-            <section className="py-20 bg-white relative overflow-hidden">
-                <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyan-500 via-blue-500 to-violet-500" />
+            {/* City Header */}
+            <section className="py-6 bg-gradient-to-r from-gray-50 to-white border-b">
+                <div className="container mx-auto px-4">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h2 className="text-2xl md:text-3xl font-bold text-gray-800">
+                                Properties in <span className="text-[#C4302B]">{selectedCity}</span>
+                            </h2>
+                            <p className="text-gray-500 mt-1">Explore the best properties in your selected city</p>
+                        </div>
+                        <Link href={`/browse?city=${selectedCity}`}>
+                            <Button variant="outline" className="border-[#C4302B] text-[#C4302B] hover:bg-red-50">
+                                View All in {selectedCity}
+                                <ArrowRight className="ml-2 h-4 w-4" />
+                            </Button>
+                        </Link>
+                    </div>
+                </div>
+            </section>
+
+            {/* Featured Properties Carousel */}
+            <section className="py-12 bg-white">
+                <div className="container mx-auto px-4">
+                    <div className="flex items-center justify-between mb-8">
+                        <div>
+                            <span className="inline-flex items-center gap-2 bg-amber-50 text-amber-600 px-3 py-1 rounded-full text-xs font-medium mb-2">
+                                <Star className="h-3 w-3 fill-current" />
+                                Premium
+                            </span>
+                            <h3 className="text-2xl font-bold text-gray-800">Featured Properties</h3>
+                        </div>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => featuredSliderRef.current?.slickPrev()}
+                                className="p-2 rounded-full border border-gray-200 hover:border-[#C4302B] hover:text-[#C4302B] transition-colors"
+                            >
+                                <ChevronLeft className="h-5 w-5" />
+                            </button>
+                            <button
+                                onClick={() => featuredSliderRef.current?.slickNext()}
+                                className="p-2 rounded-full border border-gray-200 hover:border-[#C4302B] hover:text-[#C4302B] transition-colors"
+                            >
+                                <ChevronRight className="h-5 w-5" />
+                            </button>
+                        </div>
+                    </div>
+
+                    {cityLoading ? (
+                        <div className="flex justify-center py-12">
+                            <motion.div
+                                animate={{ rotate: 360 }}
+                                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                                className="w-10 h-10 border-4 border-[#C4302B] border-t-transparent rounded-full"
+                            />
+                        </div>
+                    ) : featuredProperties.length > 0 ? (
+                        <Slider ref={featuredSliderRef} {...sliderSettings}>
+                            {featuredProperties.map((property, idx) => (
+                                <div key={property._id} className="px-2">
+                                    <PropertyCard property={property} index={idx} />
+                                </div>
+                            ))}
+                        </Slider>
+                    ) : (
+                        <div className="text-center py-12 text-gray-500">
+                            <Building2 className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                            <p>No featured properties found in {selectedCity}</p>
+                        </div>
+                    )}
+                </div>
+            </section>
+
+            {/* Latest Properties in City Carousel */}
+            <section className="py-12 bg-gray-50">
+                <div className="container mx-auto px-4">
+                    <div className="flex items-center justify-between mb-8">
+                        <div>
+                            <span className="inline-flex items-center gap-2 bg-green-50 text-green-600 px-3 py-1 rounded-full text-xs font-medium mb-2">
+                                <Clock className="h-3 w-3" />
+                                Just Listed
+                            </span>
+                            <h3 className="text-2xl font-bold text-gray-800">Latest Properties</h3>
+                        </div>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => latestSliderRef.current?.slickPrev()}
+                                className="p-2 rounded-full border border-gray-200 hover:border-[#C4302B] hover:text-[#C4302B] transition-colors bg-white"
+                            >
+                                <ChevronLeft className="h-5 w-5" />
+                            </button>
+                            <button
+                                onClick={() => latestSliderRef.current?.slickNext()}
+                                className="p-2 rounded-full border border-gray-200 hover:border-[#C4302B] hover:text-[#C4302B] transition-colors bg-white"
+                            >
+                                <ChevronRight className="h-5 w-5" />
+                            </button>
+                        </div>
+                    </div>
+
+                    {cityLoading ? (
+                        <div className="flex justify-center py-12">
+                            <motion.div
+                                animate={{ rotate: 360 }}
+                                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                                className="w-10 h-10 border-4 border-[#C4302B] border-t-transparent rounded-full"
+                            />
+                        </div>
+                    ) : latestCityProperties.length > 0 ? (
+                        <Slider ref={latestSliderRef} {...sliderSettings}>
+                            {latestCityProperties.map((property, idx) => (
+                                <div key={property._id} className="px-2">
+                                    <PropertyCard property={property} index={idx} />
+                                </div>
+                            ))}
+                        </Slider>
+                    ) : (
+                        <div className="text-center py-12 text-gray-500">
+                            <Building2 className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                            <p>No properties found in {selectedCity}</p>
+                        </div>
+                    )}
+                </div>
+            </section>
+
+            {/* Top Projects Carousel */}
+            <section className="py-12 bg-white">
+                <div className="container mx-auto px-4">
+                    <div className="flex items-center justify-between mb-8">
+                        <div>
+                            <span className="inline-flex items-center gap-2 bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-xs font-medium mb-2">
+                                <TrendingUp className="h-3 w-3" />
+                                Trending
+                            </span>
+                            <h3 className="text-2xl font-bold text-gray-800">Top Projects</h3>
+                        </div>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={() => topProjectsSliderRef.current?.slickPrev()}
+                                className="p-2 rounded-full border border-gray-200 hover:border-[#C4302B] hover:text-[#C4302B] transition-colors"
+                            >
+                                <ChevronLeft className="h-5 w-5" />
+                            </button>
+                            <button
+                                onClick={() => topProjectsSliderRef.current?.slickNext()}
+                                className="p-2 rounded-full border border-gray-200 hover:border-[#C4302B] hover:text-[#C4302B] transition-colors"
+                            >
+                                <ChevronRight className="h-5 w-5" />
+                            </button>
+                        </div>
+                    </div>
+
+                    {cityLoading ? (
+                        <div className="flex justify-center py-12">
+                            <motion.div
+                                animate={{ rotate: 360 }}
+                                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                                className="w-10 h-10 border-4 border-[#C4302B] border-t-transparent rounded-full"
+                            />
+                        </div>
+                    ) : topProjects.length > 0 ? (
+                        <Slider ref={topProjectsSliderRef} {...sliderSettings}>
+                            {topProjects.map((property, idx) => (
+                                <div key={property._id} className="px-2">
+                                    <PropertyCard property={property} index={idx} />
+                                </div>
+                            ))}
+                        </Slider>
+                    ) : (
+                        <div className="text-center py-12 text-gray-500">
+                            <Building2 className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                            <p>No projects found in {selectedCity}</p>
+                        </div>
+                    )}
+                </div>
+            </section>
+
+            {/* Stats Section */}
+            <section className="py-16 bg-gray-50">
                 <div className="container mx-auto px-4">
                     <motion.div
                         className="grid grid-cols-2 md:grid-cols-4 gap-6"
@@ -291,7 +801,7 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
                                     whileHover={{ y: -5, scale: 1.02 }}
                                     className="group"
                                 >
-                                    <Card className="text-center border-0 shadow-lg hover:shadow-xl transition-all bg-gradient-to-br from-white to-slate-50 overflow-hidden relative">
+                                    <Card className="text-center border-0 shadow-lg hover:shadow-xl transition-all bg-white overflow-hidden relative">
                                         <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-5 transition-opacity`} />
                                         <CardContent className="pt-8 pb-6 relative">
                                             <motion.div
@@ -301,10 +811,10 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
                                             >
                                                 <Icon className="h-8 w-8 text-white" />
                                             </motion.div>
-                                            <h3 className="text-3xl font-bold mb-2 bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+                                            <h3 className="text-3xl font-bold mb-2 text-gray-800">
                                                 {feature.title}
                                             </h3>
-                                            <p className="text-muted-foreground">{feature.description}</p>
+                                            <p className="text-gray-500">{feature.description}</p>
                                         </CardContent>
                                     </Card>
                                 </motion.div>
@@ -314,94 +824,24 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
                 </div>
             </section>
 
-            {/* Latest Properties */}
-            <section className="py-20 bg-slate-50 relative">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_50%,rgba(59,130,246,0.05),transparent_50%)]" />
-                <div className="container mx-auto px-4 relative">
-                    <motion.div
-                        className="text-center mb-14"
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ duration: 0.5 }}
-                    >
-                        <motion.span
-                            className="inline-flex items-center gap-2 bg-primary/10 text-primary px-4 py-1.5 rounded-full text-sm font-medium mb-4"
-                            whileHover={{ scale: 1.05 }}
-                        >
-                            <HomeIcon className="h-4 w-4" />
-                            Featured Listings
-                        </motion.span>
-                        <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
-                            Latest Properties
-                        </h2>
-                        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                            Explore our newest listings and find your perfect home
-                        </p>
-                    </motion.div>
-
-                    {loading && !displayedProperties.length ? (
-                        <div className="flex justify-center py-12">
-                            <motion.div
-                                animate={{ rotate: 360 }}
-                                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                                className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full"
-                            />
-                        </div>
-                    ) : (
-                        <motion.div
-                            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-                            variants={staggerContainer}
-                            initial="hidden"
-                            whileInView="visible"
-                            viewport={{ once: true, margin: "-50px" }}
-                        >
-                            {displayedProperties.map((property, idx) => (
-                                <PropertyCard key={property._id} property={property} index={idx} />
-                            ))}
-                        </motion.div>
-                    )}
-
-                    <motion.div
-                        className="text-center mt-14"
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                    >
-                        <Link href="/browse">
-                            <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                                <Button size="lg" className="px-10 h-14 text-lg bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90 shadow-xl shadow-primary/25 rounded-xl">
-                                    View All Properties
-                                    <ArrowRight className="ml-2 h-5 w-5" />
-                                </Button>
-                            </motion.div>
-                        </Link>
-                    </motion.div>
-                </div>
-            </section>
-
             {/* Top Cities */}
             {topCities.length > 0 && (
-                <section className="py-20 bg-white relative overflow-hidden">
-                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_70%_30%,rgba(139,92,246,0.05),transparent_50%)]" />
-                    <div className="container mx-auto px-4 relative">
+                <section className="py-16 bg-gray-50">
+                    <div className="container mx-auto px-4">
                         <motion.div
-                            className="text-center mb-14"
+                            className="text-center mb-12"
                             initial={{ opacity: 0, y: 20 }}
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                         >
-                            <motion.span
-                                className="inline-flex items-center gap-2 bg-violet-500/10 text-violet-600 px-4 py-1.5 rounded-full text-sm font-medium mb-4"
-                                whileHover={{ scale: 1.05 }}
-                            >
+                            <span className="inline-flex items-center gap-2 bg-orange-50 text-orange-600 px-4 py-1.5 rounded-full text-sm font-medium mb-4">
                                 <MapPin className="h-4 w-4" />
                                 Popular Locations
-                            </motion.span>
-                            <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+                            </span>
+                            <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-800">
                                 Explore Top Cities
                             </h2>
-                            <p className="text-lg text-muted-foreground">
+                            <p className="text-lg text-gray-500">
                                 Find properties in the most popular locations
                             </p>
                         </motion.div>
@@ -415,15 +855,23 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
                         >
                             {topCities.map((city, index) => {
                                 const gradients = [
-                                    'from-cyan-500 to-blue-500',
-                                    'from-violet-500 to-purple-500',
+                                    'from-red-500 to-rose-500',
+                                    'from-orange-500 to-amber-500',
                                     'from-pink-500 to-rose-500',
                                     'from-amber-500 to-orange-500',
                                     'from-emerald-500 to-teal-500',
                                 ];
                                 return (
                                     <motion.div key={index} variants={scaleIn}>
-                                        <Link href={`/browse?city=${city.city}`}>
+                                        <Link
+                                            href={`/browse?city=${city.city}`}
+                                            onClick={() => {
+                                                dispatch(setSelectedCity(city.city));
+                                                if (typeof window !== 'undefined') {
+                                                    localStorage.setItem('selectedCity', city.city);
+                                                }
+                                            }}
+                                        >
                                             <motion.div
                                                 whileHover={{ y: -8, scale: 1.02 }}
                                                 whileTap={{ scale: 0.98 }}
@@ -456,35 +904,66 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
             )}
 
             {/* Testimonials Section */}
-            <section className="py-20 bg-gradient-to-b from-slate-50 to-white overflow-hidden">
-                <div className="container mx-auto px-4 mb-12">
+            <section className="py-16 bg-white">
+                <div className="container mx-auto px-4">
                     <motion.div
-                        className="text-center"
+                        className="text-center mb-12"
                         initial={{ opacity: 0, y: 20 }}
                         whileInView={{ opacity: 1, y: 0 }}
                         viewport={{ once: true }}
                     >
-                        <motion.span
-                            className="inline-flex items-center gap-2 bg-amber-500/10 text-amber-600 px-4 py-1.5 rounded-full text-sm font-medium mb-4"
-                            whileHover={{ scale: 1.05 }}
-                        >
+                        <span className="inline-flex items-center gap-2 bg-amber-50 text-amber-600 px-4 py-1.5 rounded-full text-sm font-medium mb-4">
                             <Star className="h-4 w-4 fill-current" />
                             Testimonials
-                        </motion.span>
-                        <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
+                        </span>
+                        <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-800">
                             What Our Clients Say
                         </h2>
-                        <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                        <p className="text-lg text-gray-500 max-w-2xl mx-auto">
                             Hear from homeowners who found their perfect property with us
                         </p>
                     </motion.div>
+
+                    {/* Testimonial Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {[
+                            { name: "Sarah Johnson", role: "Homeowner", image: "https://randomuser.me/api/portraits/women/1.jpg", text: "Found my dream home in just 2 weeks! The team was incredibly helpful throughout the entire process.", rating: 5 },
+                            { name: "Michael Chen", role: "Property Investor", image: "https://randomuser.me/api/portraits/men/2.jpg", text: "Best real estate platform I've used. The property listings are accurate and the agents are professional.", rating: 5 },
+                            { name: "Emily Rodriguez", role: "First-time Buyer", image: "https://randomuser.me/api/portraits/women/3.jpg", text: "As a first-time buyer, I was nervous. This team made everything smooth and stress-free!", rating: 5 },
+                        ].map((t, i) => (
+                            <motion.div
+                                key={i}
+                                initial={{ opacity: 0, y: 20 }}
+                                whileInView={{ opacity: 1, y: 0 }}
+                                viewport={{ once: true }}
+                                transition={{ delay: i * 0.1 }}
+                            >
+                                <Card className="h-full bg-white border border-gray-100 shadow-lg hover:shadow-xl transition-shadow">
+                                    <CardContent className="p-6">
+                                        <div className="flex items-center gap-1 mb-4">
+                                            {[...Array(t.rating)].map((_, i) => (
+                                                <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
+                                            ))}
+                                        </div>
+                                        <p className="text-gray-600 mb-4">"{t.text}"</p>
+                                        <div className="flex items-center gap-3 pt-4 border-t">
+                                            <img src={t.image} alt={t.name} className="w-12 h-12 rounded-full object-cover" />
+                                            <div>
+                                                <p className="font-semibold text-gray-800">{t.name}</p>
+                                                <p className="text-sm text-gray-500">{t.role}</p>
+                                            </div>
+                                        </div>
+                                    </CardContent>
+                                </Card>
+                            </motion.div>
+                        ))}
+                    </div>
                 </div>
-                <TestimonialCarousel />
             </section>
 
             {/* CTA Section */}
-            <section className="py-24 relative overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-br from-blue-600 via-primary to-violet-600" />
+            <section className="py-20 relative overflow-hidden">
+                <div className="absolute inset-0 bg-gradient-to-br from-[#C4302B] via-[#A52521] to-[#8B1E1A]" />
                 <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yIDItNCAyLTRzMiAyIDIgNGMwIDAtMiAyLTIgMnMtMi0yLTItMnoiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-30" />
 
                 {/* Floating Elements */}
@@ -516,31 +995,24 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
                             <HomeIcon className="h-10 w-10 text-white" />
                         </motion.div>
 
-                        <h2 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 text-white">
-                            Ready to Find Your
-                            <span className="block bg-gradient-to-r from-cyan-300 to-amber-300 bg-clip-text text-transparent">
-                                Perfect Property?
-                            </span>
+                        <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 text-white">
+                            Ready to Find Your Perfect Property?
                         </h2>
-                        <p className="text-xl md:text-2xl mb-10 text-blue-100/90 max-w-2xl mx-auto">
+                        <p className="text-lg md:text-xl mb-10 text-white/80 max-w-2xl mx-auto">
                             Join thousands of happy homeowners who found their dream home with us
                         </p>
 
                         <div className="flex flex-col sm:flex-row gap-4 justify-center">
                             <Link href="/browse">
-                                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                                    <Button size="lg" className="h-14 px-10 text-lg bg-white text-primary hover:bg-white/90 shadow-xl rounded-xl">
-                                        Browse Properties
-                                        <ArrowRight className="ml-2 h-5 w-5" />
-                                    </Button>
-                                </motion.div>
+                                <Button size="lg" className="h-12 px-8 text-base bg-white text-[#C4302B] hover:bg-gray-100 shadow-xl rounded-lg font-semibold">
+                                    Browse Properties
+                                    <ArrowRight className="ml-2 h-5 w-5" />
+                                </Button>
                             </Link>
                             <Link href="/contact">
-                                <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                                    <Button size="lg" variant="outline" className="h-14 px-10 text-lg border-2 border-white/30 text-white bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-xl">
-                                        Contact Us
-                                    </Button>
-                                </motion.div>
+                                <Button size="lg" variant="outline" className="h-12 px-8 text-base border-2 border-white/40 text-white bg-white/10 hover:bg-white/20 rounded-lg font-semibold">
+                                    Contact Us
+                                </Button>
                             </Link>
                         </div>
                     </motion.div>
@@ -596,31 +1068,22 @@ function PropertyCard({ property, index = 0 }) {
             className="group"
         >
             <Card
-                className="border-0 shadow-lg hover:shadow-2xl transition-all cursor-pointer overflow-hidden bg-white"
+                className="border border-gray-100 shadow-lg hover:shadow-2xl transition-all cursor-pointer overflow-hidden bg-white"
                 onClick={() => router.push(`/property/${property._id}`)}
             >
                 <div className="relative h-52 overflow-hidden">
-                    <motion.img
+                    <img
                         src={property.photos[0]?.url || '/placeholder-property.jpg'}
                         alt={property.address.property_address}
-                        className="w-full h-full object-cover"
-                        whileHover={{ scale: 1.1 }}
-                        transition={{ duration: 0.4 }}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
                     <div className="absolute top-3 right-3">
-                        <motion.span
-                            className="bg-gradient-to-r from-primary to-blue-600 text-white px-4 py-1.5 rounded-full text-sm font-semibold shadow-lg"
-                            whileHover={{ scale: 1.05 }}
-                        >
+                        <span className="bg-[#C4302B] text-white px-3 py-1 rounded-full text-sm font-medium shadow-lg">
                             For {property.usage_type}
-                        </motion.span>
+                        </span>
                     </div>
-                    <motion.div
-                        className="absolute bottom-3 left-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity"
-                        initial={{ y: 10 }}
-                        whileHover={{ y: 0 }}
-                    >
+                    <div className="absolute bottom-3 left-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
                         <span className="bg-white/90 backdrop-blur-sm px-2 py-1 rounded text-xs font-medium flex items-center gap-1">
                             <Bed className="h-3 w-3" /> {property.nums_bedrooms}
                         </span>
@@ -630,26 +1093,24 @@ function PropertyCard({ property, index = 0 }) {
                         <span className="bg-white/90 backdrop-blur-sm px-2 py-1 rounded text-xs font-medium flex items-center gap-1">
                             <Maximize className="h-3 w-3" /> {property.square_feet}
                         </span>
-                    </motion.div>
+                    </div>
                 </div>
                 <CardContent className="p-5">
-                    <h3 className="font-bold text-xl mb-2 line-clamp-1 group-hover:text-primary transition-colors">
+                    <h3 className="font-bold text-lg mb-2 line-clamp-1 group-hover:text-[#C4302B] transition-colors">
                         {property.address.property_address}
                     </h3>
-                    <p className="text-muted-foreground mb-4 flex items-center gap-1.5">
-                        <MapPin className="h-4 w-4 text-primary" />
+                    <p className="text-gray-500 mb-4 flex items-center gap-1.5 text-sm">
+                        <MapPin className="h-4 w-4 text-[#C4302B]" />
                         {property.address.city}, {property.address.state}
                     </p>
                     <div className="flex items-center justify-between pt-4 border-t">
-                        <span className="text-2xl font-bold bg-gradient-to-r from-primary to-blue-600 bg-clip-text text-transparent">
+                        <span className="text-xl font-bold text-[#C4302B]">
                             {formatPrice(property.price)}
                         </span>
-                        <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                            <Button size="sm" className="rounded-lg shadow-md">
-                                View Details
-                                <ArrowRight className="ml-1 h-4 w-4" />
-                            </Button>
-                        </motion.div>
+                        <Button size="sm" className="rounded-lg bg-[#C4302B] hover:bg-[#A52521] text-white">
+                            View Details
+                            <ArrowRight className="ml-1 h-4 w-4" />
+                        </Button>
                     </div>
                 </CardContent>
             </Card>

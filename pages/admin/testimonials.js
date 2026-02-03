@@ -28,7 +28,7 @@ const Toast = ({ message, type, onClose }) => (
         initial={{ opacity: 0, y: 50, scale: 0.9 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 20, scale: 0.9 }}
-        className={`fixed bottom-4 right-4 z-50 px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 ${type === 'success' ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'
+        className={`fixed bottom-4 right-4 z-[99999] px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 ${type === 'success' ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'
             }`}
     >
         {type === 'success' ? <CheckCircle className="h-5 w-5" /> : <XCircle className="h-5 w-5" />}
@@ -39,6 +39,7 @@ const Toast = ({ message, type, onClose }) => (
 export default function AdminTestimonials() {
     const router = useRouter();
     const { user, isAuthenticated } = useSelector((state) => state.user);
+    const [mounted, setMounted] = useState(false);
     const [testimonials, setTestimonials] = useState([]);
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState({});
@@ -46,6 +47,11 @@ export default function AdminTestimonials() {
     const [filter, setFilter] = useState('all'); // all, approved, pending
 
     useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    useEffect(() => {
+        if (!mounted) return;
         if (!isAuthenticated) {
             router.push('/login');
         } else if (user?.role !== 'admin') {
@@ -53,7 +59,7 @@ export default function AdminTestimonials() {
         } else {
             fetchTestimonials();
         }
-    }, [isAuthenticated, user, router]);
+    }, [isAuthenticated, user, router, mounted]);
 
     const showToast = (message, type = 'success') => {
         setToast({ message, type });
@@ -204,8 +210,8 @@ export default function AdminTestimonials() {
                                 key={f}
                                 onClick={() => setFilter(f)}
                                 className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${filter === f
-                                        ? 'bg-primary text-white shadow-lg shadow-primary/25'
-                                        : 'bg-white text-gray-600 hover:bg-gray-100 border'
+                                    ? 'bg-primary text-white shadow-lg shadow-primary/25'
+                                    : 'bg-white text-gray-600 hover:bg-gray-100 border'
                                     }`}
                             >
                                 {f.charAt(0).toUpperCase() + f.slice(1)}

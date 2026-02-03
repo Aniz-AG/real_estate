@@ -32,7 +32,7 @@ const Toast = ({ message, type, onClose }) => (
         initial={{ opacity: 0, y: 50, scale: 0.9 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 20, scale: 0.9 }}
-        className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl backdrop-blur-sm ${type === 'success'
+        className={`fixed bottom-6 right-6 z-[99999] flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl backdrop-blur-sm ${type === 'success'
             ? 'bg-gradient-to-r from-green-500 to-emerald-500 text-white'
             : 'bg-gradient-to-r from-red-500 to-rose-500 text-white'
             }`}
@@ -66,6 +66,7 @@ const itemVariants = {
 export default function AdminContacts() {
     const router = useRouter();
     const { isAuthenticated, user } = useSelector((state) => state.user);
+    const [mounted, setMounted] = useState(false);
     const [contacts, setContacts] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
@@ -94,12 +95,17 @@ export default function AdminContacts() {
     }, [searchTerm]);
 
     useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    useEffect(() => {
+        if (!mounted) return;
         if (!isAuthenticated) {
             router.replace('/login');
         } else if (user?.role !== 'admin') {
             router.replace('/');
         }
-    }, [isAuthenticated, user, router]);
+    }, [isAuthenticated, user, router, mounted]);
 
     useEffect(() => {
         if (isAuthenticated && user?.role === 'admin') {
@@ -259,7 +265,7 @@ export default function AdminContacts() {
                                             className="pl-10 transition-all focus:scale-[1.01]"
                                         />
                                     </div>
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex flex-wrap items-center gap-2">
                                         {['all', 'unread', 'read'].map((f) => (
                                             <motion.div key={f} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                                                 <Button
@@ -335,7 +341,7 @@ export default function AdminContacts() {
                                             <div className="absolute top-0 left-0 w-1 h-full bg-gradient-to-b from-primary to-primary/50" />
                                         )}
                                         <CardContent className="p-6">
-                                            <div className="flex items-start justify-between mb-4">
+                                            <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-4">
                                                 <div className="flex-1">
                                                     <div className="flex items-center gap-3 mb-2">
                                                         <h3 className="font-semibold text-lg">{contact.subject || 'No Subject'}</h3>
@@ -371,7 +377,7 @@ export default function AdminContacts() {
                                                         </div>
                                                     </div>
                                                 </div>
-                                                <div className="flex items-center gap-2">
+                                                <div className="flex items-center gap-2 md:ml-2">
                                                     <motion.div whileHover={{ scale: 1.1 }} whileTap={{ scale: 0.9 }}>
                                                         <Button
                                                             variant="ghost"
@@ -419,7 +425,7 @@ export default function AdminContacts() {
                     {/* Pagination */}
                     {!loading && totalPages > 1 && (
                         <motion.div
-                            className="flex justify-center items-center gap-4 mt-8"
+                            className="flex flex-col sm:flex-row justify-center items-center gap-4 mt-8"
                             initial={{ opacity: 0, y: 20 }}
                             animate={{ opacity: 1, y: 0 }}
                         >
@@ -427,19 +433,19 @@ export default function AdminContacts() {
                                 variant="outline"
                                 onClick={() => setPage(p => Math.max(1, p - 1))}
                                 disabled={page === 1}
-                                className="gap-2"
+                                className="gap-2 w-full sm:w-auto"
                             >
                                 <ChevronLeft className="h-4 w-4" />
                                 Previous
                             </Button>
-                            <span className="text-sm text-muted-foreground">
+                            <span className="text-sm text-muted-foreground text-center">
                                 Page {page} of {totalPages} ({total} messages)
                             </span>
                             <Button
                                 variant="outline"
                                 onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                                 disabled={page === totalPages}
-                                className="gap-2"
+                                className="gap-2 w-full sm:w-auto"
                             >
                                 Next
                                 <ChevronRight className="h-4 w-4" />

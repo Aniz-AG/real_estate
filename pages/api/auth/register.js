@@ -41,7 +41,7 @@ const handleRegister = async (req, res) => {
         const photo = files.photo;
 
         // Validation
-        if (!username || !email || !phone || !city || !state || !photo) {
+        if (!username || !email || !phone || !state || !photo) {
             return res.status(400).json({
                 success: false,
                 message: 'All fields are required'
@@ -87,7 +87,7 @@ const handleRegister = async (req, res) => {
             username: username[0],
             email: email[0],
             phone: phone[0],
-            city: city[0],
+            city: city?.[0] || 'Jaipur',
             state: state[0],
             photo: uploadedPhoto,
         });

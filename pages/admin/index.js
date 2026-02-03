@@ -62,14 +62,21 @@ export default function AdminDashboard() {
     const { user, isAuthenticated } = useSelector((state) => state.user);
     const [stats, setStats] = useState({ properties: 0, users: 0, contacts: 0 });
     const [loading, setLoading] = useState(true);
+    const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    useEffect(() => {
+        if (!mounted) return;
+
         if (!isAuthenticated) {
-            router.replace('/login');
+            router.push('/login');
             return;
         }
         if (user?.role !== 'admin') {
-            router.replace('/');
+            router.push('/');
             return;
         }
 
@@ -93,9 +100,10 @@ export default function AdminDashboard() {
             }
         };
         fetchStats();
-    }, [isAuthenticated, user, router]);
+    }, [isAuthenticated, user, router, mounted]);
 
-    if (!isAuthenticated || user?.role !== 'admin') {
+    // Show loading while checking auth
+    if (!mounted) {
         return (
             <Layout>
                 <div className="flex items-center justify-center min-h-[60vh]">
@@ -104,6 +112,18 @@ export default function AdminDashboard() {
                         transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
                         className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full"
                     />
+                </div>
+            </Layout>
+        );
+    }
+
+    // Redirect non-admins (useEffect handles this, but show loading while redirecting)
+    if (!isAuthenticated || user?.role !== 'admin') {
+        return (
+            <Layout>
+                <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+                    <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                    <p className="text-gray-600">Checking authorization...</p>
                 </div>
             </Layout>
         );
@@ -178,9 +198,9 @@ export default function AdminDashboard() {
                             <p className="text-muted-foreground mt-1">Welcome back, {user?.username || 'Admin'}</p>
                         </div>
                     </div>
-                    <Link href="/admin/properties/add">
+                    <Link href="/admin/properties/add" className="w-full sm:w-auto">
                         <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                            <Button className="gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary shadow-lg shadow-primary/25">
+                            <Button className="gap-2 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary shadow-lg shadow-primary/25 w-full sm:w-auto">
                                 <Plus className="h-4 w-4" />
                                 Add Property
                                 <Sparkles className="h-4 w-4" />

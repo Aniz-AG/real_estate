@@ -21,9 +21,9 @@ const Toast = ({ message, type, onClose }) => (
         initial={{ opacity: 0, y: 50, scale: 0.9 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 20, scale: 0.9 }}
-        className={`fixed bottom-4 right-4 z-50 flex items-center gap-3 px-5 py-3 rounded-xl shadow-2xl backdrop-blur-sm ${type === 'success'
-                ? 'bg-emerald-500/90 text-white'
-                : 'bg-red-500/90 text-white'
+        className={`fixed bottom-4 right-4 z-[99999] flex items-center gap-3 px-5 py-3 rounded-xl shadow-2xl backdrop-blur-sm ${type === 'success'
+            ? 'bg-emerald-500/90 text-white'
+            : 'bg-red-500/90 text-white'
             }`}
     >
         {type === 'success' ? <Check className="h-5 w-5" /> : <X className="h-5 w-5" />}
@@ -63,6 +63,7 @@ export default function ManageProperties() {
     const [total, setTotal] = useState(0);
     const [deletingId, setDeletingId] = useState(null);
     const [toast, setToast] = useState(null);
+    const [mounted, setMounted] = useState(false);
 
     const showToast = (message, type = 'success') => {
         setToast({ message, type });
@@ -70,21 +71,27 @@ export default function ManageProperties() {
     };
 
     useEffect(() => {
+        setMounted(true);
+    }, []);
+
+    useEffect(() => {
+        if (!mounted) return;
+
         if (!isAuthenticated) {
-            router.replace('/login');
+            router.push('/login');
             return;
         }
         if (user?.role !== 'admin') {
-            router.replace('/');
+            router.push('/');
             return;
         }
-    }, [isAuthenticated, user, router]);
+    }, [isAuthenticated, user, router, mounted]);
 
     useEffect(() => {
-        if (isAuthenticated && user?.role === 'admin') {
+        if (mounted && isAuthenticated && user?.role === 'admin') {
             fetchProperties();
         }
-    }, [page, isAuthenticated, user]);
+    }, [page, isAuthenticated, user, mounted]);
 
     const fetchProperties = async () => {
         setLoading(true);
@@ -179,8 +186,8 @@ export default function ManageProperties() {
                             </div>
                         </div>
 
-                        <Link href="/admin/properties/add">
-                            <Button className="bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90 rounded-xl shadow-lg shadow-primary/25">
+                        <Link href="/admin/properties/add" className="w-full md:w-auto">
+                            <Button className="bg-gradient-to-r from-primary to-blue-600 hover:from-primary/90 hover:to-blue-600/90 rounded-xl shadow-lg shadow-primary/25 w-full md:w-auto">
                                 <Plus className="h-5 w-5 mr-2" />
                                 Add Property
                             </Button>
@@ -195,7 +202,7 @@ export default function ManageProperties() {
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: 0.1 }}
                     >
-                        <div className="flex gap-3 max-w-xl">
+                        <div className="flex flex-col sm:flex-row gap-3 max-w-xl">
                             <div className="relative flex-1">
                                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                                 <Input
@@ -206,7 +213,7 @@ export default function ManageProperties() {
                                     className="pl-10 h-12 rounded-xl border-gray-200 focus:border-primary"
                                 />
                             </div>
-                            <Button type="submit" className="h-12 px-6 rounded-xl">
+                            <Button type="submit" className="h-12 px-6 rounded-xl w-full sm:w-auto">
                                 Search
                             </Button>
                         </div>
@@ -254,8 +261,8 @@ export default function ManageProperties() {
                                                 <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
                                                 <div className="absolute top-3 right-3 flex gap-2">
                                                     <span className={`px-3 py-1 rounded-full text-xs font-semibold ${property.usage_type === 'Sale'
-                                                            ? 'bg-emerald-500 text-white'
-                                                            : 'bg-blue-500 text-white'
+                                                        ? 'bg-emerald-500 text-white'
+                                                        : 'bg-blue-500 text-white'
                                                         }`}>
                                                         For {property.usage_type}
                                                     </span>
@@ -276,7 +283,7 @@ export default function ManageProperties() {
                                                     {property.address?.city}, {property.address?.state}
                                                 </p>
 
-                                                <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
+                                                <div className="flex flex-wrap items-center gap-4 text-sm text-gray-600 mb-4">
                                                     <span className="flex items-center gap-1">
                                                         <Bed className="h-4 w-4" />
                                                         {property.nums_bedrooms}
@@ -292,7 +299,7 @@ export default function ManageProperties() {
                                                 </div>
 
                                                 {/* Actions */}
-                                                <div className="flex gap-2 pt-3 border-t">
+                                                <div className="flex flex-col sm:flex-row gap-2 pt-3 border-t">
                                                     <Link href={`/property/${property._id}`} className="flex-1">
                                                         <Button variant="outline" size="sm" className="w-full rounded-lg">
                                                             <Eye className="h-4 w-4 mr-1" />
@@ -308,7 +315,7 @@ export default function ManageProperties() {
                                                     <Button
                                                         variant="outline"
                                                         size="sm"
-                                                        className="rounded-lg text-red-600 hover:bg-red-50 hover:text-red-700"
+                                                        className="rounded-lg text-red-600 hover:bg-red-50 hover:text-red-700 w-full sm:w-auto"
                                                         onClick={() => handleDelete(property._id)}
                                                         disabled={deletingId === property._id}
                                                     >
@@ -328,7 +335,7 @@ export default function ManageProperties() {
                             {/* Pagination */}
                             {totalPages > 1 && (
                                 <motion.div
-                                    className="flex justify-center items-center gap-4 mt-10"
+                                    className="flex flex-col sm:flex-row justify-center items-center gap-4 mt-10"
                                     initial={{ opacity: 0 }}
                                     animate={{ opacity: 1 }}
                                     transition={{ delay: 0.3 }}
@@ -337,19 +344,19 @@ export default function ManageProperties() {
                                         variant="outline"
                                         onClick={() => setPage(p => Math.max(1, p - 1))}
                                         disabled={page === 1}
-                                        className="rounded-xl"
+                                        className="rounded-xl w-full sm:w-auto"
                                     >
                                         <ChevronLeft className="h-5 w-5 mr-1" />
                                         Previous
                                     </Button>
-                                    <span className="text-muted-foreground">
+                                    <span className="text-muted-foreground text-center">
                                         Page {page} of {totalPages}
                                     </span>
                                     <Button
                                         variant="outline"
                                         onClick={() => setPage(p => Math.min(totalPages, p + 1))}
                                         disabled={page === totalPages}
-                                        className="rounded-xl"
+                                        className="rounded-xl w-full sm:w-auto"
                                     >
                                         Next
                                         <ChevronRight className="h-5 w-5 ml-1" />

@@ -3,6 +3,7 @@ import { Provider, useDispatch, useSelector } from 'react-redux';
 import { store } from '@/redux/store';
 import { Toaster } from 'react-hot-toast';
 import { getMyProfile } from '@/redux/slices/userSlice';
+import { setSelectedCity } from '@/redux/slices/propertySlice';
 import axios from 'axios';
 import '@/styles/globals.css';
 import 'slick-carousel/slick/slick.css';
@@ -15,6 +16,7 @@ axios.defaults.withCredentials = true;
 function AuthWrapper({ children }) {
     const dispatch = useDispatch();
     const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+    const { user } = useSelector((state) => state.user);
 
     useEffect(() => {
         // Check if user is already logged in via cookies
@@ -31,6 +33,20 @@ function AuthWrapper({ children }) {
 
         checkAuth();
     }, [dispatch]);
+
+    useEffect(() => {
+        if (isCheckingAuth) return;
+        if (typeof window === 'undefined') return;
+
+        const storedCity = localStorage.getItem('selectedCity');
+        const preferredCity = storedCity || user?.city || 'Jaipur';
+
+        dispatch(setSelectedCity(preferredCity));
+
+        if (!storedCity) {
+            localStorage.setItem('selectedCity', preferredCity);
+        }
+    }, [dispatch, isCheckingAuth, user]);
 
     // Show loading spinner while checking auth
     if (isCheckingAuth) {
@@ -54,7 +70,17 @@ function AppContent({ Component, pageProps }) {
     return (
         <AuthWrapper>
             <Component {...pageProps} />
-            <Toaster position="top-center" />
+            <Toaster
+                position="top-center"
+                containerStyle={{
+                    zIndex: 99999,
+                }}
+                toastOptions={{
+                    style: {
+                        zIndex: 99999,
+                    },
+                }}
+            />
         </AuthWrapper>
     );
 }

@@ -136,21 +136,21 @@ export default function PropertyDetails() {
                 canonical={canonical}
                 jsonLd={jsonLd}
             />
-            <div className="container mx-auto px-4 py-8">
+            <div className="container mx-auto px-4 py-6 sm:py-8">
                 {/* Image Gallery */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
-                    <div className="relative h-96 md:h-[500px] rounded-lg overflow-hidden">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6 sm:mb-8">
+                    <div className="relative h-64 sm:h-80 lg:h-[500px] rounded-lg overflow-hidden">
                         <img
                             src={property.photos[currentImageIndex]?.url || '/placeholder-property.jpg'}
                             alt="Property"
                             className="w-full h-full object-cover"
                         />
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="flex lg:grid lg:grid-cols-2 gap-3 overflow-x-auto lg:overflow-visible">
                         {property.photos.slice(1, 5).map((photo, index) => (
                             <div
                                 key={index}
-                                className="relative h-44 md:h-60 rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
+                                className="relative min-w-[140px] h-32 sm:h-40 lg:h-60 rounded-lg overflow-hidden cursor-pointer hover:opacity-80 transition-opacity"
                                 onClick={() => setCurrentImageIndex(index + 1)}
                             >
                                 <img src={photo.url} alt={`Property ${index + 2}`} className="w-full h-full object-cover" />
@@ -163,9 +163,9 @@ export default function PropertyDetails() {
                     {/* Main Content */}
                     <div className="lg:col-span-2 space-y-6">
                         <div>
-                            <div className="flex items-start justify-between mb-4">
+                            <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
                                 <div>
-                                    <h1 className="text-3xl font-bold mb-2">{property.address.property_address}</h1>
+                                    <h1 className="text-2xl sm:text-3xl font-bold mb-2">{property.address.property_address}</h1>
                                     <p className="text-lg text-muted-foreground flex items-center gap-2">
                                         <MapPin className="h-5 w-5" />
                                         {property.address.city}, {property.address.state} - {property.address.pincode}
@@ -175,13 +175,13 @@ export default function PropertyDetails() {
                                     variant={isLiked ? 'default' : 'outline'}
                                     size="icon"
                                     onClick={handleLike}
-                                    className="h-12 w-12"
+                                    className="h-11 w-11 sm:h-12 sm:w-12"
                                 >
                                     <Heart className={`h-6 w-6 ${isLiked ? 'fill-current' : ''}`} />
                                 </Button>
                             </div>
 
-                            <div className="flex items-center gap-4 mb-4">
+                            <div className="flex flex-wrap items-center gap-2 sm:gap-4 mb-4">
                                 <span className="bg-primary text-white px-4 py-2 rounded-full font-semibold capitalize">
                                     For {property.usage_type}
                                 </span>
@@ -193,11 +193,11 @@ export default function PropertyDetails() {
                                 </span>
                             </div>
 
-                            <div className="text-4xl font-bold text-primary mb-6">
+                            <div className="text-3xl sm:text-4xl font-bold text-primary mb-6">
                                 {formatPrice(property.price)}
                             </div>
 
-                            <div className="grid grid-cols-3 gap-4 mb-6">
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
                                 <Card>
                                     <CardContent className="p-4 text-center">
                                         <Bed className="h-8 w-8 mx-auto mb-2 text-primary" />
@@ -233,8 +233,8 @@ export default function PropertyDetails() {
                     </div>
 
                     {/* Agent Card */}
-                    <div className="lg:col-span-1">
-                        <Card className="sticky top-20">
+                    <div className="lg:col-span-1 mt-6 lg:mt-0">
+                        <Card className="lg:sticky lg:top-20">
                             <CardHeader>
                                 <CardTitle>Contact Agent</CardTitle>
                             </CardHeader>

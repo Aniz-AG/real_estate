@@ -139,7 +139,7 @@ const Toast = ({ message, type, onClose }) => (
         initial={{ opacity: 0, y: 50, scale: 0.9 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         exit={{ opacity: 0, y: 20, scale: 0.9 }}
-        className={`fixed bottom-4 right-4 z-50 px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 ${type === 'success' ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'
+        className={`fixed bottom-4 right-4 z-[99999] px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3 ${type === 'success' ? 'bg-emerald-500 text-white' : 'bg-red-500 text-white'
             }`}
     >
         <CheckCircle className="h-5 w-5" />

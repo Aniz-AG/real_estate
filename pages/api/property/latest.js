@@ -7,15 +7,25 @@ export default async function handler(req, res) {
 
     if (req.method === 'GET') {
         try {
-            const properties = await Property.find()
+            const { city, limit = 12 } = req.query;
+
+            // Build query filter
+            const filter = {};
+            if (city) {
+                // Case-insensitive city search
+                filter['address.city'] = { $regex: new RegExp(`^${city}$`, 'i') };
+            }
+
+            const properties = await Property.find(filter)
                 .sort({ createdAt: -1 })
-                .limit(5)
+                .limit(parseInt(limit))
                 .populate('uploaded_by', 'username email photo city state');
 
             return res.status(200).json({
                 success: true,
                 message: 'Latest properties fetched successfully',
                 properties,
+                city: city || 'all',
             });
         } catch (error) {
             console.error('Error fetching latest properties:', error);
