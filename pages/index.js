@@ -903,64 +903,6 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
                 </section>
             )}
 
-            {/* Testimonials Section */}
-            <section className="py-16 bg-white">
-                <div className="container mx-auto px-4">
-                    <motion.div
-                        className="text-center mb-12"
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                    >
-                        <span className="inline-flex items-center gap-2 bg-amber-50 text-amber-600 px-4 py-1.5 rounded-full text-sm font-medium mb-4">
-                            <Star className="h-4 w-4 fill-current" />
-                            Testimonials
-                        </span>
-                        <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-800">
-                            What Our Clients Say
-                        </h2>
-                        <p className="text-lg text-gray-500 max-w-2xl mx-auto">
-                            Hear from homeowners who found their perfect property with us
-                        </p>
-                    </motion.div>
-
-                    {/* Testimonial Cards */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {[
-                            { name: "Sarah Johnson", role: "Homeowner", image: "https://randomuser.me/api/portraits/women/1.jpg", text: "Found my dream home in just 2 weeks! The team was incredibly helpful throughout the entire process.", rating: 5 },
-                            { name: "Michael Chen", role: "Property Investor", image: "https://randomuser.me/api/portraits/men/2.jpg", text: "Best real estate platform I've used. The property listings are accurate and the agents are professional.", rating: 5 },
-                            { name: "Emily Rodriguez", role: "First-time Buyer", image: "https://randomuser.me/api/portraits/women/3.jpg", text: "As a first-time buyer, I was nervous. This team made everything smooth and stress-free!", rating: 5 },
-                        ].map((t, i) => (
-                            <motion.div
-                                key={i}
-                                initial={{ opacity: 0, y: 20 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ delay: i * 0.1 }}
-                            >
-                                <Card className="h-full bg-white border border-gray-100 shadow-lg hover:shadow-xl transition-shadow">
-                                    <CardContent className="p-6">
-                                        <div className="flex items-center gap-1 mb-4">
-                                            {[...Array(t.rating)].map((_, i) => (
-                                                <Star key={i} className="h-4 w-4 fill-yellow-400 text-yellow-400" />
-                                            ))}
-                                        </div>
-                                        <p className="text-gray-600 mb-4">"{t.text}"</p>
-                                        <div className="flex items-center gap-3 pt-4 border-t">
-                                            <img src={t.image} alt={t.name} className="w-12 h-12 rounded-full object-cover" />
-                                            <div>
-                                                <p className="font-semibold text-gray-800">{t.name}</p>
-                                                <p className="text-sm text-gray-500">{t.role}</p>
-                                            </div>
-                                        </div>
-                                    </CardContent>
-                                </Card>
-                            </motion.div>
-                        ))}
-                    </div>
-                </div>
-            </section>
-
             {/* CTA Section */}
             <section className="py-20 relative overflow-hidden">
                 <div className="absolute inset-0 bg-gradient-to-br from-[#C4302B] via-[#A52521] to-[#8B1E1A]" />

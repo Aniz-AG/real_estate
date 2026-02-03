@@ -684,21 +684,6 @@ export default function BrowseProperty() {
                                         </div>
                                     </FilterSection>
 
-                                    <FilterSection title="Posted Since" name="postedSince" hasActiveFilters={!!filters.postedSince}>
-                                        <div className="flex flex-wrap gap-2">
-                                            {FILTER_OPTIONS.postedSince.map(option => (
-                                                <ToggleChip key={option.value} label={option.label} selected={filters.postedSince === option.value} onClick={() => setFilters(prev => ({ ...prev, postedSince: option.value }))} />
-                                            ))}
-                                        </div>
-                                    </FilterSection>
-
-                                    <FilterSection title="Posted By" name="postedBy" hasActiveFilters={filters.postedBy.length > 0}>
-                                        <div className="flex flex-wrap gap-2">
-                                            {FILTER_OPTIONS.postedBy.map(option => (
-                                                <ToggleChip key={option.value} label={option.label} selected={filters.postedBy.includes(option.value)} onClick={() => toggleArrayFilter('postedBy', option.value)} />
-                                            ))}
-                                        </div>
-                                    </FilterSection>
 
                                     <FilterSection title="Ownership" name="ownership" hasActiveFilters={filters.ownership.length > 0}>
                                         <div className="flex flex-wrap gap-2">
