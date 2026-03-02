@@ -66,7 +66,7 @@ export const searchProperties = createAsyncThunk(
     async (searchParams, { rejectWithValue }) => {
         try {
             const { data } = await axios.post(`${API_URL}/search`, searchParams);
-            return data.properties;
+            return data;
         } catch (error) {
             return rejectWithValue(error.response?.data?.message || 'Search failed');
         }
@@ -95,6 +95,10 @@ const propertySlice = createSlice({
         currentProperty: null,
         loading: false,
         cityLoading: false,
+        total: 0,
+        page: 1,
+        perPage: 12,
+        hasMore: false,
         error: null,
     },
     reducers: {
@@ -137,7 +141,11 @@ const propertySlice = createSlice({
             })
             .addCase(searchProperties.fulfilled, (state, action) => {
                 state.loading = false;
-                state.properties = action.payload;
+                state.properties = action.payload.properties || [];
+                state.total = action.payload.count || 0;
+                state.page = action.payload.page || 1;
+                state.perPage = action.payload.perPage || 12;
+                state.hasMore = action.payload.hasMore || false;
             })
             .addCase(searchProperties.rejected, (state, action) => {
                 state.loading = false;
