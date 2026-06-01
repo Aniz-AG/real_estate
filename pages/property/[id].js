@@ -43,9 +43,11 @@ import {
 } from "lucide-react";
 import Loader from "@/components/Loader";
 import toast from "react-hot-toast";
+import { userExist } from "@/redux/slices/userSlice";
 
 export default function PropertyDetails() {
   const router = useRouter();
+  const dispatch = useDispatch();
   const { id } = router.query;
   const { user, isAuthenticated } = useSelector((state) => state.user);
   const [property, setProperty] = useState(null);
@@ -83,12 +85,25 @@ export default function PropertyDetails() {
       return;
     }
 
+    const nextLiked = !isLiked;
+    setIsLiked(nextLiked);
+    toast.success(nextLiked ? "Added to favorites" : "Removed from favorites");
+
+    if (user) {
+      const nextLikes = nextLiked
+        ? [...(user.likes || []), id]
+        : (user.likes || []).filter((likeId) => likeId !== id);
+      dispatch(userExist({ ...user, likes: nextLikes }));
+    }
+
     try {
       await axios.post(`/api/user/like/${id}/${user._id}`);
-      setIsLiked(!isLiked);
-      toast.success(isLiked ? "Removed from favorites" : "Added to favorites");
     } catch (error) {
-      toast.error("Something went wrong");
+      setIsLiked(!nextLiked);
+      if (user) {
+        dispatch(userExist({ ...user }));
+      }
+      toast.error("Could not update favorites. Try again.");
     }
   };
 
@@ -662,84 +677,86 @@ export default function PropertyDetails() {
 
           {/* Agent Card */}
           <div className="lg:col-span-1 mt-6 lg:mt-0">
-            <Card className="lg:sticky lg:top-20">
-              <CardHeader>
-                <CardTitle>Contact Agent</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center gap-4">
-                  <Avatar className="h-16 w-16">
-                    <AvatarImage src={property.uploaded_by?.photo?.url} />
-                    <AvatarFallback>
-                      {property.uploaded_by?.username?.charAt(0).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h3 className="font-bold text-lg">
-                      {property.uploaded_by?.username}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      Property Agent
-                    </p>
-                  </div>
-                </div>
-
-                <div className="space-y-3">
-                  {isAuthenticated ? (
-                    <>
-                      <div className="flex items-center gap-3">
-                        <Phone className="h-5 w-5 text-primary" />
-                        <span className="text-sm">
-                          {property.uploaded_by?.phone}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <Mail className="h-5 w-5 text-primary" />
-                        <span className="text-sm">
-                          {property.uploaded_by?.email}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <MapPin className="h-5 w-5 text-primary" />
-                        <span className="text-sm">
-                          {property.uploaded_by?.city},{" "}
-                          {property.uploaded_by?.state}
-                        </span>
-                      </div>
-                    </>
-                  ) : (
-                    <div className="text-sm text-muted-foreground">
-                      Login to view contact details.
+            {isAuthenticated ? (
+              <Card className="lg:sticky lg:top-20">
+                <CardHeader>
+                  <CardTitle>Contact Agent</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center gap-4">
+                    <Avatar className="h-16 w-16">
+                      <AvatarImage src={property.uploaded_by?.photo?.url} />
+                      <AvatarFallback>
+                        {property.uploaded_by?.username
+                          ?.charAt(0)
+                          .toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div>
+                      <h3 className="font-bold text-lg">
+                        {property.uploaded_by?.username}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        Property Agent
+                      </p>
                     </div>
-                  )}
-                </div>
+                  </div>
 
-                <div className="space-y-2 pt-4">
-                  {isAuthenticated ? (
-                    <>
-                      <Button className="w-full" size="lg">
-                        <Phone className="h-5 w-5 mr-2" />
-                        Call Agent
-                      </Button>
-                      <Button variant="outline" className="w-full" size="lg">
-                        <Mail className="h-5 w-5 mr-2" />
-                        Email Agent
-                      </Button>
-                    </>
-                  ) : (
-                    <Button
-                      className="w-full"
-                      size="lg"
-                      onClick={() =>
-                        router.push(`/login?redirect=/property/${id}`)
-                      }
-                    >
-                      Login to Contact
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <Phone className="h-5 w-5 text-primary" />
+                      <span className="text-sm">
+                        {property.uploaded_by?.phone}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <Mail className="h-5 w-5 text-primary" />
+                      <span className="text-sm">
+                        {property.uploaded_by?.email}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <MapPin className="h-5 w-5 text-primary" />
+                      <span className="text-sm">
+                        {property.uploaded_by?.city},{" "}
+                        {property.uploaded_by?.state}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2 pt-4">
+                    <Button className="w-full" size="lg">
+                      <Phone className="h-5 w-5 mr-2" />
+                      Call Agent
                     </Button>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+                    <Button variant="outline" className="w-full" size="lg">
+                      <Mail className="h-5 w-5 mr-2" />
+                      Email Agent
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ) : (
+              <Card className="lg:sticky lg:top-20">
+                <CardHeader>
+                  <CardTitle>Contact Agent</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="text-sm text-muted-foreground">
+                    Login to view agent details and contact options.
+                  </div>
+                  <Button
+                    className="w-full"
+                    size="lg"
+                    onClick={() =>
+                      router.push(`/login?redirect=/property/${id}`)
+                    }
+                  >
+                    Login to Contact
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </div>

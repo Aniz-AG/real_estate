@@ -1,7 +1,8 @@
 import { connectDB } from "@/lib/db";
 import { Property } from "@/models/propertyModel";
-import { User } from "@/models/userModel"; // Required for populate
-import { asyncHandler } from "@/lib/helpers";
+import { User } from "@/models/userModel";
+import { asyncHandler, verifyToken } from "@/lib/helpers";
+import * as cookie from "cookie";
 
 export default async function handler(req, res) {
   await connectDB();
@@ -47,6 +48,46 @@ const searchProperties = asyncHandler(async (req, res) => {
   } = req.body;
 
   const filter = {};
+  const landTypes = new Set([
+    "plot",
+    "land",
+    "commercial_land",
+    "agricultural_land",
+    "farm_house",
+  ]);
+  let expandedTypes = null;
+
+  const recordSearchActivity = async () => {
+    const cookies = cookie.parse(req.headers.cookie || "");
+    const token =
+      cookies.token || req.headers.authorization?.replace("Bearer ", "");
+    if (!token) return;
+    const decoded = verifyToken(token);
+    if (!decoded?.userId) return;
+
+    const entry = {
+      city: city || null,
+      property_type: property_type || null,
+      bhk_type: bhk_type || null,
+      min_price: minPrice ? Number(minPrice) : null,
+      max_price: maxPrice ? Number(maxPrice) : null,
+      usage_type: usage_type || null,
+      created_at: new Date(),
+    };
+
+    await User.updateOne(
+      { _id: decoded.userId },
+      {
+        $set: { last_seen: new Date(), last_search_at: new Date() },
+        $push: {
+          search_history: {
+            $each: [entry],
+            $slice: -30,
+          },
+        },
+      },
+    );
+  };
 
   // Location filters - Use exact case-insensitive match for city to avoid partial matches
   if (city) {
@@ -79,9 +120,19 @@ const searchProperties = asyncHandler(async (req, res) => {
   // Property type filter (can be comma-separated) with alias expansion
   if (property_type) {
     const aliasMap = {
-      flat: ["flat", "apartment", "multistorey_apartment"],
+      flat: [
+        "flat",
+        "apartment",
+        "multistorey_apartment",
+        "builder_floor",
+        "penthouse",
+        "studio_apartment",
+      ],
       house: ["house", "villa", "residential_house"],
-      plot_land: ["plot", "land", "commercial_land"],
+      plot: ["plot", "land"],
+      land: ["plot", "land"],
+      shop: ["shop", "showroom"],
+      plot_land: ["plot", "land"],
       commercial_office: ["office_space"],
       shops_showrooms: ["shop", "showroom"],
       other_commercial: [
@@ -103,6 +154,7 @@ const searchProperties = asyncHandler(async (req, res) => {
           expanded.add(type);
         }
       });
+      expandedTypes = expanded;
       filter.property_type = { $in: Array.from(expanded) };
     }
   }
@@ -111,7 +163,13 @@ const searchProperties = asyncHandler(async (req, res) => {
   if (bhk_type) {
     const bhks = bhk_type.split(",").filter(Boolean);
     if (bhks.length > 0) {
-      filter.bhk_type = { $in: bhks };
+      const expandedList = expandedTypes ? Array.from(expandedTypes) : [];
+      const isLandOnly =
+        expandedList.length > 0 &&
+        expandedList.every((value) => landTypes.has(value));
+      if (!isLandOnly) {
+        filter.bhk_type = { $in: bhks };
+      }
     }
   }
 
@@ -136,15 +194,27 @@ const searchProperties = asyncHandler(async (req, res) => {
 
   // Area range filter
   if (minArea || maxArea) {
-    filter.$or = filter.$or || [];
     const areaFilter = {};
     if (minArea) areaFilter.$gte = parseInt(minArea);
     if (maxArea) areaFilter.$lte = parseInt(maxArea);
-    filter.$or.push(
-      { covered_area: areaFilter },
-      { square_feet: areaFilter },
-      { carpet_area: areaFilter },
-    );
+    const expandedList = expandedTypes ? Array.from(expandedTypes) : [];
+    const hasExpandedTypes = expandedList.length > 0;
+    const hasLandType = expandedList.some((value) => landTypes.has(value));
+    const isLandOnly =
+      hasExpandedTypes && expandedList.every((value) => landTypes.has(value));
+    if (isLandOnly) {
+      filter.plot_area = areaFilter;
+    } else {
+      filter.$or = filter.$or || [];
+      filter.$or.push(
+        { covered_area: areaFilter },
+        { square_feet: areaFilter },
+        { carpet_area: areaFilter },
+      );
+      if (!hasExpandedTypes || hasLandType) {
+        filter.$or.push({ plot_area: areaFilter });
+      }
+    }
   }
 
   // Possession status filter (can be comma-separated)
@@ -253,6 +323,8 @@ const searchProperties = asyncHandler(async (req, res) => {
   const pageNumber = Math.max(parseInt(page || 1), 1);
   const perPage = Math.min(Math.max(parseInt(limit || 12), 1), 50);
   const skip = (pageNumber - 1) * perPage;
+
+  recordSearchActivity().catch(() => {});
 
   const results = await Property.find(filter)
     .populate("uploaded_by", "username email photo city state")

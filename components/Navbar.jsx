@@ -16,6 +16,7 @@ import {
   BookOpen,
   MapPin,
   Search,
+  Ruler,
 } from "lucide-react";
 import {
   setSelectedCity,
@@ -154,6 +155,7 @@ const Navbar = () => {
     { icon: MessageCircle, label: "Customer Support", href: "/contact" },
     { icon: Shield, label: "Safety Tips", href: "/help/safety" },
     { icon: BookOpen, label: "Terms & Conditions", href: "/terms" },
+    { icon: Ruler, label: "Area Converter", href: "/area-converter" },
   ];
 
   // Login Dropdown Menu Data
@@ -423,6 +425,15 @@ const Navbar = () => {
                   </div>
                 )}
               </div>
+
+              <Link
+                href="/insights"
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-1 px-4 py-2 text-white hover:bg-white/10 rounded transition-colors"
+              >
+                Real Estate Insights
+              </Link>
             </div>
 
             {/* Right Side Actions */}
@@ -513,10 +524,24 @@ const Navbar = () => {
                 Browse Properties
               </Link>
               <Link
+                href="/area-converter"
+                className="text-sm text-gray-700 hover:text-[#C4302B] transition-colors font-medium"
+              >
+                Area Converter
+              </Link>
+              <Link
                 href="/new-projects"
                 className="text-sm text-gray-700 hover:text-[#C4302B] transition-colors font-medium"
               >
                 New Projects
+              </Link>
+              <Link
+                href="/insights"
+                target="_blank"
+                rel="noreferrer"
+                className="text-sm text-gray-700 hover:text-[#C4302B] transition-colors font-medium"
+              >
+                Real Estate Insights
               </Link>
               <Link
                 href="/contact"
@@ -631,11 +656,27 @@ const Navbar = () => {
                   Browse Properties
                 </Link>
                 <Link
+                  href="/area-converter"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="block px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg font-medium"
+                >
+                  Area Converter
+                </Link>
+                <Link
                   href="/new-projects"
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="block px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg font-medium"
                 >
                   New Projects
+                </Link>
+                <Link
+                  href="/insights"
+                  target="_blank"
+                  rel="noreferrer"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="block px-4 py-3 text-gray-700 hover:bg-gray-50 rounded-lg font-medium"
+                >
+                  Real Estate Insights
                 </Link>
                 <Link
                   href="/contact"

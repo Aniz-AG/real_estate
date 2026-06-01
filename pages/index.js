@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/router";
 import Layout from "@/components/Layout";
 import SeoHead from "@/components/SeoHead";
+import ProjectCard from "@/components/ProjectCard";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,7 +21,6 @@ import {
   Bath,
   Maximize,
   Search,
-  TrendingUp,
   Star,
   ChevronRight,
   Home as HomeIcon,
@@ -29,6 +29,7 @@ import {
   X,
   Clock,
   ChevronLeft,
+  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -51,15 +52,71 @@ const scaleIn = {
 };
 
 // Property Types Data
-const propertyTypes = [
-  { label: "Flat", value: "flat", selected: false },
-  { label: "House/Villa", value: "house", selected: false },
-  { label: "Plot", value: "plot", selected: false },
-  { label: "Office Space", value: "office", selected: false },
-  { label: "Shop", value: "shop", selected: false },
-];
+const PROPERTY_TYPE_GROUPS = {
+  residential: [
+    { label: "Flat", value: "flat" },
+    { label: "House/Villa", value: "house" },
+    { label: "Plot", value: "plot" },
+  ],
+  commercial: [
+    { label: "Office Space", value: "office_space" },
+    { label: "Shop/Showroom", value: "shop" },
+    { label: "Commercial Land", value: "commercial_land" },
+  ],
+  other: [
+    { label: "Agricultural Land", value: "agricultural_land" },
+    { label: "Farm House", value: "farm_house" },
+  ],
+};
+
+const PROPERTY_TYPE_LOOKUP = Object.values(PROPERTY_TYPE_GROUPS)
+  .flat()
+  .reduce((acc, item) => {
+    acc[item.value] = item.label;
+    return acc;
+  }, {});
+
+const LAND_PROPERTY_TYPES = new Set([
+  "plot",
+  "land",
+  "commercial_land",
+  "agricultural_land",
+  "farm_house",
+]);
+
+const BHK_PROPERTY_TYPES = new Set([
+  "flat",
+  "apartment",
+  "multistorey_apartment",
+  "builder_floor",
+  "penthouse",
+  "studio_apartment",
+  "residential_house",
+  "villa",
+  "house",
+]);
 
 const bhkOptions = ["1 BHK", "2 BHK", "3 BHK", "4 BHK", "5 BHK", "5+ BHK"];
+
+const sizeUnits = [
+  { label: "Sqft", value: "sqft", factor: 1 },
+  { label: "Sqyd", value: "sqyd", factor: 9 },
+  { label: "Acre", value: "acre", factor: 43560 },
+];
+
+const sizeOptions = [
+  "",
+  "200",
+  "300",
+  "400",
+  "500",
+  "1000",
+  "1500",
+  "2000",
+  "3000",
+  "4000",
+  "5000",
+];
 
 // Budget Options
 const budgetOptions = {
@@ -116,6 +173,9 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
   const [showBudgetDropdown, setShowBudgetDropdown] = useState(false);
   const [selectedPropertyTypes, setSelectedPropertyTypes] = useState([]);
   const [selectedBHK, setSelectedBHK] = useState([]);
+  const [sizeUnit, setSizeUnit] = useState("sqft");
+  const [minSize, setMinSize] = useState("");
+  const [maxSize, setMaxSize] = useState("");
   const [minBudget, setMinBudget] = useState("");
   const [maxBudget, setMaxBudget] = useState("");
   const [budgetTab, setBudgetTab] = useState("min");
@@ -172,6 +232,27 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
     if (!selectedCity) return;
     setSelectedLocations((prev) => (prev.length > 0 ? prev : [selectedCity]));
   }, [selectedCity]);
+
+  const showBhkOptions = selectedPropertyTypes.some((type) =>
+    BHK_PROPERTY_TYPES.has(type),
+  );
+  const showSizeOptions = selectedPropertyTypes.some((type) =>
+    LAND_PROPERTY_TYPES.has(type),
+  );
+
+  useEffect(() => {
+    if (!showBhkOptions && selectedBHK.length > 0) {
+      setSelectedBHK([]);
+    }
+  }, [showBhkOptions, selectedBHK.length]);
+
+  useEffect(() => {
+    if (!showSizeOptions && (minSize || maxSize)) {
+      setMinSize("");
+      setMaxSize("");
+      setSizeUnit("sqft");
+    }
+  }, [showSizeOptions, minSize, maxSize]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -257,6 +338,19 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
     if (selectedBHK.length > 0) {
       params.set("bhk", selectedBHK.join(","));
     }
+    if (showSizeOptions) {
+      const unitFactor =
+        sizeUnits.find((unit) => unit.value === sizeUnit)?.factor || 1;
+      const normalizedMinArea = minSize
+        ? String(Math.round(Number(minSize) * unitFactor))
+        : "";
+      const normalizedMaxArea = maxSize
+        ? String(Math.round(Number(maxSize) * unitFactor))
+        : "";
+      if (normalizedMinArea) params.set("minArea", normalizedMinArea);
+      if (normalizedMaxArea) params.set("maxArea", normalizedMaxArea);
+      params.set("areaUnit", sizeUnit);
+    }
 
     const destination = activeTab === "buy" ? "/browse" : "/new-projects";
     router.push(`${destination}?${params.toString()}`);
@@ -265,12 +359,11 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
   const getPropertyTypeLabel = () => {
     if (selectedPropertyTypes.length === 0) return "Property Type";
     if (selectedPropertyTypes.length === 1) {
-      const type = propertyTypes.find(
-        (t) => t.value === selectedPropertyTypes[0],
-      );
-      return type?.label || "Property Type";
+      return PROPERTY_TYPE_LOOKUP[selectedPropertyTypes[0]] || "Property Type";
     }
-    return `${propertyTypes.find((t) => t.value === selectedPropertyTypes[0])?.label} +${selectedPropertyTypes.length - 1}`;
+    const firstLabel =
+      PROPERTY_TYPE_LOOKUP[selectedPropertyTypes[0]] || "Property Type";
+    return `${firstLabel} +${selectedPropertyTypes.length - 1}`;
   };
 
   const getBudgetLabel = () => {
@@ -550,7 +643,7 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
                         Residential
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        {propertyTypes.slice(0, 3).map((type, i) => (
+                        {PROPERTY_TYPE_GROUPS.residential.map((type, i) => (
                           <button
                             key={i}
                             onClick={() => togglePropertyType(type.value)}
@@ -565,32 +658,34 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
                         ))}
                       </div>
                     </div>
-                    <div className="mb-4">
-                      <p className="text-sm font-semibold text-gray-800 mb-3">
-                        BHK Type
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {bhkOptions.map((bhk, i) => (
-                          <button
-                            key={i}
-                            onClick={() => toggleBHK(bhk)}
-                            className={`px-4 py-2 rounded-full text-sm border transition-colors ${
-                              selectedBHK.includes(bhk)
-                                ? "bg-red-50 border-[#C4302B] text-[#C4302B] font-medium"
-                                : "border-gray-200 text-gray-600 hover:border-gray-300"
-                            }`}
-                          >
-                            {bhk}
-                          </button>
-                        ))}
+                    {showBhkOptions && (
+                      <div className="mb-4">
+                        <p className="text-sm font-semibold text-gray-800 mb-3">
+                          BHK Type
+                        </p>
+                        <div className="flex flex-wrap gap-2">
+                          {bhkOptions.map((bhk, i) => (
+                            <button
+                              key={i}
+                              onClick={() => toggleBHK(bhk)}
+                              className={`px-4 py-2 rounded-full text-sm border transition-colors ${
+                                selectedBHK.includes(bhk)
+                                  ? "bg-red-50 border-[#C4302B] text-[#C4302B] font-medium"
+                                  : "border-gray-200 text-gray-600 hover:border-gray-300"
+                              }`}
+                            >
+                              {bhk}
+                            </button>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    )}
                     <div>
                       <p className="text-sm font-semibold text-gray-800 mb-3">
                         Commercial
                       </p>
                       <div className="flex flex-wrap gap-2">
-                        {propertyTypes.slice(3).map((type, i) => (
+                        {PROPERTY_TYPE_GROUPS.commercial.map((type, i) => (
                           <button
                             key={i}
                             onClick={() => togglePropertyType(type.value)}
@@ -605,6 +700,71 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
                         ))}
                       </div>
                     </div>
+                    <div className="mt-4">
+                      <p className="text-sm font-semibold text-gray-800 mb-3">
+                        Other Property Types
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {PROPERTY_TYPE_GROUPS.other.map((type, i) => (
+                          <button
+                            key={i}
+                            onClick={() => togglePropertyType(type.value)}
+                            className={`px-4 py-2 rounded-full text-sm border transition-colors ${
+                              selectedPropertyTypes.includes(type.value)
+                                ? "bg-red-50 border-[#C4302B] text-[#C4302B]"
+                                : "border-gray-200 text-gray-600 hover:border-gray-300"
+                            }`}
+                          >
+                            {type.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    {showSizeOptions && (
+                      <div className="mt-4">
+                        <p className="text-sm font-semibold text-gray-800 mb-3">
+                          Size
+                        </p>
+                        <div className="space-y-2">
+                          <select
+                            value={sizeUnit}
+                            onChange={(e) => setSizeUnit(e.target.value)}
+                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                          >
+                            {sizeUnits.map((unit) => (
+                              <option key={unit.value} value={unit.value}>
+                                {unit.label}
+                              </option>
+                            ))}
+                          </select>
+                          <div className="flex items-center gap-2">
+                            <select
+                              value={minSize}
+                              onChange={(e) => setMinSize(e.target.value)}
+                              className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                            >
+                              {sizeOptions.map((value, i) => (
+                                <option key={`min-${value}-${i}`} value={value}>
+                                  {value ? `${value} ${sizeUnit}` : "Min"}
+                                </option>
+                              ))}
+                            </select>
+                            <span className="text-gray-400">to</span>
+                            <select
+                              value={maxSize}
+                              onChange={(e) => setMaxSize(e.target.value)}
+                              className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                            >
+                              {sizeOptions.map((value, i) => (
+                                <option key={`max-${value}-${i}`} value={value}>
+                                  {value ? `${value} ${sizeUnit}` : "Max"}
+                                </option>
+                              ))}
+                            </select>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
@@ -826,29 +986,33 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
 
       {/* Top Projects Carousel - Only show if there are top projects */}
       {(featuredLoading || topProjects.length > 0) && (
-        <section className="py-12 bg-white">
+        <section className="py-14 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-[#FFF1D0] via-[#FFFDF8] to-[#F8FAFC]">
           <div className="container mx-auto px-4">
             <div className="flex items-center justify-between mb-8">
               <div>
-                <span className="inline-flex items-center gap-2 bg-blue-50 text-blue-600 px-3 py-1 rounded-full text-xs font-medium mb-2">
-                  <TrendingUp className="h-3 w-3" />
-                  Trending
+                <span className="inline-flex items-center gap-2 rounded-full bg-white px-3 py-1 text-xs font-semibold text-amber-700 shadow-sm">
+                  <Sparkles className="h-3 w-3" />
+                  Elite Collection
                 </span>
-                <h3 className="text-2xl font-bold text-gray-800">
-                  Top Projects
+                <h3 className="text-2xl font-bold text-slate-900 mt-2 font-display">
+                  Elite Projects
                 </h3>
+                <p className="text-sm text-slate-500 mt-1">
+                  Signature launches handpicked for premium buyers in{" "}
+                  {selectedCity || "your city"}.
+                </p>
               </div>
               {topProjects.length > 0 && (
                 <div className="flex gap-2">
                   <button
                     onClick={() => topProjectsSliderRef.current?.slickPrev()}
-                    className="p-2 rounded-full border border-gray-200 hover:border-[#C4302B] hover:text-[#C4302B] transition-colors"
+                    className="p-2 rounded-full border border-amber-200 bg-white hover:border-[#C4302B] hover:text-[#C4302B] transition-colors"
                   >
                     <ChevronLeft className="h-5 w-5" />
                   </button>
                   <button
                     onClick={() => topProjectsSliderRef.current?.slickNext()}
-                    className="p-2 rounded-full border border-gray-200 hover:border-[#C4302B] hover:text-[#C4302B] transition-colors"
+                    className="p-2 rounded-full border border-amber-200 bg-white hover:border-[#C4302B] hover:text-[#C4302B] transition-colors"
                   >
                     <ChevronRight className="h-5 w-5" />
                   </button>
@@ -868,7 +1032,7 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
               <Slider ref={topProjectsSliderRef} {...sliderSettings}>
                 {topProjects.map((property, idx) => (
                   <div key={property._id} className="px-2">
-                    <PropertyCard property={property} index={idx} />
+                    <ProjectCard project={property} variant="tile" />
                   </div>
                 ))}
               </Slider>

@@ -33,6 +33,7 @@ export default async function handler(req, res) {
     // Fetch top projects
     const topProjects = await Property.find({
       ...baseQuery,
+      is_project: true,
       is_top_project: true,
     })
       .sort({ createdAt: -1 })
@@ -43,6 +44,7 @@ export default async function handler(req, res) {
     // Fetch premium properties
     const premiumProperties = await Property.find({
       ...baseQuery,
+      is_project: true,
       is_premium: true,
     })
       .sort({ createdAt: -1 })

@@ -1,198 +1,230 @@
+@import url("https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
-    :root {
-        --background: 0 0% 100%;
-        --foreground: 0 0% 10%;
-        --card: 0 0% 100%;
-        --card-foreground: 0 0% 10%;
-        --popover: 0 0% 100%;
-        --popover-foreground: 0 0% 10%;
-        --primary: 0 76% 51%;
-        --primary-foreground: 0 0% 100%;
-        --secondary: 0 0% 96%;
-        --secondary-foreground: 0 0% 20%;
-        --muted: 0 0% 93%;
-        --muted-foreground: 0 0% 45%;
-        --accent: 0 76% 51%;
-        --accent-foreground: 0 0% 100%;
-        --destructive: 0 84.2% 60.2%;
-        --destructive-foreground: 0 0% 100%;
-        --border: 0 0% 90%;
-        --input: 0 0% 95%;
-        --ring: 0 76% 51%;
-        --radius: 0.5rem;
-    }
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 0 0% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 0 0% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 10%;
+    --primary: 0 76% 51%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 96%;
+    --secondary-foreground: 0 0% 20%;
+    --muted: 0 0% 93%;
+    --muted-foreground: 0 0% 45%;
+    --accent: 0 76% 51%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 90%;
+    --input: 0 0% 95%;
+    --ring: 0 76% 51%;
+    --radius: 0.5rem;
+  }
 
-    .dark {
-        --background: 0 0% 8%;
-        --foreground: 0 0% 100%;
-        --card: 0 0% 12%;
-        --card-foreground: 0 0% 100%;
-        --popover: 0 0% 10%;
-        --popover-foreground: 0 0% 100%;
-        --primary: 0 76% 51%;
-        --primary-foreground: 0 0% 100%;
-        --secondary: 0 0% 20%;
-        --secondary-foreground: 0 0% 100%;
-        --muted: 0 0% 25%;
-        --muted-foreground: 0 0% 70%;
-        --accent: 0 76% 51%;
-        --accent-foreground: 0 0% 100%;
-        --destructive: 0 84.2% 60.2%;
-        --destructive-foreground: 0 0% 100%;
-        --border: 0 0% 20%;
-        --input: 0 0% 15%;
-        --ring: 0 76% 51%;
-    }
+  .dark {
+    --background: 0 0% 8%;
+    --foreground: 0 0% 100%;
+    --card: 0 0% 12%;
+    --card-foreground: 0 0% 100%;
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 100%;
+    --primary: 0 76% 51%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 0 0% 20%;
+    --secondary-foreground: 0 0% 100%;
+    --muted: 0 0% 25%;
+    --muted-foreground: 0 0% 70%;
+    --accent: 0 76% 51%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 0 0% 20%;
+    --input: 0 0% 15%;
+    --ring: 0 76% 51%;
+  }
 }
 
 @layer base {
-    * {
-        @apply border-border;
-        box-sizing: border-box;
-    }
+  * {
+    @apply border-border;
+    box-sizing: border-box;
+  }
 
-    html {
-        overflow-x: hidden;
-        width: 100%;
-    }
+  html {
+    overflow-x: hidden;
+    width: 100%;
+  }
 
-    body {
-        @apply bg-background text-foreground;
-        overflow-x: hidden;
-        width: 100%;
-        max-width: 100vw;
-        position: relative;
-    }
+  body {
+    @apply bg-background text-foreground;
+    font-family: "Manrope", sans-serif;
+    overflow-x: hidden;
+    width: 100%;
+    max-width: 100vw;
+    position: relative;
+  }
 
-    /* Fix container overflow */
-    .container {
-        max-width: 100%;
-        overflow-x: hidden;
-        padding-left: 1rem;
-        padding-right: 1rem;
-    }
+  /* Fix container overflow */
+  .container {
+    max-width: 100%;
+    overflow-x: hidden;
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
 
-    /* Prevent any element from causing horizontal scroll */
-    #__next {
-        overflow-x: hidden;
-        width: 100%;
-    }
+  /* Prevent any element from causing horizontal scroll */
+  #__next {
+    overflow-x: hidden;
+    width: 100%;
+  }
 }
 
 /* Custom styles for slick carousel */
 .slick-prev:before,
 .slick-next:before {
-    color: #C4302B;
+  color: #c4302b;
 }
 
 /* Aceternity-inspired aurora backdrops - Red Theme */
 .aurora-blob {
-    position: absolute;
-    width: 38rem;
-    height: 38rem;
-    border-radius: 9999px;
-    filter: blur(80px);
-    opacity: 0.35;
-    mix-blend-mode: screen;
-    animation: aurora-shift 22s linear infinite;
-    background: radial-gradient(circle at 30% 30%, rgba(196, 48, 43, 0.85), transparent 55%),
-        radial-gradient(circle at 70% 70%, rgba(220, 38, 38, 0.9), transparent 55%);
+  position: absolute;
+  width: 38rem;
+  height: 38rem;
+  border-radius: 9999px;
+  filter: blur(80px);
+  opacity: 0.35;
+  mix-blend-mode: screen;
+  animation: aurora-shift 22s linear infinite;
+  background:
+    radial-gradient(
+      circle at 30% 30%,
+      rgba(196, 48, 43, 0.85),
+      transparent 55%
+    ),
+    radial-gradient(circle at 70% 70%, rgba(220, 38, 38, 0.9), transparent 55%);
 }
 
 .aurora-1 {
-    top: -20%;
-    left: -10%;
-    animation-delay: 0s;
+  top: -20%;
+  left: -10%;
+  animation-delay: 0s;
 }
 
 .aurora-2 {
-    top: 10%;
-    right: -15%;
-    animation-delay: -5s;
-    background: radial-gradient(circle at 40% 40%, rgba(239, 68, 68, 0.9), transparent 55%),
-        radial-gradient(circle at 70% 70%, rgba(214, 88, 66, 0.8), transparent 55%);
+  top: 10%;
+  right: -15%;
+  animation-delay: -5s;
+  background:
+    radial-gradient(circle at 40% 40%, rgba(239, 68, 68, 0.9), transparent 55%),
+    radial-gradient(circle at 70% 70%, rgba(214, 88, 66, 0.8), transparent 55%);
 }
 
 .aurora-3 {
-    bottom: -10%;
-    left: 15%;
-    animation-delay: -10s;
-    background: radial-gradient(circle at 50% 50%, rgba(220, 38, 38, 0.9), transparent 55%),
-        radial-gradient(circle at 70% 30%, rgba(196, 48, 43, 0.7), transparent 55%);
+  bottom: -10%;
+  left: 15%;
+  animation-delay: -10s;
+  background:
+    radial-gradient(circle at 50% 50%, rgba(220, 38, 38, 0.9), transparent 55%),
+    radial-gradient(circle at 70% 30%, rgba(196, 48, 43, 0.7), transparent 55%);
 }
 
 .aurora-4 {
-    bottom: -25%;
-    right: 0;
-    animation-delay: -15s;
-    background: radial-gradient(circle at 50% 50%, rgba(239, 68, 68, 0.75), transparent 55%),
-        radial-gradient(circle at 20% 60%, rgba(214, 88, 66, 0.8), transparent 55%);
+  bottom: -25%;
+  right: 0;
+  animation-delay: -15s;
+  background:
+    radial-gradient(
+      circle at 50% 50%,
+      rgba(239, 68, 68, 0.75),
+      transparent 55%
+    ),
+    radial-gradient(circle at 20% 60%, rgba(214, 88, 66, 0.8), transparent 55%);
 }
 
 @keyframes aurora-shift {
-    0% {
-        transform: translate3d(0, 0, 0) scale(1);
-    }
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
 
-    50% {
-        transform: translate3d(8%, -6%, 0) scale(1.05) rotate(8deg);
-    }
+  50% {
+    transform: translate3d(8%, -6%, 0) scale(1.05) rotate(8deg);
+  }
 
-    100% {
-        transform: translate3d(-6%, 4%, 0) scale(1);
-    }
+  100% {
+    transform: translate3d(-6%, 4%, 0) scale(1);
+  }
 }
 
 /* Subtle grid/particles overlay for hero/auth backgrounds */
 .grid-overlay {
-    pointer-events: none;
-    position: absolute;
-    inset: 0;
-    background-image:
-        linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
-        radial-gradient(circle at 10% 20%, rgba(255, 255, 255, 0.07), transparent 25%),
-        radial-gradient(circle at 80% 30%, rgba(255, 255, 255, 0.05), transparent 20%),
-        radial-gradient(circle at 50% 80%, rgba(255, 255, 255, 0.04), transparent 18%);
-    background-size: 60px 60px, 60px 60px, 320px 320px, 260px 260px, 240px 240px;
-    mix-blend-mode: screen;
-    opacity: 0.18;
+  pointer-events: none;
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    radial-gradient(
+      circle at 10% 20%,
+      rgba(255, 255, 255, 0.07),
+      transparent 25%
+    ),
+    radial-gradient(
+      circle at 80% 30%,
+      rgba(255, 255, 255, 0.05),
+      transparent 20%
+    ),
+    radial-gradient(
+      circle at 50% 80%,
+      rgba(255, 255, 255, 0.04),
+      transparent 18%
+    );
+  background-size:
+    60px 60px,
+    60px 60px,
+    320px 320px,
+    260px 260px,
+    240px 240px;
+  mix-blend-mode: screen;
+  opacity: 0.18;
 }
 
 .animate-soft-up {
-    animation: soft-up 650ms ease forwards;
+  animation: soft-up 650ms ease forwards;
 }
 
 .animate-soft-in {
-    animation: soft-in 450ms ease forwards;
+  animation: soft-in 450ms ease forwards;
 }
 
 @keyframes soft-up {
-    from {
-        opacity: 0;
-        transform: translateY(14px) scale(0.985);
-        filter: blur(1px);
-    }
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.985);
+    filter: blur(1px);
+  }
 
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-        filter: blur(0);
-    }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    filter: blur(0);
+  }
 }
 
 @keyframes soft-in {
-    from {
-        opacity: 0;
-        transform: scale(0.98);
-    }
+  from {
+    opacity: 0;
+    transform: scale(0.98);
+  }
 
-    to {
-        opacity: 1;
-        transform: scale(1);
-    }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
 }

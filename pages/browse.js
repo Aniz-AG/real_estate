@@ -9,6 +9,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useRouter } from "next/router";
 import Layout from "@/components/Layout";
 import SeoHead from "@/components/SeoHead";
+import ProjectCard from "@/components/ProjectCard";
 import { Button } from "@/components/ui/button";
 import {
   searchProperties,
@@ -43,6 +44,8 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import toast from "react-hot-toast";
+import { userExist } from "@/redux/slices/userSlice";
 
 // Filter Options Data
 const FILTER_OPTIONS = {
@@ -202,13 +205,33 @@ const FILTER_OPTIONS = {
 const SEARCH_PROPERTY_TYPES = [
   { label: "Flat", value: "flat" },
   { label: "House/Villa", value: "house" },
-  { label: "Plot/Land", value: "plot_land" },
-  { label: "Commercial Office Space", value: "commercial_office" },
-  { label: "Shops / Showrooms", value: "shops_showrooms" },
+  { label: "Plot/Land", value: "plot" },
+  { label: "Commercial Office Space", value: "office_space" },
+  { label: "Shops / Showrooms", value: "shop" },
   { label: "Other Commercial", value: "other_commercial" },
   { label: "Agricultural Land", value: "agricultural_land" },
   { label: "Farm House", value: "farm_house" },
 ];
+
+const LAND_PROPERTY_TYPES = new Set([
+  "plot",
+  "land",
+  "commercial_land",
+  "agricultural_land",
+  "farm_house",
+]);
+
+const BHK_PROPERTY_TYPES = new Set([
+  "flat",
+  "apartment",
+  "multistorey_apartment",
+  "builder_floor",
+  "penthouse",
+  "studio_apartment",
+  "residential_house",
+  "villa",
+  "house",
+]);
 
 export default function BrowseProperty() {
   const router = useRouter();
@@ -216,7 +239,8 @@ export default function BrowseProperty() {
   const { properties, loading, selectedCity, hasMore } = useSelector(
     (state) => state.property,
   );
-  const { isAuthenticated } = useSelector((state) => state.user);
+  const { isAuthenticated, user } = useSelector((state) => state.user);
+  const [likedIds, setLikedIds] = useState(new Set());
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [moreFiltersOpen, setMoreFiltersOpen] = useState(false);
   const [viewMode, setViewMode] = useState("list");
@@ -280,6 +304,80 @@ export default function BrowseProperty() {
   const prevCitiesRef = useRef([]);
   const shouldSearchOnFilterChange = useRef(false);
   const prevQueryString = useRef("");
+  const selectedPropertyTypes = filters.propertyTypes;
+  const hasSelectedPropertyTypes = selectedPropertyTypes.length > 0;
+  const hasLandTypes = selectedPropertyTypes.some((type) =>
+    LAND_PROPERTY_TYPES.has(type),
+  );
+  const hasBhkTypes = selectedPropertyTypes.some((type) =>
+    BHK_PROPERTY_TYPES.has(type),
+  );
+  const hasOnlyLandTypes =
+    hasSelectedPropertyTypes &&
+    selectedPropertyTypes.every((type) => LAND_PROPERTY_TYPES.has(type));
+  const hasOnlyBuiltTypes =
+    hasSelectedPropertyTypes &&
+    selectedPropertyTypes.every((type) => !LAND_PROPERTY_TYPES.has(type));
+  const areaLabel = hasOnlyLandTypes
+    ? "Plot Area (sqft)"
+    : hasOnlyBuiltTypes
+      ? "Covered Area (sqft)"
+      : "Area (sqft)";
+  const shouldShowBhkFilters = hasSelectedPropertyTypes && hasBhkTypes;
+
+  useEffect(() => {
+    if (user?.likes?.length) {
+      setLikedIds(new Set(user.likes.map((id) => id.toString())));
+    } else {
+      setLikedIds(new Set());
+    }
+  }, [user?.likes]);
+
+  const handleLikeToggle = (event, propertyId) => {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (!isAuthenticated || !user?._id) {
+      toast.error("Please login to save properties");
+      router.push(`/login?redirect=/property/${propertyId}`);
+      return;
+    }
+
+    const wasLiked = likedIds.has(propertyId);
+    const nextLikedIds = new Set(likedIds);
+    if (wasLiked) {
+      nextLikedIds.delete(propertyId);
+    } else {
+      nextLikedIds.add(propertyId);
+    }
+    setLikedIds(nextLikedIds);
+
+    const nextLikes = wasLiked
+      ? (user.likes || []).filter((id) => id !== propertyId)
+      : [...(user.likes || []), propertyId];
+    dispatch(userExist({ ...user, likes: nextLikes }));
+
+    fetch(`/api/user/like/${propertyId}/${user._id}`, {
+      method: "POST",
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        if (!data?.success) {
+          throw new Error(data?.message || "Failed to toggle like");
+        }
+      })
+      .catch(() => {
+        const reverted = new Set(nextLikedIds);
+        if (wasLiked) {
+          reverted.add(propertyId);
+        } else {
+          reverted.delete(propertyId);
+        }
+        setLikedIds(reverted);
+        dispatch(userExist({ ...user, likes: user.likes || [] }));
+        toast.error("Could not update favorites. Try again.");
+      });
+  };
 
   const openMobileFilter = (mode) => {
     if (mode === "projects") {
@@ -316,6 +414,8 @@ export default function BrowseProperty() {
       bhkTypes: query.bhk ? query.bhk.split(",") : [],
       minPrice: query.minPrice || "",
       maxPrice: query.maxPrice || "",
+      minArea: query.minArea || "",
+      maxArea: query.maxArea || "",
       possessionStatus: query.possessionStatus
         ? query.possessionStatus.split(",")
         : [],
@@ -380,6 +480,12 @@ export default function BrowseProperty() {
   }, [filters.cities]);
 
   useEffect(() => {
+    if (!shouldShowBhkFilters && filters.bhkTypes.length > 0) {
+      setFilters((prev) => ({ ...prev, bhkTypes: [] }));
+    }
+  }, [shouldShowBhkFilters, filters.bhkTypes.length]);
+
+  useEffect(() => {
     const handleClickOutside = (event) => {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
         setOpenDropdown(null);
@@ -426,11 +532,12 @@ export default function BrowseProperty() {
   const visibleCount = visibleProperties.length;
 
   const handleSearch = async (nextPage = page) => {
+    const shouldApplyBhkFilter = shouldShowBhkFilters;
     const searchFilters = {
       city: effectiveCities.join(","),
       property_category: filters.propertyCategory,
       property_type: filters.propertyTypes.join(","),
-      bhk_type: filters.bhkTypes.join(","),
+      bhk_type: shouldApplyBhkFilter ? filters.bhkTypes.join(",") : "",
       minPrice: filters.minPrice,
       maxPrice: filters.maxPrice,
       minArea: filters.minArea,
@@ -580,6 +687,7 @@ export default function BrowseProperty() {
     const mainImage = property.photos?.[0]?.url || "/placeholder-property.jpg";
     const photoCount = property.photos?.length || 0;
     const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+    const isLiked = likedIds.has(property._id);
 
     const handleShare = (e) => {
       e.preventDefault();
@@ -727,8 +835,20 @@ export default function BrowseProperty() {
 
               <div className="text-left md:text-right md:ml-4">
                 <div className="flex items-center gap-2 mb-2">
-                  <button className="p-2 rounded-full hover:bg-gray-100">
-                    <Heart className="h-5 w-5 text-gray-400" />
+                  <button
+                    onClick={(event) => handleLikeToggle(event, property._id)}
+                    className={`p-2 rounded-full transition-colors ${
+                      isLiked
+                        ? "bg-red-50 text-primary"
+                        : "hover:bg-gray-100 text-gray-400"
+                    }`}
+                    aria-label={
+                      isLiked ? "Remove from favorites" : "Add to favorites"
+                    }
+                  >
+                    <Heart
+                      className={`h-5 w-5 ${isLiked ? "fill-current" : ""}`}
+                    />
                   </button>
                   <button
                     onClick={handleShare}
@@ -813,7 +933,7 @@ export default function BrowseProperty() {
       />
 
       {/* Top Search Bar */}
-      <div className="bg-primary sticky top-0 z-40 overflow-visible hidden md:block">
+      <div className="bg-primary sticky top-0 z-[80] overflow-visible hidden md:block relative">
         <div className="container mx-auto px-4 py-3">
           <div
             className="flex flex-col md:flex-row md:items-center gap-2 bg-white rounded-2xl md:rounded-full px-4 py-2 shadow-lg overflow-visible"
@@ -823,7 +943,7 @@ export default function BrowseProperty() {
               Buy <ChevronDown className="h-4 w-4" />
             </button>
 
-            <div className="relative w-full md:w-auto z-[60]">
+            <div className="relative w-full md:w-auto z-[1000]">
               <div
                 role="button"
                 tabIndex={0}
@@ -874,7 +994,7 @@ export default function BrowseProperty() {
                     initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 6 }}
-                    className="absolute z-[100] mt-2 w-full md:w-64 bg-white border border-gray-200 rounded-xl shadow-lg max-h-64 overflow-y-auto"
+                    className="absolute z-[9999] mt-2 w-full md:w-64 bg-white border border-gray-200 rounded-xl shadow-lg max-h-64 overflow-y-auto"
                   >
                     <div className="p-3 border-b border-gray-100">
                       <input
@@ -1187,8 +1307,8 @@ export default function BrowseProperty() {
         <div className="container mx-auto px-4 py-2">
           <div className="flex items-center gap-3 overflow-x-auto">
             <button
-              onClick={() => openMobileFilter("bhk")}
-              className="px-4 py-2 text-sm whitespace-nowrap border border-gray-200 rounded-full bg-white hover:bg-gray-100"
+              onClick={() => shouldShowBhkFilters && openMobileFilter("bhk")}
+              className={`px-4 py-2 text-sm whitespace-nowrap border border-gray-200 rounded-full bg-white ${shouldShowBhkFilters ? "hover:bg-gray-100" : "opacity-50 cursor-not-allowed"}`}
             >
               BHK
             </button>
@@ -1266,7 +1386,7 @@ export default function BrowseProperty() {
 
                 <div className="p-4 max-h-[calc(100vh-280px)] overflow-y-auto">
                   <FilterSection
-                    title="Covered Area"
+                    title={areaLabel}
                     name="coveredArea"
                     hasActiveFilters={filters.minArea || filters.maxArea}
                   >
@@ -1689,9 +1809,17 @@ export default function BrowseProperty() {
                         : "space-y-4"
                     }
                   >
-                    {visibleProperties.map((property) => (
-                      <PropertyCard key={property._id} property={property} />
-                    ))}
+                    {visibleProperties.map((property) =>
+                      activeTab === "projects" ? (
+                        <ProjectCard
+                          key={property._id}
+                          project={property}
+                          variant={viewMode === "grid" ? "tile" : "row"}
+                        />
+                      ) : (
+                        <PropertyCard key={property._id} property={property} />
+                      ),
+                    )}
                   </div>
                   <div className="flex items-center justify-between mt-6">
                     <div className="text-sm text-gray-500">Page {page}</div>
@@ -1725,8 +1853,8 @@ export default function BrowseProperty() {
       <div className="fixed bottom-0 left-0 right-0 bg-black text-white md:hidden z-40">
         <div className="flex items-center gap-4 overflow-x-auto px-3 py-2">
           <button
-            onClick={() => openMobileFilter("bhk")}
-            className="flex flex-col items-center text-xs min-w-[70px]"
+            onClick={() => shouldShowBhkFilters && openMobileFilter("bhk")}
+            className={`flex flex-col items-center text-xs min-w-[70px] ${shouldShowBhkFilters ? "" : "opacity-50 cursor-not-allowed"}`}
           >
             <Bed className="h-5 w-5" />
             BHK
@@ -2001,24 +2129,28 @@ export default function BrowseProperty() {
                     ))}
                   </div>
                 </FilterSection>
-                <div id="mobile-filter-bhk">
-                  <FilterSection
-                    title="BHK"
-                    name="bhk"
-                    hasActiveFilters={filters.bhkTypes.length > 0}
-                  >
-                    <div className="flex flex-wrap gap-2">
-                      {FILTER_OPTIONS.bhkOptions.map((option) => (
-                        <ToggleChip
-                          key={option}
-                          label={option}
-                          selected={filters.bhkTypes.includes(option)}
-                          onClick={() => toggleArrayFilter("bhkTypes", option)}
-                        />
-                      ))}
-                    </div>
-                  </FilterSection>
-                </div>
+                {shouldShowBhkFilters && (
+                  <div id="mobile-filter-bhk">
+                    <FilterSection
+                      title="BHK"
+                      name="bhk"
+                      hasActiveFilters={filters.bhkTypes.length > 0}
+                    >
+                      <div className="flex flex-wrap gap-2">
+                        {FILTER_OPTIONS.bhkOptions.map((option) => (
+                          <ToggleChip
+                            key={option}
+                            label={option}
+                            selected={filters.bhkTypes.includes(option)}
+                            onClick={() =>
+                              toggleArrayFilter("bhkTypes", option)
+                            }
+                          />
+                        ))}
+                      </div>
+                    </FilterSection>
+                  </div>
+                )}
                 <FilterSection
                   title="Posted By"
                   name="postedBy"
@@ -2038,7 +2170,7 @@ export default function BrowseProperty() {
                   </div>
                 </FilterSection>
                 <FilterSection
-                  title="Covered Area (sqft)"
+                  title={areaLabel}
                   name="coveredArea"
                   hasActiveFilters={filters.minArea || filters.maxArea}
                 >
@@ -2331,7 +2463,7 @@ export default function BrowseProperty() {
                     <div className="space-y-4">
                       <div>
                         <h3 className="font-medium text-gray-800 mb-3">
-                          Covered Area (sqft)
+                          {areaLabel}
                         </h3>
                         <div className="flex items-center gap-2">
                           <select
