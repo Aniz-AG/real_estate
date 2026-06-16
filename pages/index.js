@@ -185,6 +185,15 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
   ]);
   const [citySuggestions, setCitySuggestions] = useState(INDIA_CITIES);
 
+  // Expanded sections state for the property type dropdown
+  const [expandedSections, setExpandedSections] = useState({
+    residential: true,
+    bhk: true,
+    commercial: false,
+    other: false,
+    size: false,
+  });
+
   // Refs for click outside
   const locationRef = useRef(null);
   const propertyTypeRef = useRef(null);
@@ -321,6 +330,13 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
     } else {
       setSelectedBHK([...selectedBHK, bhk]);
     }
+  };
+
+  const toggleSection = (section) => {
+    setExpandedSections((prev) => ({
+      ...prev,
+      [section]: !prev[section],
+    }));
   };
 
   const handleSearch = () => {
@@ -638,131 +654,208 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
 
                 {showPropertyTypeDropdown && (
                   <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-2xl border border-gray-100 py-4 px-4 z-[9999] w-full md:min-w-[280px] md:w-auto">
+                    
+                    {/* Residential Dropdown */}
                     <div className="mb-4">
-                      <p className="text-sm font-semibold text-gray-800 mb-3">
-                        Residential
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {PROPERTY_TYPE_GROUPS.residential.map((type, i) => (
-                          <button
-                            key={i}
-                            onClick={() => togglePropertyType(type.value)}
-                            className={`px-4 py-2 rounded-full text-sm border transition-colors ${
-                              selectedPropertyTypes.includes(type.value)
-                                ? "bg-red-50 border-[#C4302B] text-[#C4302B]"
-                                : "border-gray-200 text-gray-600 hover:border-gray-300"
-                            }`}
-                          >
-                            {type.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    {showBhkOptions && (
-                      <div className="mb-4">
-                        <p className="text-sm font-semibold text-gray-800 mb-3">
-                          BHK Type
-                        </p>
-                        <div className="flex flex-wrap gap-2">
-                          {bhkOptions.map((bhk, i) => (
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          toggleSection("residential");
+                        }}
+                        className="flex items-center justify-between w-full mb-2 focus:outline-none"
+                      >
+                        <span className="text-sm font-semibold text-gray-800">Residential</span>
+                        <ChevronDown
+                          className={`h-4 w-4 text-gray-500 transition-transform ${
+                            expandedSections.residential ? "rotate-180" : ""
+                          }`}
+                        />
+                      </button>
+                      {expandedSections.residential && (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {PROPERTY_TYPE_GROUPS.residential.map((type, i) => (
                             <button
                               key={i}
-                              onClick={() => toggleBHK(bhk)}
+                              onClick={() => togglePropertyType(type.value)}
                               className={`px-4 py-2 rounded-full text-sm border transition-colors ${
-                                selectedBHK.includes(bhk)
-                                  ? "bg-red-50 border-[#C4302B] text-[#C4302B] font-medium"
+                                selectedPropertyTypes.includes(type.value)
+                                  ? "bg-red-50 border-[#C4302B] text-[#C4302B]"
                                   : "border-gray-200 text-gray-600 hover:border-gray-300"
                               }`}
                             >
-                              {bhk}
+                              {type.label}
                             </button>
                           ))}
                         </div>
+                      )}
+                    </div>
+
+                    {/* BHK Type Dropdown (Conditional) */}
+                    {showBhkOptions && (
+                      <div className="mb-4 border-t pt-3">
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            toggleSection("bhk");
+                          }}
+                          className="flex items-center justify-between w-full mb-2 focus:outline-none"
+                        >
+                          <span className="text-sm font-semibold text-gray-800">BHK Type</span>
+                          <ChevronDown
+                            className={`h-4 w-4 text-gray-500 transition-transform ${
+                              expandedSections.bhk ? "rotate-180" : ""
+                            }`}
+                          />
+                        </button>
+                        {expandedSections.bhk && (
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {bhkOptions.map((bhk, i) => (
+                              <button
+                                key={i}
+                                onClick={() => toggleBHK(bhk)}
+                                className={`px-4 py-2 rounded-full text-sm border transition-colors ${
+                                  selectedBHK.includes(bhk)
+                                    ? "bg-red-50 border-[#C4302B] text-[#C4302B] font-medium"
+                                    : "border-gray-200 text-gray-600 hover:border-gray-300"
+                                }`}
+                              >
+                                {bhk}
+                              </button>
+                            ))}
+                          </div>
+                        )}
                       </div>
                     )}
-                    <div>
-                      <p className="text-sm font-semibold text-gray-800 mb-3">
-                        Commercial
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {PROPERTY_TYPE_GROUPS.commercial.map((type, i) => (
-                          <button
-                            key={i}
-                            onClick={() => togglePropertyType(type.value)}
-                            className={`px-4 py-2 rounded-full text-sm border transition-colors ${
-                              selectedPropertyTypes.includes(type.value)
-                                ? "bg-red-50 border-[#C4302B] text-[#C4302B]"
-                                : "border-gray-200 text-gray-600 hover:border-gray-300"
-                            }`}
-                          >
-                            {type.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    <div className="mt-4">
-                      <p className="text-sm font-semibold text-gray-800 mb-3">
-                        Other Property Types
-                      </p>
-                      <div className="flex flex-wrap gap-2">
-                        {PROPERTY_TYPE_GROUPS.other.map((type, i) => (
-                          <button
-                            key={i}
-                            onClick={() => togglePropertyType(type.value)}
-                            className={`px-4 py-2 rounded-full text-sm border transition-colors ${
-                              selectedPropertyTypes.includes(type.value)
-                                ? "bg-red-50 border-[#C4302B] text-[#C4302B]"
-                                : "border-gray-200 text-gray-600 hover:border-gray-300"
-                            }`}
-                          >
-                            {type.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    {showSizeOptions && (
-                      <div className="mt-4">
-                        <p className="text-sm font-semibold text-gray-800 mb-3">
-                          Size
-                        </p>
-                        <div className="space-y-2">
-                          <select
-                            value={sizeUnit}
-                            onChange={(e) => setSizeUnit(e.target.value)}
-                            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"
-                          >
-                            {sizeUnits.map((unit) => (
-                              <option key={unit.value} value={unit.value}>
-                                {unit.label}
-                              </option>
-                            ))}
-                          </select>
-                          <div className="flex items-center gap-2">
-                            <select
-                              value={minSize}
-                              onChange={(e) => setMinSize(e.target.value)}
-                              className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm"
+
+                    {/* Commercial Dropdown */}
+                    <div className="mb-4 border-t pt-3">
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          toggleSection("commercial");
+                        }}
+                        className="flex items-center justify-between w-full mb-2 focus:outline-none"
+                      >
+                        <span className="text-sm font-semibold text-gray-800">Commercial</span>
+                        <ChevronDown
+                          className={`h-4 w-4 text-gray-500 transition-transform ${
+                            expandedSections.commercial ? "rotate-180" : ""
+                          }`}
+                        />
+                      </button>
+                      {expandedSections.commercial && (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {PROPERTY_TYPE_GROUPS.commercial.map((type, i) => (
+                            <button
+                              key={i}
+                              onClick={() => togglePropertyType(type.value)}
+                              className={`px-4 py-2 rounded-full text-sm border transition-colors ${
+                                selectedPropertyTypes.includes(type.value)
+                                  ? "bg-red-50 border-[#C4302B] text-[#C4302B]"
+                                  : "border-gray-200 text-gray-600 hover:border-gray-300"
+                              }`}
                             >
-                              {sizeOptions.map((value, i) => (
-                                <option key={`min-${value}-${i}`} value={value}>
-                                  {value ? `${value} ${sizeUnit}` : "Min"}
-                                </option>
-                              ))}
-                            </select>
-                            <span className="text-gray-400">to</span>
-                            <select
-                              value={maxSize}
-                              onChange={(e) => setMaxSize(e.target.value)}
-                              className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm"
-                            >
-                              {sizeOptions.map((value, i) => (
-                                <option key={`max-${value}-${i}`} value={value}>
-                                  {value ? `${value} ${sizeUnit}` : "Max"}
-                                </option>
-                              ))}
-                            </select>
-                          </div>
+                              {type.label}
+                            </button>
+                          ))}
                         </div>
+                      )}
+                    </div>
+
+                    {/* Other Property Types Dropdown */}
+                    <div className="mt-4 border-t pt-3">
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          toggleSection("other");
+                        }}
+                        className="flex items-center justify-between w-full mb-2 focus:outline-none"
+                      >
+                        <span className="text-sm font-semibold text-gray-800">
+                          Other Property Types
+                        </span>
+                        <ChevronDown
+                          className={`h-4 w-4 text-gray-500 transition-transform ${
+                            expandedSections.other ? "rotate-180" : ""
+                          }`}
+                        />
+                      </button>
+                      {expandedSections.other && (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {PROPERTY_TYPE_GROUPS.other.map((type, i) => (
+                            <button
+                              key={i}
+                              onClick={() => togglePropertyType(type.value)}
+                              className={`px-4 py-2 rounded-full text-sm border transition-colors ${
+                                selectedPropertyTypes.includes(type.value)
+                                  ? "bg-red-50 border-[#C4302B] text-[#C4302B]"
+                                  : "border-gray-200 text-gray-600 hover:border-gray-300"
+                              }`}
+                            >
+                              {type.label}
+                            </button>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Size Dropdown (Conditional) */}
+                    {showSizeOptions && (
+                      <div className="mt-4 border-t pt-3">
+                        <button
+                          onClick={(e) => {
+                            e.preventDefault();
+                            toggleSection("size");
+                          }}
+                          className="flex items-center justify-between w-full mb-2 focus:outline-none"
+                        >
+                          <span className="text-sm font-semibold text-gray-800">Size</span>
+                          <ChevronDown
+                            className={`h-4 w-4 text-gray-500 transition-transform ${
+                              expandedSections.size ? "rotate-180" : ""
+                            }`}
+                          />
+                        </button>
+                        {expandedSections.size && (
+                          <div className="space-y-2 mt-2">
+                            <select
+                              value={sizeUnit}
+                              onChange={(e) => setSizeUnit(e.target.value)}
+                              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                            >
+                              {sizeUnits.map((unit) => (
+                                <option key={unit.value} value={unit.value}>
+                                  {unit.label}
+                                </option>
+                              ))}
+                            </select>
+                            <div className="flex items-center gap-2">
+                              <select
+                                value={minSize}
+                                onChange={(e) => setMinSize(e.target.value)}
+                                className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                              >
+                                {sizeOptions.map((value, i) => (
+                                  <option key={`min-${value}-${i}`} value={value}>
+                                    {value ? `${value} ${sizeUnit}` : "Min"}
+                                  </option>
+                                ))}
+                              </select>
+                              <span className="text-gray-400">to</span>
+                              <select
+                                value={maxSize}
+                                onChange={(e) => setMaxSize(e.target.value)}
+                                className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm"
+                              >
+                                {sizeOptions.map((value, i) => (
+                                  <option key={`max-${value}-${i}`} value={value}>
+                                    {value ? `${value} ${sizeUnit}` : "Max"}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     )}
                   </div>
@@ -1129,70 +1222,79 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
       )}
 
       {/* CTA Section */}
-      <section className="py-20 relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#C4302B] via-[#A52521] to-[#8B1E1A]" />
-        <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yIDItNCAyLTRzMiAyIDIgNGMwIDAtMiAyLTIgMnMtMi0yLTItMnoiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-30" />
+      <section className="py-12 md:py-20 bg-transparent">
+          {/* Container restricts width on desktop (max-w-5xl). 
+            px-0 on mobile makes it full width, sm:px-6 adds margins on larger screens.
+          */}
+          <div className="container mx-auto px-0 sm:px-6 lg:px-8 max-w-5xl">
+            <div className="relative overflow-hidden rounded-t-3xl sm:rounded-t-3xl shadow-t-2xl py-16 md:py-20">
+              
+              {/* Background Gradients & Patterns */}
+              <div className="absolute inset-0 bg-gradient-to-br from-[#C4302B] via-[#A52521] to-[#8B1E1A]" />
+              <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yIDItNCAyLTRzMiAyIDIgNGMwIDAtMiAyLTIgMnMtMi0yLTItMnoiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-30" />
 
-        {/* Floating Elements */}
-        <motion.div
-          className="absolute top-10 left-10 w-20 h-20 bg-white/10 rounded-full blur-xl"
-          animate={{ y: [0, 20, 0], scale: [1, 1.1, 1] }}
-          transition={{ duration: 4, repeat: Infinity }}
-        />
-        <motion.div
-          className="absolute bottom-10 right-10 w-32 h-32 bg-white/10 rounded-full blur-xl"
-          animate={{ y: [0, -20, 0], scale: [1, 1.2, 1] }}
-          transition={{ duration: 5, repeat: Infinity }}
-        />
+              {/* Floating Elements */}
+              <motion.div
+                className="absolute top-10 left-10 w-20 h-20 bg-white/10 rounded-full blur-xl hidden sm:block"
+                animate={{ y: [0, 20, 0], scale: [1, 1.1, 1] }}
+                transition={{ duration: 4, repeat: Infinity }}
+              />
+              <motion.div
+                className="absolute bottom-10 right-10 w-32 h-32 bg-white/10 rounded-full blur-xl hidden sm:block"
+                animate={{ y: [0, -20, 0], scale: [1, 1.2, 1] }}
+                transition={{ duration: 5, repeat: Infinity }}
+              />
 
-        <div className="container mx-auto px-4 text-center relative">
-          <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ duration: 0.6 }}
-          >
-            <motion.div
-              initial={{ scale: 0 }}
-              whileInView={{ scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ type: "spring", delay: 0.2 }}
-              className="w-20 h-20 mx-auto mb-8 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center"
-            >
-              <HomeIcon className="h-10 w-10 text-white" />
-            </motion.div>
-
-            <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-6 text-white">
-              Ready to Find Your Perfect Property?
-            </h2>
-            <p className="text-lg md:text-xl mb-10 text-white/80 max-w-2xl mx-auto">
-              Join thousands of happy homeowners who found their dream home with
-              us
-            </p>
-
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/browse">
-                <Button
-                  size="lg"
-                  className="h-12 px-8 text-base bg-white text-[#C4302B] hover:bg-gray-100 shadow-xl rounded-lg font-semibold"
+              {/* Content */}
+              <div className="container mx-auto px-6 text-center relative z-10">
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.6 }}
                 >
-                  Browse Properties
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-              <Link href="/contact">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="h-12 px-8 text-base border-2 border-white/40 text-white bg-white/10 hover:bg-white/20 rounded-lg font-semibold"
-                >
-                  Contact Us
-                </Button>
-              </Link>
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    whileInView={{ scale: 1 }}
+                    viewport={{ once: true }}
+                    transition={{ type: "spring", delay: 0.2 }}
+                    className="w-16 h-16 md:w-20 md:h-20 mx-auto mb-6 md:mb-8 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-inner"
+                  >
+                    <HomeIcon className="h-8 w-8 md:h-10 md:w-10 text-white" />
+                  </motion.div>
+
+                  <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6 text-white tracking-tight">
+                    Ready to Find Your Perfect Property?
+                  </h2>
+                  <p className="text-base md:text-xl mb-8 md:mb-10 text-white/90 max-w-2xl mx-auto font-medium">
+                    Join thousands of happy homeowners who found their dream home with us.
+                  </p>
+
+                  <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                    <Link href="/browse" className="w-full sm:w-auto">
+                      <Button
+                        size="lg"
+                        className="w-full sm:w-auto h-12 md:h-14 px-8 text-base bg-white text-[#C4302B] hover:bg-gray-50 shadow-xl hover:shadow-2xl transition-all duration-300 rounded-xl font-bold flex items-center justify-center"
+                      >
+                        Browse Properties
+                        <ArrowRight className="ml-2 h-5 w-5" />
+                      </Button>
+                    </Link>
+                    <Link href="/contact" className="w-full sm:w-auto">
+                      <Button
+                        size="lg"
+                        variant="outline"
+                        className="w-full sm:w-auto h-12 md:h-14 px-8 text-base border-2 border-white/40 text-white bg-white/10 hover:bg-white/20 hover:border-white/60 transition-all duration-300 rounded-xl font-bold"
+                      >
+                        Contact Us
+                      </Button>
+                    </Link>
+                  </div>
+                </motion.div>
+              </div>
             </div>
-          </motion.div>
-        </div>
-      </section>
+          </div>
+        </section>
     </Layout>
   );
 }

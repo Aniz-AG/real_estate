@@ -3,7 +3,6 @@ import { useSelector, useDispatch } from "react-redux";
 import Link from "next/link";
 import { useRouter } from "next/router";
 import {
-  Building2,
   ChevronDown,
   User,
   Menu,
@@ -176,7 +175,7 @@ const Navbar = () => {
 
   return (
     <>
-      <nav className="sticky top-0 z-[9999] w-full bg-[#C4302B] shadow-lg overflow-visible">
+      <nav className="sticky top-0 z-[9999] w-full bg-gradient-to-r from-red-400 to-[#C4302B] shadow-lg overflow-visible">
         <div className="container mx-auto px-4 overflow-visible">
           <div
             className="flex h-14 items-center justify-between"
@@ -184,11 +183,15 @@ const Navbar = () => {
           >
             {/* Logo */}
             <div className="flex items-center gap-4">
-              <Link href="/" className="flex items-center space-x-2">
-                <Building2 className="h-7 w-7 text-white" />
-                <span className="text-xl font-bold text-white tracking-wide">
-                  EstateHub
-                </span>
+              <Link 
+                href="/" 
+                className="flex items-center bg-white px-3 py-1.5 rounded-lg shadow-sm transition-transform hover:scale-[1.02]"
+              >
+                <img 
+                  src="/logo.png" 
+                  alt="EstateHub Logo" 
+                  className="h-8 w-auto object-contain" 
+                />
               </Link>
 
               {/* City Dropdown */}
