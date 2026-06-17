@@ -23,9 +23,11 @@ const Footer = () => {
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
               <Building2 className="h-8 w-8 text-slate-900" />
-              <span className="text-2xl font-bold text-slate-900">
-                EstateHub
-              </span>
+              <img 
+                  src="/logo.png" 
+                  alt="EstateHub Logo" 
+                  className="h-16 w-auto object-contain" 
+                />
             </div>
             <p className="text-sm text-slate-600">
               Your trusted partner in finding the perfect property. We make real
@@ -50,12 +52,12 @@ const Footer = () => {
               >
                 <Instagram className="h-5 w-5" />
               </a>
-              <a
+              {/* <a
                 href="#"
                 className="text-slate-500 hover:text-[#1D4ED8] transition-colors"
               >
                 <Linkedin className="h-5 w-5" />
-              </a>
+              </a> */}
             </div>
           </div>
 
@@ -81,14 +83,14 @@ const Footer = () => {
                   Browse Properties
                 </Link>
               </li>
-              <li>
+              {/* <li>
                 <Link
                   href="/agents"
                   className="text-slate-600 hover:text-[#1D4ED8] transition-colors"
                 >
                   Our Agents
                 </Link>
-              </li>
+              </li> */}
               <li>
                 <Link
                   href="/about"
@@ -106,9 +108,6 @@ const Footer = () => {
             <ul className="space-y-2 text-sm">
               <li className="text-slate-600 hover:text-[#1D4ED8] transition-colors cursor-pointer">
                 Buy Property
-              </li>
-              <li className="text-slate-600 hover:text-[#1D4ED8] transition-colors cursor-pointer">
-                Rent Property
               </li>
               <li className="text-slate-600 hover:text-[#1D4ED8] transition-colors cursor-pointer">
                 Sell Property
@@ -144,7 +143,7 @@ const Footer = () => {
         <Separator className="my-8 bg-slate-200" />
 
         <div className="flex flex-col md:flex-row justify-between items-center text-sm text-slate-600">
-          <p>&copy; {currentYear} EstateHub. All rights reserved.</p>
+          <p>&copy; {currentYear} VSK Holdings Real EstateHub. All rights reserved.</p>
           <div className="flex gap-6 mt-4 md:mt-0">
             <Link
               href="/privacy"

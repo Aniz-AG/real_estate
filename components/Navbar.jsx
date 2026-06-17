@@ -185,12 +185,12 @@ const Navbar = () => {
             <div className="flex items-center gap-4">
               <Link 
                 href="/" 
-                className="flex items-center bg-white px-3 py-1.5 rounded-lg shadow-sm transition-transform hover:scale-[1.02]"
+                className="flex items-center bg-white px-4 py-1.5 rounded-lg shadow-sm transition-transform hover:scale-[1.02]"
               >
                 <img 
                   src="/logo.png" 
                   alt="EstateHub Logo" 
-                  className="h-8 w-auto object-contain" 
+                  className="w-24 h-auto object-contain" 
                 />
               </Link>
 

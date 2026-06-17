@@ -46,7 +46,7 @@ export default function Insights() {
   return (
     <Layout>
       <SeoHead
-        title="Real Estate Insights | EstateHub"
+        title="Real Estate Insights | VSK Holdings Real EstateHub"
         description="News, guides, and market insights for the real estate community."
       />
       <div className={`${bodyFont.className} bg-[#F7F7F7]`}>

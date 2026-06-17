@@ -119,7 +119,7 @@ export default function AreaConverter() {
   return (
     <Layout>
       <SeoHead
-        title="Area Converter | EstateHub"
+        title="Area Converter | VSK Holdings Real EstateHub"
         description="Convert land and property area units by state."
       />
       <div

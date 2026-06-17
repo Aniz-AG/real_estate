@@ -14,6 +14,8 @@ import {
   INDIA_CITIES,
 } from "@/redux/slices/propertySlice";
 import axios from "axios";
+// import logo from "/logo.png";
+import { AnimatePresence, motion } from "framer-motion";
 import {
   Building2,
   MapPin,
@@ -32,7 +34,6 @@ import {
   Sparkles,
 } from "lucide-react";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import Slider from "react-slick";
 
 // Animation variants
@@ -156,7 +157,15 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
     useSelector((state) => state.property);
   const [ssrProperties] = useState(latestProperties);
   const [topCities, setTopCities] = useState(initialTopCities);
+  const [showLogo, setShowLogo] = useState(false);
 
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setShowLogo((prev) => !prev);
+    }, 2500); // switch every 2.5s
+
+    return () => clearInterval(interval);
+  }, []);
   // Featured Properties from Database
   const [dbFeaturedProperties, setDbFeaturedProperties] = useState([]);
   const [dbTopProjects, setDbTopProjects] = useState([]);
@@ -452,7 +461,7 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
   return (
     <Layout>
       <SeoHead
-        title="Find Your Dream Home | EstateHub"
+        title="Find Your Dream Home | VSK Holdings Real EstateHub"
         description="Browse the latest apartments, villas, and homes across top cities. Find your dream property today."
       />
 
@@ -467,10 +476,38 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <h1 className="text-3xl md:text-4xl font-light text-gray-800 mb-2">
-                Start your <span className="font-bold">#PropertySearch</span>{" "}
-                Journey
-              </h1>
+             <h1 className="text-2xl md:text-3xl font-light text-gray-800 mb-2 flex flex-wrap justify-center items-center gap-1 md:gap-2">
+              <span>Start your</span>
+              <div className="relative flex items-center justify-center h-[40px] w-[180px] md:w-[240px] overflow-hidden">
+                <AnimatePresence mode="wait">
+                  {showLogo ? (
+                    <motion.img
+                      key="logo"
+                      src="/logo.png"
+                      alt="Logo"
+                      className="absolute max-h-10 md:max-h-14 w-auto"
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      transition={{ duration: 0.4 }}
+                    />
+                  ) : (
+                    <motion.span
+                      key="text"
+                      className="text-xl md:text-2xl absolute font-bold text-center whitespace-nowrap"
+                      initial={{ opacity: 0, y: 8 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -8 }}
+                      transition={{ duration: 0.4 }}
+                    >
+                      #PropertySearch
+                    </motion.span>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              <span>Journey</span>
+            </h1>
             </motion.div>
 
             {/* Tabs */}
@@ -654,7 +691,6 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
 
                 {showPropertyTypeDropdown && (
                   <div className="absolute top-full left-0 right-0 mt-2 bg-white rounded-lg shadow-2xl border border-gray-100 py-4 px-4 z-[9999] w-full md:min-w-[280px] md:w-auto">
-                    
                     {/* Residential Dropdown */}
                     <div className="mb-4">
                       <button
@@ -664,7 +700,9 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
                         }}
                         className="flex items-center justify-between w-full mb-2 focus:outline-none"
                       >
-                        <span className="text-sm font-semibold text-gray-800">Residential</span>
+                        <span className="text-sm font-semibold text-gray-800">
+                          Residential
+                        </span>
                         <ChevronDown
                           className={`h-4 w-4 text-gray-500 transition-transform ${
                             expandedSections.residential ? "rotate-180" : ""
@@ -700,7 +738,9 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
                           }}
                           className="flex items-center justify-between w-full mb-2 focus:outline-none"
                         >
-                          <span className="text-sm font-semibold text-gray-800">BHK Type</span>
+                          <span className="text-sm font-semibold text-gray-800">
+                            BHK Type
+                          </span>
                           <ChevronDown
                             className={`h-4 w-4 text-gray-500 transition-transform ${
                               expandedSections.bhk ? "rotate-180" : ""
@@ -736,7 +776,9 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
                         }}
                         className="flex items-center justify-between w-full mb-2 focus:outline-none"
                       >
-                        <span className="text-sm font-semibold text-gray-800">Commercial</span>
+                        <span className="text-sm font-semibold text-gray-800">
+                          Commercial
+                        </span>
                         <ChevronDown
                           className={`h-4 w-4 text-gray-500 transition-transform ${
                             expandedSections.commercial ? "rotate-180" : ""
@@ -809,7 +851,9 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
                           }}
                           className="flex items-center justify-between w-full mb-2 focus:outline-none"
                         >
-                          <span className="text-sm font-semibold text-gray-800">Size</span>
+                          <span className="text-sm font-semibold text-gray-800">
+                            Size
+                          </span>
                           <ChevronDown
                             className={`h-4 w-4 text-gray-500 transition-transform ${
                               expandedSections.size ? "rotate-180" : ""
@@ -836,7 +880,10 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
                                 className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm"
                               >
                                 {sizeOptions.map((value, i) => (
-                                  <option key={`min-${value}-${i}`} value={value}>
+                                  <option
+                                    key={`min-${value}-${i}`}
+                                    value={value}
+                                  >
                                     {value ? `${value} ${sizeUnit}` : "Min"}
                                   </option>
                                 ))}
@@ -848,7 +895,10 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
                                 className="flex-1 border border-gray-200 rounded-lg px-3 py-2 text-sm"
                               >
                                 {sizeOptions.map((value, i) => (
-                                  <option key={`max-${value}-${i}`} value={value}>
+                                  <option
+                                    key={`max-${value}-${i}`}
+                                    value={value}
+                                  >
                                     {value ? `${value} ${sizeUnit}` : "Max"}
                                   </option>
                                 ))}
@@ -1223,78 +1273,78 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
 
       {/* CTA Section */}
       <section className="py-12 md:py-20 bg-transparent">
-          {/* Container restricts width on desktop (max-w-5xl). 
+        {/* Container restricts width on desktop (max-w-5xl). 
             px-0 on mobile makes it full width, sm:px-6 adds margins on larger screens.
           */}
-          <div className="container mx-auto px-0 sm:px-6 lg:px-8 max-w-5xl">
-            <div className="relative overflow-hidden rounded-t-3xl sm:rounded-t-3xl shadow-t-2xl py-16 md:py-20">
-              
-              {/* Background Gradients & Patterns */}
-              <div className="absolute inset-0 bg-gradient-to-br from-[#C4302B] via-[#A52521] to-[#8B1E1A]" />
-              <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yIDItNCAyLTRzMiAyIDIgNGMwIDAtMiAyLTIgMnMtMi0yLTItMnoiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-30" />
+        <div className="container mx-auto px-0 sm:px-6 lg:px-8 max-w-5xl">
+          <div className="relative overflow-hidden rounded-t-3xl sm:rounded-t-3xl shadow-t-2xl py-16 md:py-20">
+            {/* Background Gradients & Patterns */}
+            <div className="absolute inset-0 bg-gradient-to-br from-[#C4302B] via-[#A52521] to-[#8B1E1A]" />
+            <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yIDItNCAyLTRzMiAyIDIgNGMwIDAtMiAyLTIgMnMtMi0yLTItMnoiLz48L2c+PC9nPjwvc3ZnPg==')] opacity-30" />
 
-              {/* Floating Elements */}
-              <motion.div
-                className="absolute top-10 left-10 w-20 h-20 bg-white/10 rounded-full blur-xl hidden sm:block"
-                animate={{ y: [0, 20, 0], scale: [1, 1.1, 1] }}
-                transition={{ duration: 4, repeat: Infinity }}
-              />
-              <motion.div
-                className="absolute bottom-10 right-10 w-32 h-32 bg-white/10 rounded-full blur-xl hidden sm:block"
-                animate={{ y: [0, -20, 0], scale: [1, 1.2, 1] }}
-                transition={{ duration: 5, repeat: Infinity }}
-              />
+            {/* Floating Elements */}
+            <motion.div
+              className="absolute top-10 left-10 w-20 h-20 bg-white/10 rounded-full blur-xl hidden sm:block"
+              animate={{ y: [0, 20, 0], scale: [1, 1.1, 1] }}
+              transition={{ duration: 4, repeat: Infinity }}
+            />
+            <motion.div
+              className="absolute bottom-10 right-10 w-32 h-32 bg-white/10 rounded-full blur-xl hidden sm:block"
+              animate={{ y: [0, -20, 0], scale: [1, 1.2, 1] }}
+              transition={{ duration: 5, repeat: Infinity }}
+            />
 
-              {/* Content */}
-              <div className="container mx-auto px-6 text-center relative z-10">
+            {/* Content */}
+            <div className="container mx-auto px-6 text-center relative z-10">
+              <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6 }}
+              >
                 <motion.div
-                  initial={{ opacity: 0, y: 30 }}
-                  whileInView={{ opacity: 1, y: 0 }}
+                  initial={{ scale: 0 }}
+                  whileInView={{ scale: 1 }}
                   viewport={{ once: true }}
-                  transition={{ duration: 0.6 }}
+                  transition={{ type: "spring", delay: 0.2 }}
+                  className="w-16 h-16 md:w-20 md:h-20 mx-auto mb-6 md:mb-8 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-inner"
                 >
-                  <motion.div
-                    initial={{ scale: 0 }}
-                    whileInView={{ scale: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ type: "spring", delay: 0.2 }}
-                    className="w-16 h-16 md:w-20 md:h-20 mx-auto mb-6 md:mb-8 rounded-2xl bg-white/20 backdrop-blur-sm flex items-center justify-center shadow-inner"
-                  >
-                    <HomeIcon className="h-8 w-8 md:h-10 md:w-10 text-white" />
-                  </motion.div>
-
-                  <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6 text-white tracking-tight">
-                    Ready to Find Your Perfect Property?
-                  </h2>
-                  <p className="text-base md:text-xl mb-8 md:mb-10 text-white/90 max-w-2xl mx-auto font-medium">
-                    Join thousands of happy homeowners who found their dream home with us.
-                  </p>
-
-                  <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
-                    <Link href="/browse" className="w-full sm:w-auto">
-                      <Button
-                        size="lg"
-                        className="w-full sm:w-auto h-12 md:h-14 px-8 text-base bg-white text-[#C4302B] hover:bg-gray-50 shadow-xl hover:shadow-2xl transition-all duration-300 rounded-xl font-bold flex items-center justify-center"
-                      >
-                        Browse Properties
-                        <ArrowRight className="ml-2 h-5 w-5" />
-                      </Button>
-                    </Link>
-                    <Link href="/contact" className="w-full sm:w-auto">
-                      <Button
-                        size="lg"
-                        variant="outline"
-                        className="w-full sm:w-auto h-12 md:h-14 px-8 text-base border-2 border-white/40 text-white bg-white/10 hover:bg-white/20 hover:border-white/60 transition-all duration-300 rounded-xl font-bold"
-                      >
-                        Contact Us
-                      </Button>
-                    </Link>
-                  </div>
+                  <HomeIcon className="h-8 w-8 md:h-10 md:w-10 text-white" />
                 </motion.div>
-              </div>
+
+                <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold mb-4 md:mb-6 text-white tracking-tight">
+                  Ready to Find Your Perfect Property?
+                </h2>
+                <p className="text-base md:text-xl mb-8 md:mb-10 text-white/90 max-w-2xl mx-auto font-medium">
+                  Join thousands of happy homeowners who found their dream home
+                  with us.
+                </p>
+
+                <div className="flex flex-col sm:flex-row gap-4 justify-center items-center">
+                  <Link href="/browse" className="w-full sm:w-auto">
+                    <Button
+                      size="lg"
+                      className="w-full sm:w-auto h-12 md:h-14 px-8 text-base bg-white text-[#C4302B] hover:bg-gray-50 shadow-xl hover:shadow-2xl transition-all duration-300 rounded-xl font-bold flex items-center justify-center"
+                    >
+                      Browse Properties
+                      <ArrowRight className="ml-2 h-5 w-5" />
+                    </Button>
+                  </Link>
+                  <Link href="/contact" className="w-full sm:w-auto">
+                    <Button
+                      size="lg"
+                      variant="outline"
+                      className="w-full sm:w-auto h-12 md:h-14 px-8 text-base border-2 border-white/40 text-white bg-white/10 hover:bg-white/20 hover:border-white/60 transition-all duration-300 rounded-xl font-bold"
+                    >
+                      Contact Us
+                    </Button>
+                  </Link>
+                </div>
+              </motion.div>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
     </Layout>
   );
 }
