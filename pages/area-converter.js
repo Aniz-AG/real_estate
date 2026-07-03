@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { ArrowRightLeft, Info, MapPin, Scale } from "lucide-react";
+import { ArrowRightLeft, MapPin, Scale } from "lucide-react";
 import Layout from "@/components/Layout";
 import SeoHead from "@/components/SeoHead";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,70 +15,36 @@ const bodyFont = Space_Grotesk({
   weight: ["400", "500", "600"],
 });
 
-const STATE_UNITS = [
-  {
-    state: "All India (General)",
-    note: "Approximate values for quick reference. Units vary by state.",
-    units: [
-      { label: "Sq ft", value: "sqft", sqft: 1 },
-      { label: "Sq yd", value: "sqyd", sqft: 9 },
-      { label: "Sq m", value: "sqm", sqft: 10.7639 },
-      { label: "Acre", value: "acre", sqft: 43560 },
-      { label: "Hectare", value: "hectare", sqft: 107639 },
-      { label: "Bigha (approx)", value: "bigha", sqft: 27225 },
-      { label: "Katha (approx)", value: "katha", sqft: 1361.25 },
-      { label: "Lessa (approx)", value: "lessa", sqft: 144 },
-      { label: "Cent", value: "cent", sqft: 435.6 },
-      { label: "Gaj", value: "gaj", sqft: 9 },
-    ],
-  },
-  {
-    state: "Gujarat",
-    note: "Common land units in Gujarat.",
-    units: [
-      { label: "Sq ft", value: "sqft", sqft: 1 },
-      { label: "Gaj", value: "gaj", sqft: 9 },
-      { label: "Acre", value: "acre", sqft: 43560 },
-      { label: "Bigha (Gujarat)", value: "bigha", sqft: 17424 },
-      { label: "Hectare", value: "hectare", sqft: 107639 },
-    ],
-  },
-  {
-    state: "Maharashtra",
-    note: "Guntha is commonly used for agricultural land.",
-    units: [
-      { label: "Sq ft", value: "sqft", sqft: 1 },
-      { label: "Sq m", value: "sqm", sqft: 10.7639 },
-      { label: "Guntha", value: "guntha", sqft: 1089 },
-      { label: "Acre", value: "acre", sqft: 43560 },
-      { label: "Hectare", value: "hectare", sqft: 107639 },
-    ],
-  },
-  {
-    state: "Tamil Nadu",
-    note: "Cent is widely used for plots.",
-    units: [
-      { label: "Sq ft", value: "sqft", sqft: 1 },
-      { label: "Cent", value: "cent", sqft: 435.6 },
-      { label: "Acre", value: "acre", sqft: 43560 },
-      { label: "Sq m", value: "sqm", sqft: 10.7639 },
-    ],
-  },
-  {
-    state: "West Bengal",
-    note: "Bigha and katha vary by district; use for quick reference.",
-    units: [
-      { label: "Sq ft", value: "sqft", sqft: 1 },
-      { label: "Lessa", value: "lessa", sqft: 144 },
-      { label: "Katha", value: "katha", sqft: 720 },
-      { label: "Bigha", value: "bigha", sqft: 14400 },
-      { label: "Acre", value: "acre", sqft: 43560 },
-    ],
-  },
+// Comprehensive list of Indian and International land units sorted alphabetically
+const ALL_UNITS = [
+  { label: "Acre", value: "acre", sqft: 43560 },
+  { label: "Bigha", value: "bigha", sqft: 27225 },
+  { label: "Biswa", value: "biswa", sqft: 1361.25 },
+  { label: "Biswa Kacha", value: "biswakacha", sqft: 2722.5 },
+  { label: "Cent", value: "cent", sqft: 435.6 },
+  { label: "Chatak", value: "chatak", sqft: 45 },
+  { label: "Decimal", value: "decimal", sqft: 435.6 },
+  { label: "Dhur", value: "dhur", sqft: 68.06 },
+  { label: "Gaj", value: "gaj", sqft: 9 },
+  { label: "Ground", value: "ground", sqft: 2400 },
+  { label: "Guntha", value: "guntha", sqft: 1089 },
+  { label: "Hectare", value: "hectare", sqft: 107639 },
+  { label: "Kanal", value: "kanal", sqft: 5445 },
+  { label: "Katha", value: "katha", sqft: 1361.25 },
+  { label: "Killa", value: "killa", sqft: 43560 },
+  { label: "Lessa", value: "lessa", sqft: 144 },
+  { label: "Marla", value: "marla", sqft: 272.25 },
+  { label: "Murabba", value: "murabba", sqft: 1089000 },
+  { label: "Pura", value: "pura", sqft: 108900 },
+  { label: "Square Centimeter", value: "sqcm", sqft: 0.00107639 },
+  { label: "Square Feet", value: "sqft", sqft: 1 },
+  { label: "Square Inch", value: "sqin", sqft: 0.00694444 },
+  { label: "Square Karam", value: "sqkaram", sqft: 30.25 },
+  { label: "Square Kilometer", value: "sqkm", sqft: 10763910.4 },
+  { label: "Square Meter", value: "sqm", sqft: 10.7639 },
+  { label: "Square Mile", value: "sqmi", sqft: 27878400 },
+  { label: "Square Yard", value: "sqyd", sqft: 9 },
 ];
-
-const getUnitsForState = (stateName) =>
-  STATE_UNITS.find((item) => item.state === stateName) || STATE_UNITS[0];
 
 const formatValue = (value) => {
   if (!Number.isFinite(value)) return "-";
@@ -88,19 +54,14 @@ const formatValue = (value) => {
 };
 
 export default function AreaConverter() {
-  const [stateName, setStateName] = useState(STATE_UNITS[0].state);
   const [fromUnit, setFromUnit] = useState("sqft");
   const [toUnit, setToUnit] = useState("acre");
   const [inputValue, setInputValue] = useState("1000");
 
-  const stateConfig = useMemo(() => getUnitsForState(stateName), [stateName]);
-
-  const availableUnits = stateConfig.units;
-
   const conversion = useMemo(() => {
     const value = parseFloat(inputValue);
-    const from = availableUnits.find((unit) => unit.value === fromUnit);
-    const to = availableUnits.find((unit) => unit.value === toUnit);
+    const from = ALL_UNITS.find((unit) => unit.value === fromUnit);
+    const to = ALL_UNITS.find((unit) => unit.value === toUnit);
 
     if (!from || !to || !Number.isFinite(value)) {
       return { sqft: null, result: null };
@@ -109,7 +70,7 @@ export default function AreaConverter() {
     const sqft = value * from.sqft;
     const result = sqft / to.sqft;
     return { sqft, result };
-  }, [inputValue, fromUnit, toUnit, availableUnits]);
+  }, [inputValue, fromUnit, toUnit]);
 
   const handleSwap = () => {
     setFromUnit(toUnit);
@@ -120,7 +81,7 @@ export default function AreaConverter() {
     <Layout>
       <SeoHead
         title="Area Converter | VSK Holdings Real EstateHub"
-        description="Convert land and property area units by state."
+        description="Convert land and property area units used across India."
       />
       <div
         className={`${bodyFont.className} min-h-screen bg-gradient-to-br from-[#FFF7F4] via-white to-[#F2F2F2]`}
@@ -132,7 +93,7 @@ export default function AreaConverter() {
             <div className="max-w-4xl mx-auto">
               <div className="flex items-center gap-3 text-sm text-gray-600 mb-4">
                 <MapPin className="h-4 w-4" />
-                Location-aware unit conversions
+                Comprehensive Indian Land Units
               </div>
               <h1
                 className={`${displayFont.className} text-4xl md:text-5xl font-bold text-gray-900 mb-4`}
@@ -140,9 +101,7 @@ export default function AreaConverter() {
                 Area Converter
               </h1>
               <p className="text-gray-600 text-lg max-w-2xl">
-                Convert land and property measurements with state-aware units.
-                Built for buyers, sellers, and agents who need fast, reliable
-                conversions.
+                Convert land and property measurements across standard and regional Indian units. Built for buyers, sellers, and agents who need fast, reliable conversions.
               </p>
             </div>
           </div>
@@ -158,33 +117,6 @@ export default function AreaConverter() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
-                <div>
-                  <label className="text-sm font-medium text-gray-700">
-                    State
-                  </label>
-                  <select
-                    value={stateName}
-                    onChange={(e) => {
-                      const nextState = e.target.value;
-                      const stateUnits = getUnitsForState(nextState).units;
-                      setStateName(nextState);
-                      setFromUnit(stateUnits[0].value);
-                      setToUnit(stateUnits[1]?.value || stateUnits[0].value);
-                    }}
-                    className="mt-2 w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C4302B]/20"
-                  >
-                    {STATE_UNITS.map((state) => (
-                      <option key={state.state} value={state.state}>
-                        {state.state}
-                      </option>
-                    ))}
-                  </select>
-                  <p className="mt-2 text-xs text-gray-500 flex items-center gap-2">
-                    <Info className="h-3.5 w-3.5" />
-                    {stateConfig.note}
-                  </p>
-                </div>
-
                 <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 items-end">
                   <div>
                     <label className="text-sm font-medium text-gray-700">
@@ -202,8 +134,8 @@ export default function AreaConverter() {
                         onChange={(e) => setFromUnit(e.target.value)}
                         className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C4302B]/20"
                       >
-                        {availableUnits.map((unit) => (
-                          <option key={unit.value} value={unit.value}>
+                        {ALL_UNITS.map((unit) => (
+                          <option key={`from-${unit.value}`} value={unit.value}>
                             {unit.label}
                           </option>
                         ))}
@@ -224,7 +156,7 @@ export default function AreaConverter() {
                       To
                     </label>
                     <div className="mt-2 flex flex-col gap-2">
-                      <div className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600">
+                      <div className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-600 h-[46px] flex items-center">
                         {formatValue(conversion.result)}
                       </div>
                       <select
@@ -232,8 +164,8 @@ export default function AreaConverter() {
                         onChange={(e) => setToUnit(e.target.value)}
                         className="w-full rounded-xl border border-gray-200 bg-white px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[#C4302B]/20"
                       >
-                        {availableUnits.map((unit) => (
-                          <option key={unit.value} value={unit.value}>
+                        {ALL_UNITS.map((unit) => (
+                          <option key={`to-${unit.value}`} value={unit.value}>
                             {unit.label}
                           </option>
                         ))}
@@ -245,7 +177,7 @@ export default function AreaConverter() {
                 <div className="rounded-2xl bg-gray-900 text-white p-5 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                   <div>
                     <p className="text-xs uppercase tracking-[0.2em] text-gray-400">
-                      Square feet
+                      Standardized to Square feet
                     </p>
                     <p className="text-2xl font-semibold">
                       {formatValue(conversion.sqft)} sq ft
@@ -262,16 +194,24 @@ export default function AreaConverter() {
               <Card className="border border-gray-200 shadow-lg">
                 <CardHeader>
                   <CardTitle className="text-lg font-semibold text-gray-900">
-                    Quick Conversions
+                    Popular Conversions
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-3 text-sm text-gray-600">
-                  {availableUnits.slice(0, 6).map((unit) => (
+                  {/* Rendering a few popular standard items statically for the side widget */}
+                  {[
+                    { label: "1 Bigha", sqft: 27225 },
+                    { label: "1 Acre", sqft: 43560 },
+                    { label: "1 Hectare", sqft: 107639 },
+                    { label: "1 Biswa", sqft: 1361.25 },
+                    { label: "1 Guntha", sqft: 1089 },
+                    { label: "1 Square Yard", sqft: 9 },
+                  ].map((unit) => (
                     <div
-                      key={unit.value}
+                      key={unit.label}
                       className="flex items-center justify-between rounded-lg border border-gray-100 px-4 py-3"
                     >
-                      <span>1 {unit.label}</span>
+                      <span>{unit.label}</span>
                       <span className="font-semibold text-gray-800">
                         {formatValue(unit.sqft)} sq ft
                       </span>
@@ -288,13 +228,10 @@ export default function AreaConverter() {
                 </CardHeader>
                 <CardContent className="text-sm text-gray-600 space-y-3">
                   <p>
-                    Land units like bigha, katha, or guntha can differ across
-                    districts. Use this tool for quick estimates and confirm
-                    with local authorities for exact values.
+                    Regional units like <strong>Bigha</strong>, <strong>Biswa</strong>, <strong>Guntha</strong>, and <strong>Katha</strong> can slightly vary across different districts and states.
                   </p>
                   <p>
-                    Prefer modern units like sq ft, sq m, acre, or hectare when
-                    comparing properties across cities.
+                    We use standard conversion metrics universally accepted for quick referencing. Always confirm with local revenue authorities for exact jurisdictional values.
                   </p>
                 </CardContent>
               </Card>

@@ -2,10 +2,10 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 
 const defaultMeta = {
-    title: 'Real Estate Hub',
+    title: 'VSK Holdings Real Estate Hub',
     description: 'Find your dream property from curated listings of homes, apartments, and villas.',
     image: '/og-image.png',
-    siteName: 'Real Estate Hub',
+    siteName: 'VSK Holdings Real Estate Hub',
 };
 
 export default function SeoHead({

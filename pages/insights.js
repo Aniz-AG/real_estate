@@ -1,10 +1,10 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Layout from "@/components/Layout";
 import SeoHead from "@/components/SeoHead";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowRight, BookOpen, Sparkles } from "lucide-react";
+import { Calendar, ExternalLink, ArrowRight, Loader2 } from "lucide-react";
 import { Playfair_Display, Space_Grotesk } from "next/font/google";
+import Link from "next/link";
 
 const displayFont = Playfair_Display({
   subsets: ["latin"],
@@ -15,164 +15,188 @@ const bodyFont = Space_Grotesk({
   weight: ["400", "500", "600"],
 });
 
-const PLACEHOLDER_CARDS = [
-  {
-    title: "Market Pulse",
-    description:
-      "Weekly summary of price movements, listings, and demand signals.",
-    tag: "Weekly",
-  },
-  {
-    title: "Neighborhood Spotlight",
-    description:
-      "Deep dives into fast-growing micro-markets and upcoming localities.",
-    tag: "Local",
-  },
-  {
-    title: "Buyer Playbook",
-    description:
-      "Guides for first-time buyers, investors, and resale decisions.",
-    tag: "Guides",
-  },
-  {
-    title: "Policy & Finance",
-    description:
-      "Updates on loans, tax changes, and housing policies that matter.",
-    tag: "Finance",
-  },
-];
-
 export default function Insights() {
+  const [articles, setArticles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchNews = async () => {
+      try {
+        // Using Economic Times India Real Estate RSS feed via RSS2JSON public API
+         const rssUrl = encodeURIComponent(
+          "https://realty.economictimes.indiatimes.com/rss/topstories"
+        );
+        const response = await fetch(
+          `https://api.rss2json.com/v1/api.json?rss_url=${rssUrl}`
+        );
+
+        if (!response.ok) throw new Error("Failed to fetch news");
+        
+        const data = await response.json();
+        if (data.status === "ok") {
+          setArticles(data.items);
+        } else {
+          throw new Error("Invalid data format received");
+        }
+      } catch (err) {
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchNews();
+  }, []);
+
+  const topStories = articles.slice(0, 3);
+  const otherStories = articles.slice(3, 10); // Limit list to next 7 items for performance
+
+  const formatDate = (dateString) => {
+    const options = { year: "numeric", month: "short", day: "numeric" };
+    return new Date(dateString).toLocaleDateString("en-IN", options);
+  };
+
+  // Helper to clean up standard RSS descriptions
+  const cleanDescription = (html) => {
+    if (!html) return "";
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    return doc.body.textContent || "";
+  };
+
   return (
     <Layout>
       <SeoHead
         title="Real Estate Insights | VSK Holdings Real EstateHub"
-        description="News, guides, and market insights for the real estate community."
+        description="Latest news, trends, and market insights for the Indian real estate sector."
       />
-      <div className={`${bodyFont.className} bg-[#F7F7F7]`}>
-        <section className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(196,48,43,0.12),_transparent_55%)]" />
-          <div className="absolute inset-0 bg-[linear-gradient(120deg,_rgba(17,24,39,0.08),_transparent_45%)]" />
-          <div className="container mx-auto px-4 py-20 relative">
+      <div className={`${bodyFont.className} min-h-screen bg-[#F7F7F7]`}>
+        {/* Header Section */}
+        <section className="relative overflow-hidden bg-white border-b border-gray-200">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(196,48,43,0.05),_transparent_60%)]" />
+          <div className="container mx-auto px-4 py-16 relative">
             <div className="max-w-3xl">
-              <div className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-xs font-semibold text-gray-700 shadow">
-                <Sparkles className="h-4 w-4 text-[#C4302B]" />
-                Launching soon
-              </div>
               <h1
-                className={`${displayFont.className} mt-6 text-4xl md:text-5xl font-bold text-gray-900`}
+                className={`${displayFont.className} text-4xl md:text-5xl font-bold text-gray-900`}
               >
-                Real Estate Insights
+                Market Insights & News
               </h1>
               <p className="mt-4 text-lg text-gray-600">
-                A curated space for market commentary, city trends, and
-                practical guides. Content will be published by the client once
-                the newsroom opens.
+                Stay updated with the latest trends, policy changes, and market pulse across the Indian real estate landscape.
               </p>
-              <div className="mt-8 flex flex-wrap gap-3">
-                <Button className="bg-[#C4302B] hover:bg-[#A52521] text-white rounded-full px-6">
-                  Get notified
-                </Button>
-                <Button variant="outline" className="rounded-full px-6">
-                  Submit an article
-                </Button>
-              </div>
             </div>
           </div>
         </section>
 
-        <section className="container mx-auto px-4 pb-20">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 -mt-12">
-            {PLACEHOLDER_CARDS.map((card) => (
-              <Card
-                key={card.title}
-                className="border border-gray-200 shadow-lg"
-              >
-                <CardHeader>
-                  <div className="flex items-center justify-between text-xs text-gray-500">
-                    <span className="uppercase tracking-[0.15em]">
-                      {card.tag}
-                    </span>
-                    <BookOpen className="h-4 w-4" />
-                  </div>
-                  <CardTitle className="text-lg font-semibold text-gray-900">
-                    {card.title}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="text-sm text-gray-600 space-y-4">
-                  <p>{card.description}</p>
-                  <div className="flex items-center gap-2 text-[#C4302B] font-semibold">
-                    Coming soon <ArrowRight className="h-4 w-4" />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+        <section className="container mx-auto px-4 py-12">
+          {loading && (
+            <div className="flex flex-col items-center justify-center py-20 text-gray-500">
+              <Loader2 className="h-8 w-8 animate-spin text-[#C4302B] mb-4" />
+              <p>Fetching the latest market insights...</p>
+            </div>
+          )}
 
-          <div className="mt-16 grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-8">
-            <Card className="border border-gray-200 shadow-lg">
-              <CardHeader>
-                <CardTitle className="text-xl font-semibold text-gray-900">
-                  Editorial Roadmap
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4 text-sm text-gray-600">
-                <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-                  <div>
-                    <p className="font-semibold text-gray-800">Q2 Launch</p>
-                    <p>City trend reports and monthly outlook.</p>
-                  </div>
-                  <span className="text-xs uppercase tracking-[0.15em] text-gray-500">
-                    Scheduled
-                  </span>
-                </div>
-                <div className="flex items-center justify-between border-b border-gray-100 pb-3">
-                  <div>
-                    <p className="font-semibold text-gray-800">Buyer Clinics</p>
-                    <p>Step-by-step guidance for first-time buyers.</p>
-                  </div>
-                  <span className="text-xs uppercase tracking-[0.15em] text-gray-500">
-                    Planned
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-semibold text-gray-800">
-                      Investor Series
-                    </p>
-                    <p>Yield benchmarks and rental market signals.</p>
-                  </div>
-                  <span className="text-xs uppercase tracking-[0.15em] text-gray-500">
-                    In review
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
+          {error && (
+            <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-center text-red-600 max-w-2xl mx-auto">
+              <p className="font-semibold">Unable to load news feed.</p>
+              <p className="text-sm mt-1">{error}</p>
+            </div>
+          )}
 
-            <Card className="border border-gray-200 shadow-lg bg-gray-900 text-white">
-              <CardHeader>
-                <CardTitle className="text-xl font-semibold">
-                  Get early access
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4 text-sm text-gray-200">
-                <p>
-                  Be the first to receive newsletters and new market reports
-                  once the newsroom goes live.
-                </p>
-                <div className="flex flex-col gap-3">
-                  <input
-                    type="email"
-                    placeholder="Email address"
-                    className="rounded-lg px-4 py-3 text-sm text-gray-900"
-                  />
-                  <Button className="bg-white text-gray-900 hover:bg-gray-100 rounded-lg">
-                    Request access
-                  </Button>
+          {!loading && !error && articles.length > 0 && (
+            <>
+              {/* Top 3 Stories */}
+              <div className="mb-12">
+                <h2 className={`${displayFont.className} text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2`}>
+                  Top Stories
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {topStories.map((article, index) => (
+                    <Card
+                      key={index}
+                      className="group border border-gray-200 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden"
+                    >
+                      {article.thumbnail && (
+                        <div className="relative h-48 w-full overflow-hidden bg-gray-100">
+                          <img
+                            src={article.thumbnail}
+                            alt={article.title}
+                            className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
+                          />
+                        </div>
+                      )}
+                      <CardHeader className="flex-1">
+                        <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
+                          <Calendar className="h-3.5 w-3.5" />
+                          {formatDate(article.pubDate)}
+                        </div>
+                        <CardTitle className="text-lg font-semibold text-gray-900 line-clamp-2 leading-snug group-hover:text-[#C4302B] transition-colors">
+                          <Link href={article.link} target="_blank" rel="noopener noreferrer">
+                            {article.title}
+                          </Link>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <p className="text-sm text-gray-600 line-clamp-3 mb-4">
+                          {cleanDescription(article.description)}
+                        </p>
+                        <Link
+                          href={article.link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#C4302B] hover:text-[#A52521] transition-colors"
+                        >
+                          Read full article <ArrowRight className="h-4 w-4" />
+                        </Link>
+                      </CardContent>
+                    </Card>
+                  ))}
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+
+              {/* Remaining List */}
+              {otherStories.length > 0 && (
+                <div>
+                  <h2 className={`${displayFont.className} text-2xl font-bold text-gray-900 mb-6 border-b border-gray-200 pb-2`}>
+                    More Market Updates
+                  </h2>
+                  <div className="flex flex-col gap-4">
+                    {otherStories.map((article, index) => (
+                      <Link 
+                        href={article.link} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        key={index}
+                        className="group flex flex-col sm:flex-row gap-4 p-4 rounded-xl border border-transparent hover:border-gray-200 hover:bg-white hover:shadow-md transition-all duration-200"
+                      >
+                        {article.thumbnail && (
+                          <div className="hidden sm:block w-32 h-24 shrink-0 overflow-hidden rounded-lg bg-gray-100">
+                            <img
+                              src={article.thumbnail}
+                              alt={article.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                          </div>
+                        )}
+                        <div className="flex-1 flex flex-col justify-center">
+                          <div className="flex items-center gap-2 text-xs text-gray-500 mb-2">
+                            <Calendar className="h-3.5 w-3.5" />
+                            {formatDate(article.pubDate)}
+                          </div>
+                          <h3 className="text-base font-semibold text-gray-900 line-clamp-2 group-hover:text-[#C4302B] transition-colors">
+                            {article.title}
+                          </h3>
+                        </div>
+                        <div className="hidden md:flex items-center text-gray-400 group-hover:text-[#C4302B] transition-colors shrink-0">
+                          <ExternalLink className="h-5 w-5" />
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
         </section>
       </div>
     </Layout>
