@@ -1,3 +1,4 @@
+import { createPortal } from "react-dom";
 import React, {
   useEffect,
   useState,
@@ -11,6 +12,7 @@ import Layout from "@/components/Layout";
 import SeoHead from "@/components/SeoHead";
 import ProjectCard from "@/components/ProjectCard";
 import { Button } from "@/components/ui/button";
+import { PRICE_UNIT_LABELS, formatPriceDisplay } from "@/lib/constants";
 import {
   searchProperties,
   setSelectedCity,
@@ -233,6 +235,366 @@ const BHK_PROPERTY_TYPES = new Set([
   "house",
 ]);
 
+// Renders dropdown/menu content into document.body via a portal, positioned
+// from the trigger's actual screen coordinates. The top search bar's dropdown
+// panels used to be nested (absolute + z-index) inside the sticky search bar,
+// which itself lives inside <main>, a sibling of the page's content sections
+// below it — verified empirically (via getBoundingClientRect/elementFromPoint
+// in a headless browser) that Chromium renders those later sibling sections
+// on top of the sticky bar's overflowing absolute children regardless of the
+// z-index used inside it. A portal sidesteps the whole ancestor-stacking
+// question by rendering straight onto <body> with its own independent,
+// unambiguous z-index — the standard fix real component libraries (Radix,
+// MUI, Headless UI) use for exactly this class of bug.
+function DropdownPortal({ anchorRef, isOpen, align = "left", children }) {
+  const [coords, setCoords] = useState(null);
+
+  useEffect(() => {
+    if (!isOpen || !anchorRef.current) {
+      setCoords(null);
+      return;
+    }
+    const updatePosition = () => {
+      if (!anchorRef.current) return;
+      const rect = anchorRef.current.getBoundingClientRect();
+      setCoords({
+        top: rect.bottom + window.scrollY + 8,
+        left: align === "right" ? undefined : rect.left + window.scrollX,
+        right:
+          align === "right"
+            ? window.innerWidth - rect.right - window.scrollX
+            : undefined,
+      });
+    };
+    updatePosition();
+    window.addEventListener("scroll", updatePosition, true);
+    window.addEventListener("resize", updatePosition);
+    return () => {
+      window.removeEventListener("scroll", updatePosition, true);
+      window.removeEventListener("resize", updatePosition);
+    };
+  }, [isOpen, anchorRef, align]);
+
+  if (!isOpen || !coords || typeof document === "undefined") return null;
+
+  return createPortal(
+    <div
+      data-dropdown-portal="true"
+      style={{
+        position: "absolute",
+        top: coords.top,
+        left: coords.left,
+        right: coords.right,
+        zIndex: 99999,
+      }}
+    >
+      {children}
+    </div>,
+    document.body,
+  );
+}
+
+// Defined at module scope (not inside BrowseProperty) so its identity stays
+// stable across renders — otherwise React treats it as a brand-new component
+// type on every parent re-render (e.g. opening a dropdown) and remounts every
+// card in the list, which is what caused the results list to visibly flicker.
+function PropertyCard({
+  property,
+  viewMode,
+  isLiked,
+  isAuthenticated,
+  onLikeToggle,
+  onContactClick,
+}) {
+  const mainImage = property.photos?.[0]?.url || "/placeholder-property.jpg";
+  const photoCount = property.photos?.length || 0;
+  const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
+
+  const handleShare = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const propertyUrl = `${baseUrl}/property/${property._id}`;
+    const title = `${property.bhk_type || ""} ${property.property_type?.replace(/_/g, " ")} for ${property.usage_type === "rent" ? "Rent" : "Sale"} in ${property.address?.city}`;
+    const price =
+      property.price >= 10000000
+        ? `₹${(property.price / 10000000).toFixed(2)} Cr`
+        : property.price >= 100000
+          ? `₹${(property.price / 100000).toFixed(2)} Lac`
+          : `₹${property.price?.toLocaleString("en-IN")}`;
+    const message = `Check out this property: ${title}\nPrice: ${price}\nArea: ${property.square_feet || property.covered_area} sqft\n\n${propertyUrl}`;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, "_blank");
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow"
+    >
+      <div
+        className={`flex ${viewMode === "list" ? "flex-col md:flex-row" : "flex-col"}`}
+      >
+        <div
+          className={`relative ${viewMode === "list" ? "w-full md:w-72 h-52 md:h-48" : "w-full h-48"}`}
+        >
+          <Link href={`/property/${property._id}`}>
+            <img
+              src={mainImage}
+              alt={property.title || "Property"}
+              className="w-full h-full object-cover"
+            />
+          </Link>
+          {photoCount > 1 && (
+            <div className="absolute top-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
+              {photoCount}+ Photos
+            </div>
+          )}
+          <div className="absolute bottom-2 right-2 text-white text-xs bg-black/50 px-2 py-1 rounded">
+            Posted: {new Date(property.createdAt).toLocaleDateString()}
+          </div>
+        </div>
+
+        <div className="flex-1 p-4">
+          <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-3">
+            <div className="flex-1">
+              <Link href={`/property/${property._id}`}>
+                <h3 className="text-base font-semibold text-gray-800 hover:text-primary">
+                  {property.bhk_type && `${property.bhk_type} `}
+                  {property.property_type
+                    ?.replace(/_/g, " ")
+                    .replace(/\b\w/g, (l) => l.toUpperCase())}{" "}
+                  for {property.usage_type === "rent" ? "Rent" : "Sale"} in{" "}
+                  {property.address?.locality || property.address?.city}
+                </h3>
+              </Link>
+              <div className="flex items-baseline gap-2 mt-1">
+                <span className="text-lg font-semibold text-gray-900">
+                  {property.price_text ||
+                    formatPriceDisplay(property.price, property.price_max)}
+                </span>
+                {property.price_per_sqft && (
+                  <span className="text-xs text-gray-500">
+                    ₹{property.price_per_sqft.toLocaleString()}/
+                    {PRICE_UNIT_LABELS[property.price_unit] || "Sq. Ft."}
+                  </span>
+                )}
+              </div>
+              {property.project_name && (
+                <p className="text-sm text-primary mt-1">
+                  {property.project_name}
+                </p>
+              )}
+              {property.google_maps_link && (
+                <a
+                  href={property.google_maps_link}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex items-center gap-1 text-xs text-primary hover:underline mt-1"
+                >
+                  <MapPin className="h-3 w-3" />
+                  View on Map
+                </a>
+              )}
+
+              <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-gray-600">
+                <div className="flex items-center gap-1 md:border-r md:border-gray-200 md:pr-6">
+                  <Maximize className="h-4 w-4" />
+                  <div>
+                    <div className="text-xs text-gray-400">SUPER AREA</div>
+                    <div className="font-medium">
+                      {property.covered_area || property.square_feet} sqft
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1 md:border-r md:border-gray-200 md:pr-6">
+                  <Calendar className="h-4 w-4" />
+                  <div>
+                    <div className="text-xs text-gray-400">STATUS</div>
+                    <div className="font-medium">
+                      {property.possession_status === "ready_to_move"
+                        ? "Ready to Move"
+                        : property.possession_status === "under_construction"
+                          ? "Under Construction"
+                          : "Available"}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Layers className="h-4 w-4" />
+                  <div>
+                    <div className="text-xs text-gray-400">FLOOR</div>
+                    <div className="font-medium">
+                      {property.floor_number || "N/A"}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <p className="text-sm text-gray-500 mt-2 line-clamp-1">
+                {property.facing &&
+                  `${property.facing.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())} Facing, `}
+                {property.furnishing &&
+                  `${property.furnishing.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}, `}
+                {property.nums_bedrooms} Bedrooms, {property.nums_bathrooms}{" "}
+                Bathrooms
+              </p>
+
+              {/* Key Amenities */}
+              {property.amenities && (
+                <div className="flex flex-wrap items-center gap-2 mt-3">
+                  {property.amenities.reserved_parking && (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-50 text-green-700 text-xs rounded-full">
+                      <Check className="h-3 w-3" /> Parking
+                    </span>
+                  )}
+                  {property.amenities.lift && (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-full">
+                      <Check className="h-3 w-3" /> Lift
+                    </span>
+                  )}
+                  {property.amenities.power_backup && (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-50 text-yellow-700 text-xs rounded-full">
+                      <Check className="h-3 w-3" /> Power Backup
+                    </span>
+                  )}
+                  {property.amenities.security && (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-purple-50 text-purple-700 text-xs rounded-full">
+                      <Check className="h-3 w-3" /> Security
+                    </span>
+                  )}
+                  {property.amenities.gymnasium && (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-orange-50 text-orange-700 text-xs rounded-full">
+                      <Check className="h-3 w-3" /> Gym
+                    </span>
+                  )}
+                  {property.amenities.swimming_pool && (
+                    <span className="inline-flex items-center gap-1 px-2 py-1 bg-cyan-50 text-cyan-700 text-xs rounded-full">
+                      <Check className="h-3 w-3" /> Pool
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+
+            <div className="text-left md:text-right md:ml-4">
+              <div className="flex items-center gap-2 mb-2">
+                <button
+                  onClick={(event) => onLikeToggle(event, property._id)}
+                  className={`p-2 rounded-full transition-colors ${
+                    isLiked
+                      ? "bg-red-50 text-primary"
+                      : "hover:bg-gray-100 text-gray-400"
+                  }`}
+                  aria-label={
+                    isLiked ? "Remove from favorites" : "Add to favorites"
+                  }
+                >
+                  <Heart
+                    className={`h-5 w-5 ${isLiked ? "fill-current" : ""}`}
+                  />
+                </button>
+                <button
+                  onClick={handleShare}
+                  className="p-2 rounded-full hover:bg-green-50 hover:text-green-600 transition-colors"
+                  title="Share on WhatsApp"
+                >
+                  <Share2 className="h-5 w-5 text-gray-400 hover:text-green-600" />
+                </button>
+              </div>
+              {property.builder?._id ? (
+                <Link
+                  href={`/builders/${property.builder._id}`}
+                  className="flex items-center gap-2 md:justify-end group"
+                >
+                  <div className="w-9 h-9 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    {property.builder.logo?.url ? (
+                      <img
+                        src={property.builder.logo.url}
+                        alt={property.builder.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <Building2 className="h-5 w-5 text-primary" />
+                    )}
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium group-hover:text-primary">
+                      {property.builder.name}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {property.posted_by_type?.replace(/\b\w/g, (l) =>
+                        l.toUpperCase(),
+                      ) || "Owner"}
+                    </div>
+                  </div>
+                </Link>
+              ) : (
+                <div className="flex items-center gap-2 md:justify-end">
+                  <div className="w-9 h-9 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <Building2 className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium">
+                      {property.builder_name || "Property Owner"}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {property.posted_by_type?.replace(/\b\w/g, (l) =>
+                        l.toUpperCase(),
+                      ) || "Owner"}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <div className="flex flex-col md:flex-row md:items-center md:justify-end gap-3 mt-4 pt-4 border-t border-gray-100">
+            <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+              {isAuthenticated ? (
+                <Button
+                  onClick={() =>
+                    onContactClick({
+                      name:
+                        property.contact_person_name ||
+                        property.uploaded_by?.username ||
+                        property.builder_name ||
+                        "Sales Person",
+                      phone:
+                        property.contact_phone || property.uploaded_by?.phone,
+                      whatsapp:
+                        property.contact_whatsapp ||
+                        property.contact_phone ||
+                        property.uploaded_by?.phone,
+                      city: property.uploaded_by?.city,
+                      propertyTitle: `${property.bhk_type || ""} ${property.property_type?.replace(/_/g, " ")} in ${property.address?.city}`,
+                      propertyId: property._id,
+                    })
+                  }
+                  className="bg-primary hover:bg-primary/90 text-white w-full sm:w-auto"
+                >
+                  <Phone className="h-4 w-4 mr-2" />
+                  Contact Sales Person
+                </Button>
+              ) : (
+                <Link
+                  href={`/login?redirect=/property/${property._id}`}
+                  className="w-full sm:w-auto"
+                >
+                  <Button className="bg-primary hover:bg-primary/90 text-white w-full sm:w-auto">
+                    Login to Contact
+                  </Button>
+                </Link>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}
+
 export default function BrowseProperty() {
   const router = useRouter();
   const dispatch = useDispatch();
@@ -253,6 +615,7 @@ export default function BrowseProperty() {
   // Filter states
   const [filters, setFilters] = useState({
     cities: [],
+    usageType: "sale",
     propertyCategory: "residential",
     propertyTypes: [],
     bhkTypes: [],
@@ -299,11 +662,17 @@ export default function BrowseProperty() {
   const [contactModalOpen, setContactModalOpen] = useState(false);
   const [selectedPropertyContact, setSelectedPropertyContact] = useState(null);
   const dropdownRef = useRef(null);
+  const usageTypeAnchorRef = useRef(null);
+  const cityAnchorRef = useRef(null);
+  const propertyTypeAnchorRef = useRef(null);
+  const budgetAnchorRef = useRef(null);
   const prevSelectedCityRef = useRef(selectedCity);
   const isInitialMount = useRef(true);
   const prevCitiesRef = useRef([]);
   const shouldSearchOnFilterChange = useRef(false);
   const prevQueryString = useRef("");
+  const isInitialSortMount = useRef(true);
+  const isInitialUsageTypeMount = useRef(true);
   const selectedPropertyTypes = filters.propertyTypes;
   const hasSelectedPropertyTypes = selectedPropertyTypes.length > 0;
   const hasLandTypes = selectedPropertyTypes.some((type) =>
@@ -409,6 +778,7 @@ export default function BrowseProperty() {
 
     const newFilters = {
       cities: cityListFromQuery,
+      usageType: query.usageType || "sale",
       propertyCategory: query.category || "residential",
       propertyTypes: query.type ? query.type.split(",") : [],
       bhkTypes: query.bhk ? query.bhk.split(",") : [],
@@ -422,6 +792,15 @@ export default function BrowseProperty() {
       postedBy: query.postedBy ? query.postedBy.split(",") : [],
       saleType: query.saleType ? query.saleType.split(",") : [],
       furnishing: query.furnishing ? query.furnishing.split(",") : [],
+      ownership: query.ownership ? query.ownership.split(",") : [],
+      amenities: query.amenities ? query.amenities.split(",") : [],
+      facing: query.facing ? query.facing.split(",") : [],
+      floor: query.floor ? query.floor.split(",") : [],
+      bathrooms: query.bathrooms ? query.bathrooms.split(",") : [],
+      postedSince: query.postedSince || "",
+      hasPhotos: query.hasPhotos === "true",
+      hasVideos: query.hasVideos === "true",
+      verifiedOnly: query.verifiedOnly === "true",
     };
 
     setFilters((prev) => ({
@@ -479,6 +858,24 @@ export default function BrowseProperty() {
     }
   }, [filters.cities]);
 
+  // Sort order should apply immediately, like changing the city does
+  useEffect(() => {
+    if (isInitialSortMount.current) {
+      isInitialSortMount.current = false;
+      return;
+    }
+    handleSearch(1);
+  }, [sortBy]);
+
+  // Buy/Rent is a primary top-bar toggle — apply immediately, like city
+  useEffect(() => {
+    if (isInitialUsageTypeMount.current) {
+      isInitialUsageTypeMount.current = false;
+      return;
+    }
+    handleSearch(1);
+  }, [filters.usageType]);
+
   useEffect(() => {
     if (!shouldShowBhkFilters && filters.bhkTypes.length > 0) {
       setFilters((prev) => ({ ...prev, bhkTypes: [] }));
@@ -487,7 +884,16 @@ export default function BrowseProperty() {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+      // Dropdown panels render into a body-level portal, so they're outside
+      // dropdownRef's DOM subtree even while "open" — clicks inside them must
+      // not be treated as outside clicks, or selecting an option would close
+      // the menu on mousedown before the option's own click can register.
+      const insidePortal = event.target.closest?.('[data-dropdown-portal="true"]');
+      if (
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target) &&
+        !insidePortal
+      ) {
         setOpenDropdown(null);
       }
     };
@@ -535,6 +941,7 @@ export default function BrowseProperty() {
     const shouldApplyBhkFilter = shouldShowBhkFilters;
     const searchFilters = {
       city: effectiveCities.join(","),
+      usage_type: filters.usageType,
       property_category: filters.propertyCategory,
       property_type: filters.propertyTypes.join(","),
       bhk_type: shouldApplyBhkFilter ? filters.bhkTypes.join(",") : "",
@@ -568,6 +975,7 @@ export default function BrowseProperty() {
   const handleClearAll = () => {
     setFilters({
       cities: filters.cities,
+      usageType: filters.usageType,
       propertyCategory: filters.propertyCategory,
       propertyTypes: [],
       bhkTypes: [],
@@ -682,266 +1090,6 @@ export default function BrowseProperty() {
     </div>
   );
 
-  // Property Card Component - Magic Bricks Style
-  const PropertyCard = ({ property }) => {
-    const mainImage = property.photos?.[0]?.url || "/placeholder-property.jpg";
-    const photoCount = property.photos?.length || 0;
-    const baseUrl = typeof window !== "undefined" ? window.location.origin : "";
-    const isLiked = likedIds.has(property._id);
-
-    const handleShare = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const propertyUrl = `${baseUrl}/property/${property._id}`;
-      const title = `${property.bhk_type || ""} ${property.property_type?.replace(/_/g, " ")} for ${property.usage_type === "rent" ? "Rent" : "Sale"} in ${property.address?.city}`;
-      const price =
-        property.price >= 10000000
-          ? `₹${(property.price / 10000000).toFixed(2)} Cr`
-          : property.price >= 100000
-            ? `₹${(property.price / 100000).toFixed(2)} Lac`
-            : `₹${property.price?.toLocaleString("en-IN")}`;
-      const message = `Check out this property: ${title}\nPrice: ${price}\nArea: ${property.square_feet || property.covered_area} sqft\n\n${propertyUrl}`;
-      const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
-      window.open(whatsappUrl, "_blank");
-    };
-
-    return (
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow"
-      >
-        <div
-          className={`flex ${viewMode === "list" ? "flex-col md:flex-row" : "flex-col"}`}
-        >
-          <div
-            className={`relative ${viewMode === "list" ? "w-full md:w-72 h-52 md:h-48" : "w-full h-48"}`}
-          >
-            <Link href={`/property/${property._id}`}>
-              <img
-                src={mainImage}
-                alt={property.title || "Property"}
-                className="w-full h-full object-cover"
-              />
-            </Link>
-            {photoCount > 1 && (
-              <div className="absolute top-2 left-2 bg-black/70 text-white text-xs px-2 py-1 rounded">
-                {photoCount}+ Photos
-              </div>
-            )}
-            <div className="absolute bottom-2 right-2 text-white text-xs bg-black/50 px-2 py-1 rounded">
-              Posted: {new Date(property.createdAt).toLocaleDateString()}
-            </div>
-          </div>
-
-          <div className="flex-1 p-4">
-            <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-3">
-              <div className="flex-1">
-                <Link href={`/property/${property._id}`}>
-                  <h3 className="text-base font-semibold text-gray-800 hover:text-primary">
-                    {property.bhk_type && `${property.bhk_type} `}
-                    {property.property_type
-                      ?.replace(/_/g, " ")
-                      .replace(/\b\w/g, (l) => l.toUpperCase())}{" "}
-                    for {property.usage_type === "rent" ? "Rent" : "Sale"} in{" "}
-                    {property.address?.locality || property.address?.city}
-                  </h3>
-                </Link>
-                <div className="flex items-baseline gap-2 mt-1">
-                  <span className="text-lg font-semibold text-gray-900">
-                    {property.price_text || formatPrice(property.price)}
-                  </span>
-                  {property.price_per_sqft && (
-                    <span className="text-xs text-gray-500">
-                      ₹{property.price_per_sqft.toLocaleString()}/sqft
-                    </span>
-                  )}
-                </div>
-                {property.project_name && (
-                  <p className="text-sm text-primary mt-1">
-                    {property.project_name}
-                  </p>
-                )}
-
-                <div className="flex flex-wrap items-center gap-4 mt-3 text-sm text-gray-600">
-                  <div className="flex items-center gap-1 md:border-r md:border-gray-200 md:pr-6">
-                    <Maximize className="h-4 w-4" />
-                    <div>
-                      <div className="text-xs text-gray-400">SUPER AREA</div>
-                      <div className="font-medium">
-                        {property.covered_area || property.square_feet} sqft
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1 md:border-r md:border-gray-200 md:pr-6">
-                    <Calendar className="h-4 w-4" />
-                    <div>
-                      <div className="text-xs text-gray-400">STATUS</div>
-                      <div className="font-medium">
-                        {property.possession_status === "ready_to_move"
-                          ? "Ready to Move"
-                          : property.possession_status === "under_construction"
-                            ? "Under Construction"
-                            : "Available"}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Layers className="h-4 w-4" />
-                    <div>
-                      <div className="text-xs text-gray-400">FLOOR</div>
-                      <div className="font-medium">
-                        {property.floor_number || "N/A"}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <p className="text-sm text-gray-500 mt-2 line-clamp-1">
-                  {property.facing &&
-                    `${property.facing.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())} Facing, `}
-                  {property.furnishing &&
-                    `${property.furnishing.replace(/_/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())}, `}
-                  {property.nums_bedrooms} Bedrooms, {property.nums_bathrooms}{" "}
-                  Bathrooms
-                </p>
-
-                {/* Key Amenities */}
-                {property.amenities && (
-                  <div className="flex flex-wrap items-center gap-2 mt-3">
-                    {property.amenities.reserved_parking && (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-green-50 text-green-700 text-xs rounded-full">
-                        <Check className="h-3 w-3" /> Parking
-                      </span>
-                    )}
-                    {property.amenities.lift && (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-blue-50 text-blue-700 text-xs rounded-full">
-                        <Check className="h-3 w-3" /> Lift
-                      </span>
-                    )}
-                    {property.amenities.power_backup && (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-yellow-50 text-yellow-700 text-xs rounded-full">
-                        <Check className="h-3 w-3" /> Power Backup
-                      </span>
-                    )}
-                    {property.amenities.security && (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-purple-50 text-purple-700 text-xs rounded-full">
-                        <Check className="h-3 w-3" /> Security
-                      </span>
-                    )}
-                    {property.amenities.gymnasium && (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-orange-50 text-orange-700 text-xs rounded-full">
-                        <Check className="h-3 w-3" /> Gym
-                      </span>
-                    )}
-                    {property.amenities.swimming_pool && (
-                      <span className="inline-flex items-center gap-1 px-2 py-1 bg-cyan-50 text-cyan-700 text-xs rounded-full">
-                        <Check className="h-3 w-3" /> Pool
-                      </span>
-                    )}
-                  </div>
-                )}
-              </div>
-
-              <div className="text-left md:text-right md:ml-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <button
-                    onClick={(event) => handleLikeToggle(event, property._id)}
-                    className={`p-2 rounded-full transition-colors ${
-                      isLiked
-                        ? "bg-red-50 text-primary"
-                        : "hover:bg-gray-100 text-gray-400"
-                    }`}
-                    aria-label={
-                      isLiked ? "Remove from favorites" : "Add to favorites"
-                    }
-                  >
-                    <Heart
-                      className={`h-5 w-5 ${isLiked ? "fill-current" : ""}`}
-                    />
-                  </button>
-                  <button
-                    onClick={handleShare}
-                    className="p-2 rounded-full hover:bg-green-50 hover:text-green-600 transition-colors"
-                    title="Share on WhatsApp"
-                  >
-                    <Share2 className="h-5 w-5 text-gray-400 hover:text-green-600" />
-                  </button>
-                </div>
-                <div className="flex items-center gap-2 md:justify-end">
-                  <div className="w-9 h-9 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center flex-shrink-0">
-                    {property.builder?.logo?.url ? (
-                      <img
-                        src={property.builder.logo.url}
-                        alt={property.builder.name}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <Building2 className="h-5 w-5 text-primary" />
-                    )}
-                  </div>
-                  <div>
-                    <div className="text-sm font-medium">
-                      {property.builder?.name ||
-                        property.builder_name ||
-                        "Property Owner"}
-                    </div>
-                    <div className="text-xs text-gray-500">
-                      {property.posted_by_type?.replace(/\b\w/g, (l) =>
-                        l.toUpperCase(),
-                      ) || "Owner"}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="flex flex-col md:flex-row md:items-center md:justify-end gap-3 mt-4 pt-4 border-t border-gray-100">
-              <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
-                {isAuthenticated ? (
-                  <Button
-                    onClick={() => {
-                      setSelectedPropertyContact({
-                        name:
-                          property.contact_person_name ||
-                          property.uploaded_by?.username ||
-                          property.builder_name ||
-                          "Sales Person",
-                        phone:
-                          property.contact_phone || property.uploaded_by?.phone,
-                        whatsapp:
-                          property.contact_whatsapp ||
-                          property.contact_phone ||
-                          property.uploaded_by?.phone,
-                        city: property.uploaded_by?.city,
-                        propertyTitle: `${property.bhk_type || ""} ${property.property_type?.replace(/_/g, " ")} in ${property.address?.city}`,
-                        propertyId: property._id,
-                      });
-                      setContactModalOpen(true);
-                    }}
-                    className="bg-primary hover:bg-primary/90 text-white w-full sm:w-auto"
-                  >
-                    <Phone className="h-4 w-4 mr-2" />
-                    Contact Sales Person
-                  </Button>
-                ) : (
-                  <Link
-                    href={`/login?redirect=/property/${property._id}`}
-                    className="w-full sm:w-auto"
-                  >
-                    <Button className="bg-primary hover:bg-primary/90 text-white w-full sm:w-auto">
-                      Login to Contact
-                    </Button>
-                  </Link>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </motion.div>
-    );
-  };
-
   return (
     <Layout>
       <SeoHead
@@ -956,11 +1104,54 @@ export default function BrowseProperty() {
             className="flex flex-col md:flex-row md:items-center gap-2 bg-white rounded-2xl md:rounded-full px-4 py-2 shadow-lg overflow-visible"
             ref={dropdownRef}
           >
-            <button className="flex items-center justify-between md:justify-start gap-2 text-sm font-medium text-gray-700 hover:text-primary px-3 py-2 rounded-xl md:rounded-full w-full md:w-auto">
-              Buy <ChevronDown className="h-4 w-4" />
-            </button>
+            <div className="relative w-full md:w-auto" ref={usageTypeAnchorRef}>
+              <button
+                type="button"
+                onClick={() =>
+                  setOpenDropdown(openDropdown === "usageType" ? null : "usageType")
+                }
+                className="flex items-center justify-between md:justify-start gap-2 text-sm font-medium text-gray-700 hover:text-primary px-3 py-2 rounded-xl md:rounded-full w-full md:w-auto"
+              >
+                {filters.usageType === "rent" ? "Rent" : "Buy"}{" "}
+                <ChevronDown className="h-4 w-4" />
+              </button>
+              <DropdownPortal
+                anchorRef={usageTypeAnchorRef}
+                isOpen={openDropdown === "usageType"}
+              >
+                <motion.div
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="w-40 bg-white border border-gray-200 rounded-xl shadow-lg overflow-hidden"
+                >
+                  {[
+                    { label: "Buy", value: "sale" },
+                    { label: "Rent", value: "rent" },
+                  ].map((option) => (
+                    <button
+                      type="button"
+                      key={option.value}
+                      onClick={() => {
+                        setFilters((prev) => ({
+                          ...prev,
+                          usageType: option.value,
+                        }));
+                        setOpenDropdown(null);
+                      }}
+                      className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-50 ${
+                        filters.usageType === option.value
+                          ? "text-primary font-semibold"
+                          : ""
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </motion.div>
+              </DropdownPortal>
+            </div>
 
-            <div className="relative w-full md:w-auto z-[1000]">
+            <div className="relative w-full md:w-auto" ref={cityAnchorRef}>
               <div
                 role="button"
                 tabIndex={0}
@@ -1005,60 +1196,60 @@ export default function BrowseProperty() {
                 <ChevronDown className="h-4 w-4 text-gray-500" />
               </div>
 
-              <AnimatePresence>
-                {openDropdown === "cities" && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 6 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 6 }}
-                    className="absolute z-[9999] mt-2 w-full md:w-64 bg-white border border-gray-200 rounded-xl shadow-lg max-h-64 overflow-y-auto"
-                  >
-                    <div className="p-3 border-b border-gray-100">
-                      <input
-                        type="text"
-                        value={citySearch}
-                        onChange={(e) => setCitySearch(e.target.value)}
-                        placeholder="Search city"
-                        className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none"
-                      />
+              <DropdownPortal
+                anchorRef={cityAnchorRef}
+                isOpen={openDropdown === "cities"}
+              >
+                <motion.div
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="w-64 bg-white border border-gray-200 rounded-xl shadow-lg max-h-64 overflow-y-auto"
+                >
+                  <div className="p-3 border-b border-gray-100">
+                    <input
+                      type="text"
+                      value={citySearch}
+                      onChange={(e) => setCitySearch(e.target.value)}
+                      placeholder="Search city"
+                      className="w-full text-sm border border-gray-200 rounded-lg px-3 py-2 focus:outline-none"
+                    />
+                  </div>
+                  {INDIA_CITIES.filter((city) =>
+                    city.name
+                      .toLowerCase()
+                      .includes(citySearch.toLowerCase()),
+                  )
+                    .slice(0, 100)
+                    .map((city) => (
+                      <button
+                        type="button"
+                        key={city.name}
+                        onClick={() => {
+                          setFilters((prev) => ({
+                            ...prev,
+                            cities: prev.cities.includes(city.name)
+                              ? prev.cities
+                              : [...prev.cities, city.name],
+                          }));
+                          setCitySearch("");
+                          setOpenDropdown(null);
+                        }}
+                        className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
+                      >
+                        {city.name}, {city.state}
+                      </button>
+                    ))}
+                  {INDIA_CITIES.filter((city) =>
+                    city.name
+                      .toLowerCase()
+                      .includes(citySearch.toLowerCase()),
+                  ).length === 0 && (
+                    <div className="px-4 py-3 text-sm text-gray-500">
+                      No cities found
                     </div>
-                    {INDIA_CITIES.filter((city) =>
-                      city.name
-                        .toLowerCase()
-                        .includes(citySearch.toLowerCase()),
-                    )
-                      .slice(0, 100)
-                      .map((city) => (
-                        <button
-                          type="button"
-                          key={city.name}
-                          onClick={() => {
-                            setFilters((prev) => ({
-                              ...prev,
-                              cities: prev.cities.includes(city.name)
-                                ? prev.cities
-                                : [...prev.cities, city.name],
-                            }));
-                            setCitySearch("");
-                            setOpenDropdown(null);
-                          }}
-                          className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50"
-                        >
-                          {city.name}, {city.state}
-                        </button>
-                      ))}
-                    {INDIA_CITIES.filter((city) =>
-                      city.name
-                        .toLowerCase()
-                        .includes(citySearch.toLowerCase()),
-                    ).length === 0 && (
-                      <div className="px-4 py-3 text-sm text-gray-500">
-                        No cities found
-                      </div>
-                    )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+                  )}
+                </motion.div>
+              </DropdownPortal>
             </div>
 
             <div className="w-full md:w-auto">
@@ -1081,16 +1272,47 @@ export default function BrowseProperty() {
               </select>
             </div>
 
-            <button
-              onClick={() =>
-                setOpenDropdown(
-                  openDropdown === "propertyType" ? null : "propertyType",
-                )
-              }
-              className="flex items-center justify-between md:justify-start gap-2 text-sm font-medium text-gray-700 hover:text-primary px-3 py-2 border border-gray-200 rounded-xl md:rounded-lg w-full md:w-auto"
-            >
-              {getSearchPropertyTypeLabel()} <ChevronDown className="h-4 w-4" />
-            </button>
+            <div className="relative w-full md:w-auto" ref={propertyTypeAnchorRef}>
+              <button
+                onClick={() =>
+                  setOpenDropdown(
+                    openDropdown === "propertyType" ? null : "propertyType",
+                  )
+                }
+                className="flex items-center justify-between md:justify-start gap-2 text-sm font-medium text-gray-700 hover:text-primary px-3 py-2 border border-gray-200 rounded-xl md:rounded-lg w-full md:w-auto"
+              >
+                {getSearchPropertyTypeLabel()} <ChevronDown className="h-4 w-4" />
+              </button>
+              <DropdownPortal
+                anchorRef={propertyTypeAnchorRef}
+                isOpen={openDropdown === "propertyType"}
+              >
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-white rounded-lg shadow-xl border border-gray-200 p-4"
+                  style={{ minWidth: "240px" }}
+                >
+                  <div className="grid grid-cols-1 gap-2">
+                    {SEARCH_PROPERTY_TYPES.map((option) => (
+                      <button
+                        key={option.value}
+                        type="button"
+                        onClick={() =>
+                          toggleArrayFilter("propertyTypes", option.value)
+                        }
+                        className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm hover:bg-gray-50 ${filters.propertyTypes.includes(option.value) ? "bg-red-50 text-primary" : "text-gray-700"}`}
+                      >
+                        <span>{option.label}</span>
+                        {filters.propertyTypes.includes(option.value) && (
+                          <Check className="h-4 w-4" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
+              </DropdownPortal>
+            </div>
 
             <input
               type="text"
@@ -1125,14 +1347,74 @@ export default function BrowseProperty() {
 
             <div className="hidden md:block border-l border-gray-200 h-8" />
 
-            <button
-              onClick={() =>
-                setOpenDropdown(openDropdown === "budget" ? null : "budget")
-              }
-              className="flex items-center justify-between md:justify-start gap-2 text-sm font-medium text-gray-700 hover:text-primary px-3 py-2 border border-gray-200 rounded-xl md:rounded-lg w-full md:w-auto"
-            >
-              Budget <ChevronDown className="h-4 w-4" />
-            </button>
+            <div className="relative w-full md:w-auto" ref={budgetAnchorRef}>
+              <button
+                onClick={() =>
+                  setOpenDropdown(openDropdown === "budget" ? null : "budget")
+                }
+                className="flex items-center justify-between md:justify-start gap-2 text-sm font-medium text-gray-700 hover:text-primary px-3 py-2 border border-gray-200 rounded-xl md:rounded-lg w-full md:w-auto"
+              >
+                Budget <ChevronDown className="h-4 w-4" />
+              </button>
+              <DropdownPortal
+                anchorRef={budgetAnchorRef}
+                isOpen={openDropdown === "budget"}
+                align="right"
+              >
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-white rounded-lg shadow-xl border border-gray-200 p-4"
+                  style={{ minWidth: "300px" }}
+                >
+                  <div className="flex border-b border-gray-200 mb-3">
+                    <button
+                      onClick={() => setBudgetTab("min")}
+                      className={`flex-1 pb-2 text-sm font-medium ${budgetTab === "min" ? "text-primary border-b-2 border-primary" : "text-gray-500"}`}
+                    >
+                      Min Price
+                    </button>
+                    <button
+                      onClick={() => setBudgetTab("max")}
+                      className={`flex-1 pb-2 text-sm font-medium ${budgetTab === "max" ? "text-primary border-b-2 border-primary" : "text-gray-500"}`}
+                    >
+                      Max Price
+                    </button>
+                  </div>
+                  <div>
+                    {(budgetTab === "min"
+                      ? FILTER_OPTIONS.budgetOptions.min
+                      : FILTER_OPTIONS.budgetOptions.max
+                    ).map((option) => (
+                      <button
+                        key={option.value}
+                        onClick={() => {
+                          if (budgetTab === "min")
+                            setFilters((prev) => ({
+                              ...prev,
+                              minPrice: option.value,
+                            }));
+                          else
+                            setFilters((prev) => ({
+                              ...prev,
+                              maxPrice: option.value,
+                            }));
+                        }}
+                        className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 rounded ${
+                          (budgetTab === "min"
+                            ? filters.minPrice
+                            : filters.maxPrice) === option.value
+                            ? "bg-red-50 text-primary"
+                            : ""
+                        }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </motion.div>
+              </DropdownPortal>
+            </div>
 
             {filters.propertyTypes.length > 0 && (
               <div className="flex items-center gap-1 bg-gray-100 rounded-full px-3 py-1.5 text-sm">
@@ -1202,90 +1484,6 @@ export default function BrowseProperty() {
             </Button>
           </div>
 
-          <AnimatePresence>
-            {openDropdown === "propertyType" && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="absolute left-0 right-0 md:right-auto md:left-auto mt-2 bg-white rounded-lg shadow-xl border border-gray-200 p-4 z-[9999]"
-                style={{ minWidth: "240px" }}
-              >
-                <div className="grid grid-cols-1 gap-2">
-                  {SEARCH_PROPERTY_TYPES.map((option) => (
-                    <button
-                      key={option.value}
-                      type="button"
-                      onClick={() =>
-                        toggleArrayFilter("propertyTypes", option.value)
-                      }
-                      className={`flex items-center justify-between px-3 py-2 rounded-lg text-sm hover:bg-gray-50 ${filters.propertyTypes.includes(option.value) ? "bg-red-50 text-primary" : "text-gray-700"}`}
-                    >
-                      <span>{option.label}</span>
-                      {filters.propertyTypes.includes(option.value) && (
-                        <Check className="h-4 w-4" />
-                      )}
-                    </button>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-            {openDropdown === "budget" && (
-              <motion.div
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -10 }}
-                className="absolute left-0 right-0 md:right-0 md:left-auto mt-2 bg-white rounded-lg shadow-xl border border-gray-200 p-4 z-[9999]"
-                style={{ minWidth: "300px" }}
-              >
-                <div className="flex border-b border-gray-200 mb-3">
-                  <button
-                    onClick={() => setBudgetTab("min")}
-                    className={`flex-1 pb-2 text-sm font-medium ${budgetTab === "min" ? "text-primary border-b-2 border-primary" : "text-gray-500"}`}
-                  >
-                    Min Price
-                  </button>
-                  <button
-                    onClick={() => setBudgetTab("max")}
-                    className={`flex-1 pb-2 text-sm font-medium ${budgetTab === "max" ? "text-primary border-b-2 border-primary" : "text-gray-500"}`}
-                  >
-                    Max Price
-                  </button>
-                </div>
-                <div>
-                  {(budgetTab === "min"
-                    ? FILTER_OPTIONS.budgetOptions.min
-                    : FILTER_OPTIONS.budgetOptions.max
-                  ).map((option) => (
-                    <button
-                      key={option.value}
-                      onClick={() => {
-                        if (budgetTab === "min")
-                          setFilters((prev) => ({
-                            ...prev,
-                            minPrice: option.value,
-                          }));
-                        else
-                          setFilters((prev) => ({
-                            ...prev,
-                            maxPrice: option.value,
-                          }));
-                      }}
-                      className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 rounded ${
-                        (budgetTab === "min"
-                          ? filters.minPrice
-                          : filters.maxPrice) === option.value
-                          ? "bg-red-50 text-primary"
-                          : ""
-                      }`}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
         </div>
       </div>
 
@@ -1834,7 +2032,18 @@ export default function BrowseProperty() {
                           variant={viewMode === "grid" ? "tile" : "row"}
                         />
                       ) : (
-                        <PropertyCard key={property._id} property={property} />
+                        <PropertyCard
+                          key={property._id}
+                          property={property}
+                          viewMode={viewMode}
+                          isLiked={likedIds.has(property._id)}
+                          isAuthenticated={isAuthenticated}
+                          onLikeToggle={handleLikeToggle}
+                          onContactClick={(contact) => {
+                            setSelectedPropertyContact(contact);
+                            setContactModalOpen(true);
+                          }}
+                        />
                       ),
                     )}
                   </div>
