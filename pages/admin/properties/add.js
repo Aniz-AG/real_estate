@@ -34,6 +34,12 @@ import {
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { PRICE_UNITS } from "@/lib/constants";
+import {
+  compressImage,
+  compressImages,
+  formatBytes,
+  MAX_UPLOAD_PAYLOAD_BYTES,
+} from "@/lib/imageCompression";
 
 // Form Options
 const FORM_OPTIONS = {
@@ -166,6 +172,7 @@ export default function AddProperty() {
   const router = useRouter();
   const { isAuthenticated, user } = useSelector((state) => state.user);
   const [loading, setLoading] = useState(false);
+  const [compressingImages, setCompressingImages] = useState(false);
   const [images, setImages] = useState([]);
   const [previews, setPreviews] = useState([]);
   const [toast, setToast] = useState(null);
@@ -302,18 +309,26 @@ export default function AddProperty() {
     }));
   };
 
-  const handleImageChange = (e) => {
+  const handleImageChange = async (e) => {
     const files = Array.from(e.target.files);
     if (files.length + images.length > 10) {
       showToast("Maximum 10 images allowed", "error");
+      e.target.value = "";
       return;
     }
-    setImages((prev) => [...prev, ...files]);
-    files.forEach((file) => {
-      const reader = new FileReader();
-      reader.onloadend = () => setPreviews((prev) => [...prev, reader.result]);
-      reader.readAsDataURL(file);
-    });
+    e.target.value = "";
+    setCompressingImages(true);
+    try {
+      const compressed = await compressImages(files);
+      setImages((prev) => [...prev, ...compressed]);
+      compressed.forEach((file) => {
+        const reader = new FileReader();
+        reader.onloadend = () => setPreviews((prev) => [...prev, reader.result]);
+        reader.readAsDataURL(file);
+      });
+    } finally {
+      setCompressingImages(false);
+    }
   };
 
   const removeImage = (index) => {
@@ -330,6 +345,17 @@ export default function AddProperty() {
 
     if (formData.propertyCategory === "residential" && newBuilderMode && !newBuilderName.trim()) {
       showToast("Please enter the new builder's name", "error");
+      return;
+    }
+
+    const totalUploadBytes =
+      images.reduce((sum, file) => sum + file.size, 0) +
+      (brochureFile?.size || 0);
+    if (totalUploadBytes > MAX_UPLOAD_PAYLOAD_BYTES) {
+      showToast(
+        `Upload is too large (${formatBytes(totalUploadBytes)}). Please remove a few images or a large brochure — total must stay under ${formatBytes(MAX_UPLOAD_PAYLOAD_BYTES)}.`,
+        "error",
+      );
       return;
     }
 
@@ -821,7 +847,10 @@ export default function AddProperty() {
                         <Input
                           type="file"
                           accept="image/*"
-                          onChange={(e) => setNewBuilderLogo(e.target.files?.[0] || null)}
+                          onChange={async (e) => {
+                            const file = e.target.files?.[0] || null;
+                            setNewBuilderLogo(file ? await compressImage(file) : null);
+                          }}
                         />
                       </div>
                     )}
@@ -887,10 +916,23 @@ export default function AddProperty() {
                     <Input
                       type="file"
                       accept="application/pdf"
-                      onChange={(e) => setBrochureFile(e.target.files?.[0] || null)}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0] || null;
+                        if (file && file.size > MAX_UPLOAD_PAYLOAD_BYTES) {
+                          showToast(
+                            `Brochure is too large (${formatBytes(file.size)}). Please use a file under ${formatBytes(MAX_UPLOAD_PAYLOAD_BYTES)}.`,
+                            "error",
+                          );
+                          e.target.value = "";
+                          return;
+                        }
+                        setBrochureFile(file);
+                      }}
                     />
                     {brochureFile && (
-                      <p className="text-sm text-muted-foreground mt-1">{brochureFile.name}</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {brochureFile.name} ({formatBytes(brochureFile.size)})
+                      </p>
                     )}
                   </div>
                 </CardContent>
@@ -1382,10 +1424,13 @@ export default function AddProperty() {
                     <label htmlFor="images" className="cursor-pointer">
                       <Upload className="h-12 w-12 mx-auto text-gray-400 mb-4" />
                       <p className="text-lg font-medium text-gray-700">
-                        Click to upload images
+                        {compressingImages
+                          ? "Compressing images..."
+                          : "Click to upload images"}
                       </p>
                       <p className="text-sm text-gray-500 mt-1">
-                        PNG, JPG up to 10MB (max 10 images)
+                        PNG, JPG up to 10MB (max 10 images) — auto-compressed
+                        before upload
                       </p>
                     </label>
                   </div>

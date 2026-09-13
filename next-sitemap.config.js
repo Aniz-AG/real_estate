@@ -3,7 +3,12 @@ module.exports = {
     siteUrl: process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000',
     generateRobotsTxt: true,
     sitemapSize: 5000,
-    exclude: ['/api/*'],
+    exclude: ['/api/*', '/admin/*'],
+    robotsTxtOptions: {
+        policies: [
+            { userAgent: '*', allow: '/', disallow: ['/admin', '/admin/*'] },
+        ],
+    },
     transform: async (config, path) => {
         return {
             loc: path,

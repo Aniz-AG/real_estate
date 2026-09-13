@@ -9,6 +9,7 @@ import { updateProfile } from '@/redux/slices/userSlice';
 import { Loader2, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { z } from 'zod';
+import { compressImage } from '@/lib/imageCompression';
 
 const profileSchema = z.object({
     username: z.string().min(2, 'Username must be at least 2 characters').max(50, 'Username is too long'),
@@ -51,15 +52,16 @@ export default function EditProfileModal({ isOpen, onClose }) {
         }));
     };
 
-    const handleFileChange = (e) => {
+    const handleFileChange = async (e) => {
         const file = e.target.files[0];
         if (file) {
-            setSelectedFile(file);
+            const compressed = await compressImage(file);
+            setSelectedFile(compressed);
             const reader = new FileReader();
             reader.onloadend = () => {
                 setPreviewUrl(reader.result);
             };
-            reader.readAsDataURL(file);
+            reader.readAsDataURL(compressed);
         }
     };
 

@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
+import { compressImage } from "@/lib/imageCompression";
 
 const Toast = ({ message, type, onClose }) => (
   <motion.div
@@ -252,7 +253,10 @@ export default function AdminInsights() {
                   <Input
                     type="file"
                     accept="image/*"
-                    onChange={(e) => setNewThumbnail(e.target.files?.[0] || null)}
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0] || null;
+                      setNewThumbnail(file ? await compressImage(file) : null);
+                    }}
                   />
                 </div>
                 <Button type="submit" disabled={creating}>

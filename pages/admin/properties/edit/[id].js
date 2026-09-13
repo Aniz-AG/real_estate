@@ -30,6 +30,12 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import { PRICE_UNITS } from "@/lib/constants";
+import {
+  compressImage,
+  compressImages,
+  formatBytes,
+  MAX_UPLOAD_PAYLOAD_BYTES,
+} from "@/lib/imageCompression";
 import { motion, AnimatePresence } from "framer-motion";
 
 // Toast Component
@@ -163,6 +169,7 @@ export default function EditProperty() {
   const { user, isAuthenticated } = useSelector((state) => state.user);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [compressingImages, setCompressingImages] = useState(false);
   const [toast, setToast] = useState(null);
   const [uploadProgress, setUploadProgress] = useState(0);
 
@@ -379,7 +386,7 @@ export default function EditProperty() {
     }));
   };
 
-  const handlePhotoUpload = (e) => {
+  const handlePhotoUpload = async (e) => {
     const files = Array.from(e.target.files);
     if (
       files.length +
@@ -389,9 +396,17 @@ export default function EditProperty() {
       10
     ) {
       showToast("Maximum 10 photos allowed", "error");
+      e.target.value = "";
       return;
     }
-    setNewPhotos((prev) => [...prev, ...files]);
+    e.target.value = "";
+    setCompressingImages(true);
+    try {
+      const compressed = await compressImages(files);
+      setNewPhotos((prev) => [...prev, ...compressed]);
+    } finally {
+      setCompressingImages(false);
+    }
   };
 
   const removeExistingPhoto = (index) => {
@@ -419,6 +434,17 @@ export default function EditProperty() {
 
     if (formData.property_category === "residential" && newBuilderMode && !newBuilderName.trim()) {
       showToast("Please enter the new builder's name", "error");
+      return;
+    }
+
+    const totalUploadBytes =
+      newPhotos.reduce((sum, file) => sum + file.size, 0) +
+      (brochureFile?.size || 0);
+    if (totalUploadBytes > MAX_UPLOAD_PAYLOAD_BYTES) {
+      showToast(
+        `Upload is too large (${formatBytes(totalUploadBytes)}). Please remove a few photos or a large brochure — total must stay under ${formatBytes(MAX_UPLOAD_PAYLOAD_BYTES)}.`,
+        "error",
+      );
       return;
     }
 
@@ -660,7 +686,9 @@ export default function EditProperty() {
                   <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-dashed border-gray-300 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
                     <Upload className="h-8 w-8 text-gray-400 mb-2" />
                     <span className="text-sm text-gray-500">
-                      Click to add more photos
+                      {compressingImages
+                        ? "Compressing images..."
+                        : "Click to add more photos"}
                     </span>
                     <input
                       type="file"
@@ -1369,7 +1397,10 @@ export default function EditProperty() {
                           <Input
                             type="file"
                             accept="image/*"
-                            onChange={(e) => setNewBuilderLogo(e.target.files?.[0] || null)}
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0] || null;
+                              setNewBuilderLogo(file ? await compressImage(file) : null);
+                            }}
                           />
                         </div>
                       )}
@@ -1465,10 +1496,23 @@ export default function EditProperty() {
                         type="file"
                         accept="application/pdf"
                         className="mt-1"
-                        onChange={(e) => setBrochureFile(e.target.files?.[0] || null)}
+                        onChange={(e) => {
+                          const file = e.target.files?.[0] || null;
+                          if (file && file.size > MAX_UPLOAD_PAYLOAD_BYTES) {
+                            showToast(
+                              `Brochure is too large (${formatBytes(file.size)}). Please use a file under ${formatBytes(MAX_UPLOAD_PAYLOAD_BYTES)}.`,
+                              "error",
+                            );
+                            e.target.value = "";
+                            return;
+                          }
+                          setBrochureFile(file);
+                        }}
                       />
                       {brochureFile && (
-                        <p className="text-sm text-muted-foreground mt-1">{brochureFile.name}</p>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          {brochureFile.name} ({formatBytes(brochureFile.size)})
+                        </p>
                       )}
                     </div>
                   </CardContent>
