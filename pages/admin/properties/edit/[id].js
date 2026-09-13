@@ -29,6 +29,7 @@ import {
   Plus,
 } from "lucide-react";
 import axios from "axios";
+import { PRICE_UNITS } from "@/lib/constants";
 import { motion, AnimatePresence } from "framer-motion";
 
 // Toast Component
@@ -182,6 +183,8 @@ export default function EditProperty() {
 
     price: "",
     price_per_sqft: "",
+    price_max: "",
+    price_unit: "sqft",
     is_negotiable: false,
     maintenance_charges: "",
 
@@ -296,6 +299,8 @@ export default function EditProperty() {
 
         price: property.price?.toString() || "",
         price_per_sqft: property.price_per_sqft?.toString() || "",
+        price_max: property.price_max?.toString() || "",
+        price_unit: property.price_unit || "sqft",
         is_negotiable: !!property.is_negotiable,
         maintenance_charges: property.maintenance_charges?.toString() || "",
 
@@ -890,7 +895,19 @@ export default function EditProperty() {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="price_per_sqft">Price per sqft</Label>
+                    <Label htmlFor="price_max">Price Upto (₹)</Label>
+                    <Input
+                      id="price_max"
+                      name="price_max"
+                      type="number"
+                      value={formData.price_max}
+                      onChange={handleChange}
+                      placeholder="Only if this is a price range"
+                      className="mt-1 rounded-lg"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="price_per_sqft">Price per Unit</Label>
                     <Input
                       id="price_per_sqft"
                       name="price_per_sqft"
@@ -899,6 +916,22 @@ export default function EditProperty() {
                       onChange={handleChange}
                       className="mt-1 rounded-lg"
                     />
+                  </div>
+                  <div>
+                    <Label htmlFor="price_unit">Unit</Label>
+                    <select
+                      id="price_unit"
+                      name="price_unit"
+                      value={formData.price_unit}
+                      onChange={handleChange}
+                      className="mt-1 w-full h-10 px-3 rounded-lg border border-input bg-background"
+                    >
+                      {PRICE_UNITS.map((unit) => (
+                        <option key={unit.value} value={unit.value}>
+                          {unit.label}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <Label htmlFor="maintenance_charges">
@@ -1264,6 +1297,17 @@ export default function EditProperty() {
                       className="mt-1 rounded-lg"
                     />
                   </div>
+                  <div className="md:col-span-2">
+                    <Label htmlFor="google_maps_link">Google Maps Link</Label>
+                    <Input
+                      id="google_maps_link"
+                      name="google_maps_link"
+                      value={formData.google_maps_link}
+                      onChange={handleChange}
+                      placeholder="https://maps.google.com/..."
+                      className="mt-1 rounded-lg"
+                    />
+                  </div>
                 </CardContent>
               </Card>
 
@@ -1371,13 +1415,13 @@ export default function EditProperty() {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div>
-                        <Label htmlFor="price_text">Display Price</Label>
+                        <Label htmlFor="price_text">Custom Display Price (optional)</Label>
                         <Input
                           id="price_text"
                           name="price_text"
                           value={formData.price_text}
                           onChange={handleChange}
-                          placeholder="e.g., 19 Lacs Onwards"
+                          placeholder="Leave blank to auto-generate, e.g. for 'Price on Request'"
                           className="mt-1 rounded-lg"
                         />
                       </div>
@@ -1392,18 +1436,6 @@ export default function EditProperty() {
                           className="mt-1 rounded-lg"
                         />
                       </div>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="google_maps_link">Google Maps Link</Label>
-                      <Input
-                        id="google_maps_link"
-                        name="google_maps_link"
-                        value={formData.google_maps_link}
-                        onChange={handleChange}
-                        placeholder="https://maps.google.com/..."
-                        className="mt-1 rounded-lg"
-                      />
                     </div>
 
                     <div>

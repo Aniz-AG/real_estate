@@ -3,6 +3,7 @@ import { Property } from "@/models/propertyModel";
 import { Builder } from "@/models/builderModel";
 import { withAuth } from "@/lib/middleware";
 import { uploadToCloudinary } from "@/lib/helpers";
+import { cacheDeleteByPrefix } from "@/lib/cache";
 import formidable from "formidable";
 import fs from "fs";
 
@@ -147,9 +148,11 @@ async function handler(req, res) {
       property_type: getField("propertyType") || "apartment",
       bhk_type: getField("bhkType") || "",
       price: Number(getField("price")),
+      price_max: getField("priceMax") ? Number(getField("priceMax")) : undefined,
       price_per_sqft: getField("pricePerSqft")
         ? Number(getField("pricePerSqft"))
         : undefined,
+      price_unit: getField("priceUnit") || "sqft",
       is_negotiable: getField("isNegotiable") === "true",
       maintenance_charges: getField("maintenanceCharges")
         ? Number(getField("maintenanceCharges"))
@@ -208,6 +211,8 @@ async function handler(req, res) {
       contact_email: getField("contactEmail") || "",
       uploaded_by: req.user._id.toString(),
     });
+
+    if (builderId) cacheDeleteByPrefix(`builder:${builderId}:`);
 
     res.status(201).json({
       success: true,

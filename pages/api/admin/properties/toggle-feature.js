@@ -1,6 +1,7 @@
 import { connectDB } from "@/lib/db";
 import { Property } from "@/models/propertyModel";
 import { withAuth } from "@/lib/middleware";
+import { cacheDeleteByPrefix } from "@/lib/cache";
 
 const handler = async (req, res) => {
   if (req.method !== "PUT") {
@@ -51,6 +52,10 @@ const handler = async (req, res) => {
     property[featureType] =
       value !== undefined ? value : !property[featureType];
     await property.save();
+
+    if (property.builder) {
+      cacheDeleteByPrefix(`builder:${property.builder.toString()}:`);
+    }
 
     res.status(200).json({
       success: true,

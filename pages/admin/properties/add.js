@@ -33,6 +33,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
+import { PRICE_UNITS } from "@/lib/constants";
 
 // Form Options
 const FORM_OPTIONS = {
@@ -198,7 +199,9 @@ export default function AddProperty() {
 
     // Pricing
     price: "",
+    priceMax: "",
     pricePerSqft: "",
+    priceUnit: "sqft",
     isNegotiable: false,
     maintenanceCharges: "",
 
@@ -746,6 +749,15 @@ export default function AddProperty() {
                       />
                     </div>
                   </div>
+                  <div>
+                    <Label>Google Maps Link</Label>
+                    <Input
+                      name="googleMapsLink"
+                      value={formData.googleMapsLink}
+                      onChange={handleInputChange}
+                      placeholder="https://maps.google.com/..."
+                    />
+                  </div>
                 </CardContent>
               </Card>
             )}
@@ -849,12 +861,12 @@ export default function AddProperty() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
-                      <Label>Display Price</Label>
+                      <Label>Custom Display Price (optional)</Label>
                       <Input
                         name="priceText"
                         value={formData.priceText}
                         onChange={handleInputChange}
-                        placeholder="e.g., 19 Lacs Onwards"
+                        placeholder="Leave blank to auto-generate from Price/Price Upto, e.g. for 'Price on Request'"
                       />
                     </div>
                     <div>
@@ -866,16 +878,6 @@ export default function AddProperty() {
                         placeholder="RERA registration number"
                       />
                     </div>
-                  </div>
-
-                  <div>
-                    <Label>Google Maps Link</Label>
-                    <Input
-                      name="googleMapsLink"
-                      value={formData.googleMapsLink}
-                      onChange={handleInputChange}
-                      placeholder="https://maps.google.com/..."
-                    />
                   </div>
 
                   <div>
@@ -913,19 +915,46 @@ export default function AddProperty() {
                         type="number"
                         value={formData.price}
                         onChange={handleInputChange}
-                        placeholder="Enter price"
+                        placeholder="Starting price"
                         required
                       />
                     </div>
                     <div>
-                      <Label>Price per sqft (₹)</Label>
+                      <Label>Price Upto (₹)</Label>
+                      <Input
+                        name="priceMax"
+                        type="number"
+                        value={formData.priceMax}
+                        onChange={handleInputChange}
+                        placeholder="Only if this is a price range (e.g., project with multiple unit sizes)"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label>Price per Unit (₹)</Label>
                       <Input
                         name="pricePerSqft"
                         type="number"
                         value={formData.pricePerSqft}
                         onChange={handleInputChange}
-                        placeholder="Price per sqft"
+                        placeholder="e.g., 9500"
                       />
+                    </div>
+                    <div>
+                      <Label>Unit</Label>
+                      <select
+                        name="priceUnit"
+                        value={formData.priceUnit}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border rounded-md"
+                      >
+                        {PRICE_UNITS.map((unit) => (
+                          <option key={unit.value} value={unit.value}>
+                            {unit.label}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

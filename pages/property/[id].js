@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
+import Link from "next/link";
 import { useDispatch, useSelector } from "react-redux";
 import axios from "axios";
 import Layout from "@/components/Layout";
@@ -50,6 +51,7 @@ import {
 } from "lucide-react";
 import Loader from "@/components/Loader";
 import toast from "react-hot-toast";
+import { PRICE_UNIT_LABELS } from "@/lib/constants";
 import { userExist } from "@/redux/slices/userSlice";
 
 export default function PropertyDetails() {
@@ -241,7 +243,10 @@ export default function PropertyDetails() {
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
                 <div>
                   {property.builder && (
-                    <div className="flex items-center gap-3 mb-3">
+                    <Link
+                      href={`/builders/${property.builder._id}`}
+                      className="flex items-center gap-3 mb-3 group w-fit"
+                    >
                       <div className="w-14 h-14 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center flex-shrink-0">
                         {property.builder.logo?.url ? (
                           <img
@@ -257,11 +262,14 @@ export default function PropertyDetails() {
                         <p className="text-xs text-muted-foreground">
                           By
                         </p>
-                        <span className="text-lg font-semibold text-gray-800">
+                        <span className="text-lg font-semibold text-gray-800 group-hover:text-primary">
                           {property.builder.name}
                         </span>
+                        <p className="text-xs text-primary group-hover:underline">
+                          See all projects by this builder
+                        </p>
                       </div>
-                    </div>
+                    </Link>
                   )}
                   {property.project_name && (
                     <p className="text-sm text-primary font-medium mb-1">
@@ -320,7 +328,10 @@ export default function PropertyDetails() {
               </div>
 
               <div className="text-3xl sm:text-4xl font-bold text-primary mb-6">
-                {property.price_text || formatPrice(property.price)}
+                {property.price_text ||
+                  (property.price_max && property.price_max > property.price
+                    ? `${formatPrice(property.price)} - ${formatPrice(property.price_max)}`
+                    : formatPrice(property.price))}
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
@@ -555,7 +566,8 @@ export default function PropertyDetails() {
                       <Eye className="h-5 w-5 text-primary" />
                       <div>
                         <p className="text-xs text-muted-foreground">
-                          Price per sqft
+                          Price per{" "}
+                          {PRICE_UNIT_LABELS[property.price_unit] || "Sq. Ft."}
                         </p>
                         <p className="font-medium">
                           ₹{property.price_per_sqft.toLocaleString()}

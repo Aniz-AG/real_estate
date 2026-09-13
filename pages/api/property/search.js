@@ -186,11 +186,22 @@ const searchProperties = asyncHandler(async (req, res) => {
     }
   }
 
-  // Price range filter
+  // Price range filter — matches if the property's own price range
+  // ([price, price_max] for ranged/project listings, or just [price, price]
+  // for a single fixed price) overlaps the buyer's requested budget range.
   if (minPrice || maxPrice) {
-    filter.price = {};
-    if (minPrice) filter.price.$gte = parseInt(minPrice);
-    if (maxPrice) filter.price.$lte = parseInt(maxPrice);
+    const min = minPrice ? parseInt(minPrice) : 0;
+    const max = maxPrice ? parseInt(maxPrice) : Number.MAX_SAFE_INTEGER;
+    filter.$and = filter.$and || [];
+    filter.$and.push(
+      { price: { $lte: max } },
+      {
+        $or: [
+          { price_max: { $gte: min } },
+          { price_max: { $exists: false }, price: { $gte: min } },
+        ],
+      },
+    );
   }
 
   // Area range filter
@@ -307,8 +318,10 @@ const searchProperties = asyncHandler(async (req, res) => {
     filter.is_verified = true;
   }
 
-  // Determine sort order
-  let sortOption = { createdAt: -1 }; // Default: newest first
+  // Determine sort order. "Relevance" (and no sort_by at all) ranks
+  // featured/premium listings first, then falls back to recency — distinct
+  // from "Most Recent", which is a pure createdAt sort.
+  let sortOption = { is_featured: -1, is_premium: -1, createdAt: -1 };
   if (sort_by === "price_low") {
     sortOption = { price: 1 };
   } else if (sort_by === "price_high") {

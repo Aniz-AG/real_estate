@@ -91,9 +91,18 @@ const propertySchema = new mongoose.Schema(
       required: true,
       min: 0,
     },
+    price_max: {
+      type: Number,
+      min: 0,
+    },
     price_per_sqft: {
       type: Number,
       min: 0,
+    },
+    price_unit: {
+      type: String,
+      enum: ["sqft", "sqyd", "sqm", "acre", "katha", "bigha", "marla", "cent"],
+      default: "sqft",
     },
     is_negotiable: {
       type: Boolean,

@@ -4,6 +4,7 @@ import { Builder } from "@/models/builderModel";
 import { User } from "@/models/userModel"; // Required for populate
 import { withAuth } from "@/lib/middleware";
 import { uploadToCloudinary, deleteFromCloudinary } from "@/lib/helpers";
+import { cacheDeleteByPrefix } from "@/lib/cache";
 import formidable from "formidable";
 import { v2 as cloudinary } from "cloudinary";
 
@@ -98,6 +99,7 @@ const updateProperty = async (req, res) => {
         .status(404)
         .json({ success: false, message: "Property not found" });
     }
+    const previousBuilderId = property.builder?.toString();
 
     const form = formidable({ multiples: true, maxFileSize: 10 * 1024 * 1024 });
 
@@ -148,8 +150,11 @@ const updateProperty = async (req, res) => {
 
       const price = parseNumber(fields.price);
       if (price !== undefined) property.price = price;
+      const priceMax = parseNumber(fields.price_max);
+      if (priceMax !== undefined) property.price_max = priceMax;
       const pricePerSqft = parseNumber(fields.price_per_sqft);
       if (pricePerSqft !== undefined) property.price_per_sqft = pricePerSqft;
+      property.price_unit = getValue(fields.price_unit) || property.price_unit;
       const maintenance = parseNumber(fields.maintenance_charges);
       if (maintenance !== undefined) property.maintenance_charges = maintenance;
       const negotiable = parseBool(fields.is_negotiable);
@@ -323,6 +328,12 @@ const updateProperty = async (req, res) => {
 
       await property.save();
 
+      const newBuilderId = property.builder?.toString();
+      if (previousBuilderId) cacheDeleteByPrefix(`builder:${previousBuilderId}:`);
+      if (newBuilderId && newBuilderId !== previousBuilderId) {
+        cacheDeleteByPrefix(`builder:${newBuilderId}:`);
+      }
+
       res.status(200).json({
         success: true,
         message: "Property updated successfully",
@@ -369,6 +380,10 @@ const deleteProperty = async (req, res) => {
     }
 
     await Property.findByIdAndDelete(id);
+
+    if (property.builder) {
+      cacheDeleteByPrefix(`builder:${property.builder.toString()}:`);
+    }
 
     res.status(200).json({
       success: true,
