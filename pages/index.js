@@ -158,6 +158,7 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
   const [ssrProperties] = useState(latestProperties);
   const [topCities, setTopCities] = useState(initialTopCities);
   const [builders, setBuilders] = useState([]);
+  const [showTopCities, setShowTopCities] = useState(true);
   const [showLogo, setShowLogo] = useState(false);
 
   useEffect(() => {
@@ -217,6 +218,7 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
       fetchTopCities();
     }
     fetchBuilders();
+    fetchSiteSettings();
   }, [
     dispatch,
     properties?.length,
@@ -321,6 +323,17 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
       if (data.success) setBuilders(data.builders || []);
     } catch (error) {
       console.error("Failed to fetch builders");
+    }
+  };
+
+  const fetchSiteSettings = async () => {
+    try {
+      const { data } = await axios.get("/api/settings");
+      if (data.success && data.settings?.show_top_cities === false) {
+        setShowTopCities(false);
+      }
+    } catch (error) {
+      console.error("Failed to fetch site settings");
     }
   };
 
@@ -489,7 +502,7 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
             >
              <h1 className="text-2xl md:text-3xl font-light text-gray-800 mb-2 flex flex-wrap justify-center items-center gap-1 md:gap-2">
               <span>Start your</span>
-              <div className="relative flex items-center justify-center h-[40px] w-[180px] md:w-[240px] overflow-hidden">
+              <div className="relative flex items-center justify-center h-10 md:h-14 w-[180px] md:w-[240px] overflow-hidden">
                 <AnimatePresence mode="wait">
                   {showLogo ? (
                     <motion.img
@@ -1196,7 +1209,7 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
       )}
 
       {/* Top Cities */}
-      {topCities.length > 0 && (
+      {showTopCities && topCities.length > 0 && (
         <section className="py-16 bg-gray-50">
           <div className="container mx-auto px-4">
             <motion.div
@@ -1306,54 +1319,63 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
               </p>
             </motion.div>
 
-            {builders.length > 6 ? (
-              <Slider
-                infinite
-                autoplay
-                autoplaySpeed={0}
-                speed={5000}
-                cssEase="linear"
-                arrows={false}
-                pauseOnHover
-                slidesToShow={6}
-                slidesToScroll={1}
-                responsive={[
-                  { breakpoint: 1280, settings: { slidesToShow: 5 } },
-                  { breakpoint: 1024, settings: { slidesToShow: 4 } },
-                  { breakpoint: 768, settings: { slidesToShow: 3 } },
-                  { breakpoint: 480, settings: { slidesToShow: 2 } },
-                ]}
-              >
-                {builders.map((builder) => (
-                  <div key={builder._id} className="px-3">
-                    <div className="h-24 flex items-center justify-center bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-shadow p-4">
-                      <img
-                        src={builder.logo?.url}
-                        alt={builder.name}
-                        title={builder.name}
-                        className="max-h-14 max-w-full object-contain grayscale hover:grayscale-0 transition-all"
-                      />
+            {(() => {
+              const repeatCount = Math.max(1, Math.ceil(12 / builders.length));
+              const marqueeBuilders = Array.from(
+                { length: repeatCount },
+                (_, i) => builders.map((b) => ({ ...b, _key: `${b._id}-${i}` })),
+              ).flat();
+
+              return (
+                <Slider
+                  infinite
+                  autoplay
+                  autoplaySpeed={0}
+                  speed={5000}
+                  cssEase="linear"
+                  arrows={false}
+                  pauseOnHover
+                  slidesToShow={Math.min(6, marqueeBuilders.length)}
+                  slidesToScroll={1}
+                  responsive={[
+                    { breakpoint: 1280, settings: { slidesToShow: Math.min(5, marqueeBuilders.length) } },
+                    { breakpoint: 1024, settings: { slidesToShow: Math.min(4, marqueeBuilders.length) } },
+                    { breakpoint: 768, settings: { slidesToShow: Math.min(3, marqueeBuilders.length) } },
+                    { breakpoint: 480, settings: { slidesToShow: Math.min(2, marqueeBuilders.length) } },
+                  ]}
+                >
+                  {marqueeBuilders.map((builder) => (
+                    <div key={builder._key} className="px-3">
+                      <Link href={`/builders/${builder._id}`}>
+                        <div
+                          className={`relative flex items-center justify-center bg-white border rounded-xl shadow-sm hover:shadow-md transition-shadow p-4 cursor-pointer ${
+                            builder.is_premium
+                              ? "h-28 border-amber-300 ring-1 ring-amber-200"
+                              : "h-24 border-gray-100"
+                          }`}
+                        >
+                          {builder.is_premium && (
+                            <span className="absolute -top-2 -right-2 inline-flex items-center gap-1 rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-semibold text-slate-900 shadow">
+                              <Sparkles className="h-2.5 w-2.5" /> Featured
+                            </span>
+                          )}
+                          <img
+                            src={builder.logo?.url}
+                            alt={builder.name}
+                            className={`max-w-full object-contain grayscale hover:grayscale-0 transition-all ${
+                              builder.is_premium ? "max-h-16" : "max-h-14"
+                            }`}
+                          />
+                        </div>
+                        <p className="text-center text-sm font-medium text-gray-700 mt-2 truncate hover:text-primary">
+                          {builder.name}
+                        </p>
+                      </Link>
                     </div>
-                  </div>
-                ))}
-              </Slider>
-            ) : (
-              <div className="flex flex-wrap items-center justify-center gap-5">
-                {builders.map((builder) => (
-                  <div
-                    key={builder._id}
-                    className="h-24 w-44 flex items-center justify-center bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-shadow p-4"
-                  >
-                    <img
-                      src={builder.logo?.url}
-                      alt={builder.name}
-                      title={builder.name}
-                      className="max-h-14 max-w-full object-contain grayscale hover:grayscale-0 transition-all"
-                    />
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </Slider>
+              );
+            })()}
           </div>
         </section>
       )}

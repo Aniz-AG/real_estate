@@ -3,12 +3,18 @@ import { ArrowRight, Building2, Crown, MapPin, Sparkles } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
-const formatPrice = (price) => {
+const formatPriceShort = (price) => {
   if (!Number.isFinite(price)) return "Price on request";
-  if (price >= 10000000)
-    return `INR ${(price / 10000000).toFixed(2)} Cr onwards`;
-  if (price >= 100000) return `INR ${(price / 100000).toFixed(2)} Lac onwards`;
-  return `INR ${price.toLocaleString("en-IN")} onwards`;
+  if (price >= 10000000) return `INR ${(price / 10000000).toFixed(2)} Cr`;
+  if (price >= 100000) return `INR ${(price / 100000).toFixed(2)} Lac`;
+  return `INR ${price.toLocaleString("en-IN")}`;
+};
+
+const formatPrice = (price, priceMax) => {
+  if (priceMax && priceMax > price) {
+    return `${formatPriceShort(price)} - ${formatPriceShort(priceMax)}`;
+  }
+  return `${formatPriceShort(price)} onwards`;
 };
 
 const BuilderLogo = ({ logoUrl, name, className = "" }) => (
@@ -43,8 +49,10 @@ export default function ProjectCard({ project, variant = "row" }) {
     : "Location on request";
   const title = project.project_name || project.title || "Project";
   const builder = project.builder?.name || project.builder_name || "Builder";
+  const builderId = project.builder?._id;
   const builderLogo = project.builder?.logo?.url;
-  const priceLabel = project.price_text || formatPrice(project.price);
+  const priceLabel =
+    project.price_text || formatPrice(project.price, project.price_max);
   const statusLabel = formatStatus(project.possession_status);
   const typeLabel = getTypeLabel(project);
   const badgeLabel = project.is_premium
@@ -69,12 +77,24 @@ export default function ProjectCard({ project, variant = "row" }) {
           </div>
           <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white">
             <div>
-              <div className="flex items-center gap-1.5">
-                <BuilderLogo logoUrl={builderLogo} name={builder} />
-                <p className="text-xs uppercase tracking-[0.2em] text-white/70">
-                  {builder}
-                </p>
-              </div>
+              {builderId ? (
+                <Link
+                  href={`/builders/${builderId}`}
+                  className="flex items-center gap-1.5 w-fit hover:opacity-80"
+                >
+                  <BuilderLogo logoUrl={builderLogo} name={builder} />
+                  <p className="text-xs uppercase tracking-[0.2em] text-white/70">
+                    {builder}
+                  </p>
+                </Link>
+              ) : (
+                <div className="flex items-center gap-1.5">
+                  <BuilderLogo logoUrl={builderLogo} name={builder} />
+                  <p className="text-xs uppercase tracking-[0.2em] text-white/70">
+                    {builder}
+                  </p>
+                </div>
+              )}
               <h3 className="text-lg font-semibold leading-snug font-display mt-1">
                 {title}
               </h3>
@@ -91,6 +111,17 @@ export default function ProjectCard({ project, variant = "row" }) {
             <MapPin className="h-4 w-4 text-amber-600" />
             {location}
           </div>
+          {project.google_maps_link && (
+            <a
+              href={project.google_maps_link}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="inline-block text-xs text-amber-700 hover:underline mt-1"
+            >
+              View on Map
+            </a>
+          )}
           <div className="mt-4 flex flex-wrap gap-2">
             <span className="rounded-full bg-white px-3 py-1 text-xs font-medium text-slate-600 shadow-sm">
               {statusLabel}
@@ -141,16 +172,32 @@ export default function ProjectCard({ project, variant = "row" }) {
 
         <CardContent className="flex flex-col justify-between gap-4 p-6">
           <div>
-            <div className="flex items-center gap-1.5">
-              <BuilderLogo
-                logoUrl={builderLogo}
-                name={builder}
-                className="bg-slate-100 text-slate-500"
-              />
-              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-                {builder}
-              </p>
-            </div>
+            {builderId ? (
+              <Link
+                href={`/builders/${builderId}`}
+                className="flex items-center gap-1.5 w-fit hover:opacity-80"
+              >
+                <BuilderLogo
+                  logoUrl={builderLogo}
+                  name={builder}
+                  className="bg-slate-100 text-slate-500"
+                />
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+                  {builder}
+                </p>
+              </Link>
+            ) : (
+              <div className="flex items-center gap-1.5">
+                <BuilderLogo
+                  logoUrl={builderLogo}
+                  name={builder}
+                  className="bg-slate-100 text-slate-500"
+                />
+                <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+                  {builder}
+                </p>
+              </div>
+            )}
             <div className="mt-2 flex items-center gap-3">
               <h3 className="text-xl font-semibold text-slate-900 font-display">
                 {title}
@@ -165,6 +212,17 @@ export default function ProjectCard({ project, variant = "row" }) {
               <MapPin className="h-4 w-4" />
               {location}
             </div>
+            {project.google_maps_link && (
+              <a
+                href={project.google_maps_link}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="inline-block text-xs text-amber-700 hover:underline mt-1"
+              >
+                View on Map
+              </a>
+            )}
             <div className="mt-3 text-sm text-slate-600">{typeLabel}</div>
           </div>
 
