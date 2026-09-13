@@ -1,5 +1,6 @@
 import { connectDB } from "@/lib/db";
 import { Property } from "@/models/propertyModel";
+import { Builder } from "@/models/builderModel";
 
 export default async function handler(req, res) {
   if (req.method !== "GET") {
@@ -28,7 +29,8 @@ export default async function handler(req, res) {
       .sort({ createdAt: -1 })
       .limit(parsedLimit)
       .select("-description -amenities")
-      .populate("uploaded_by", "username phone");
+      .populate("uploaded_by", "username phone")
+      .populate("builder");
 
     // Fetch top projects
     const topProjects = await Property.find({
@@ -39,7 +41,8 @@ export default async function handler(req, res) {
       .sort({ createdAt: -1 })
       .limit(parsedLimit)
       .select("-description -amenities")
-      .populate("uploaded_by", "username phone");
+      .populate("uploaded_by", "username phone")
+      .populate("builder");
 
     // Fetch premium properties
     const premiumProperties = await Property.find({
@@ -50,7 +53,8 @@ export default async function handler(req, res) {
       .sort({ createdAt: -1 })
       .limit(parsedLimit)
       .select("-description -amenities")
-      .populate("uploaded_by", "username phone");
+      .populate("uploaded_by", "username phone")
+      .populate("builder");
 
     res.status(200).json({
       success: true,

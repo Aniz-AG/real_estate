@@ -1,7 +1,9 @@
 import { connectDB } from "@/lib/db";
 import { Property } from "@/models/propertyModel";
+import { Builder } from "@/models/builderModel";
 import { User } from "@/models/userModel"; // Required for populate
 import { withAuth } from "@/lib/middleware";
+import { uploadToCloudinary, deleteFromCloudinary } from "@/lib/helpers";
 import formidable from "formidable";
 import { v2 as cloudinary } from "cloudinary";
 
@@ -189,13 +191,70 @@ const updateProperty = async (req, res) => {
 
       property.project_name =
         getValue(fields.project_name) || property.project_name;
-      property.builder_name =
-        getValue(fields.builder_name) || property.builder_name;
+
+      const builderId = getValue(fields.builder_id);
+      if (builderId) {
+        const builder = await Builder.findById(builderId);
+        if (builder) {
+          property.builder = builder._id;
+          property.builder_name = builder.name;
+        }
+      } else if (getValue(fields.builder_name)) {
+        property.builder_name = getValue(fields.builder_name);
+      }
+
+      property.project_size =
+        getValue(fields.project_size) || property.project_size;
+      property.launch_date =
+        getValue(fields.launch_date) || property.launch_date;
+      property.price_text =
+        getValue(fields.price_text) || property.price_text;
+      property.rera_number =
+        getValue(fields.rera_number) || property.rera_number;
+      property.google_maps_link =
+        getValue(fields.google_maps_link) || property.google_maps_link;
+      property.contact_person_name =
+        getValue(fields.contact_person_name) || property.contact_person_name;
 
       property.contact_phone =
         getValue(fields.contact_phone) || property.contact_phone;
+      property.contact_whatsapp =
+        getValue(fields.contact_whatsapp) || property.contact_whatsapp;
       property.contact_email =
         getValue(fields.contact_email) || property.contact_email;
+
+      // Handle brochure removal/replacement
+      if (getValue(fields.brochure_to_remove) === "true" && property.brochure?.public_id) {
+        try {
+          await deleteFromCloudinary(property.brochure.public_id, "raw");
+        } catch (e) {
+          console.error("Error deleting brochure:", e);
+        }
+        property.brochure = undefined;
+      }
+
+      const brochureFile = Array.isArray(files.brochure)
+        ? files.brochure[0]
+        : files.brochure;
+      if (brochureFile && brochureFile.filepath) {
+        if (property.brochure?.public_id) {
+          try {
+            await deleteFromCloudinary(property.brochure.public_id, "raw");
+          } catch (e) {
+            console.error("Error deleting old brochure:", e);
+          }
+        }
+        try {
+          const result = await uploadToCloudinary(
+            brochureFile.filepath,
+            "brochures",
+            "raw",
+          );
+          property.brochure = { public_id: result.public_id, url: result.url };
+        } catch (uploadError) {
+          console.error("Error uploading brochure:", uploadError);
+        }
+      }
 
       property.video_url = getValue(fields.video_url) || property.video_url;
 

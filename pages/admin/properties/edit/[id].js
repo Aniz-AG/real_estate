@@ -25,6 +25,8 @@ import {
   Users,
   Car,
   Phone,
+  FileText,
+  Plus,
 } from "lucide-react";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
@@ -208,8 +210,16 @@ export default function EditProperty() {
 
     project_name: "",
     builder_name: "",
+    builder_id: "",
+    project_size: "",
+    launch_date: "",
+    price_text: "",
+    rera_number: "",
+    google_maps_link: "",
+    contact_person_name: "",
 
     contact_phone: "",
+    contact_whatsapp: "",
     contact_email: "",
 
     is_verified: false,
@@ -222,6 +232,15 @@ export default function EditProperty() {
   const [existingPhotos, setExistingPhotos] = useState([]);
   const [newPhotos, setNewPhotos] = useState([]);
   const [photosToRemove, setPhotosToRemove] = useState([]);
+
+  // Builder + Brochure (residential project details)
+  const [builders, setBuilders] = useState([]);
+  const [newBuilderMode, setNewBuilderMode] = useState(false);
+  const [newBuilderName, setNewBuilderName] = useState("");
+  const [newBuilderLogo, setNewBuilderLogo] = useState(null);
+  const [existingBrochure, setExistingBrochure] = useState(null);
+  const [brochureFile, setBrochureFile] = useState(null);
+  const [removeBrochure, setRemoveBrochure] = useState(false);
 
   const showToast = (message, type = "success") => {
     setToast({ message, type });
@@ -244,6 +263,15 @@ export default function EditProperty() {
       fetchProperty();
     }
   }, [id, isAuthenticated, user]);
+
+  useEffect(() => {
+    fetch("/api/admin/builders")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) setBuilders(data.builders || []);
+      })
+      .catch((err) => console.error("Error fetching builders:", err));
+  }, []);
 
   const fetchProperty = async () => {
     try {
@@ -297,8 +325,16 @@ export default function EditProperty() {
 
         project_name: property.project_name || "",
         builder_name: property.builder_name || "",
+        builder_id: property.builder?._id || property.builder || "",
+        project_size: property.project_size || "",
+        launch_date: property.launch_date || "",
+        price_text: property.price_text || "",
+        rera_number: property.rera_number || "",
+        google_maps_link: property.google_maps_link || "",
+        contact_person_name: property.contact_person_name || "",
 
         contact_phone: property.contact_phone || "",
+        contact_whatsapp: property.contact_whatsapp || "",
         contact_email: property.contact_email || "",
 
         is_verified: !!property.is_verified,
@@ -309,6 +345,7 @@ export default function EditProperty() {
         video_url: property.video_url || "",
       });
       setExistingPhotos(property.photos || []);
+      setExistingBrochure(property.brochure?.url ? property.brochure : null);
     } catch (error) {
       console.error("Error fetching property:", error);
       showToast("Failed to fetch property details", "error");
@@ -373,16 +410,43 @@ export default function EditProperty() {
       return;
     }
 
+    if (formData.property_category === "residential" && newBuilderMode && !newBuilderName.trim()) {
+      showToast("Please enter the new builder's name", "error");
+      return;
+    }
+
     setSaving(true);
     setUploadProgress(0);
 
     try {
+      // If adding a brand new builder inline, create it first and use its id
+      let resolvedBuilderId = formData.builder_id;
+      if (formData.property_category === "residential" && newBuilderMode && newBuilderName.trim()) {
+        const builderForm = new FormData();
+        builderForm.append("name", newBuilderName.trim());
+        if (newBuilderLogo) builderForm.append("logo", newBuilderLogo);
+
+        const builderRes = await axios.post("/api/admin/builders", builderForm, {
+          headers: { "Content-Type": "multipart/form-data" },
+        });
+        if (!builderRes.data.success) {
+          showToast(builderRes.data.message || "Failed to create builder", "error");
+          setSaving(false);
+          return;
+        }
+        resolvedBuilderId = builderRes.data.builder._id;
+      }
+
       const data = new FormData();
 
       // Append form fields
       Object.keys(formData).forEach((key) => {
         if (key === "amenities") {
           data.append(key, JSON.stringify(formData.amenities || {}));
+          return;
+        }
+        if (key === "builder_id") {
+          if (resolvedBuilderId) data.append("builder_id", resolvedBuilderId);
           return;
         }
         data.append(key, formData[key]);
@@ -400,6 +464,10 @@ export default function EditProperty() {
 
       // Append existing photos that are kept
       data.append("existingPhotos", JSON.stringify(existingPhotos));
+
+      // Brochure (residential projects)
+      if (brochureFile) data.append("brochure", brochureFile);
+      if (removeBrochure) data.append("brochure_to_remove", "true");
 
       const res = await axios.put(`/api/admin/properties?id=${id}`, data, {
         headers: { "Content-Type": "multipart/form-data" },
@@ -688,23 +756,25 @@ export default function EditProperty() {
                     </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="bhk_type">BHK Type</Label>
-                      <select
-                        id="bhk_type"
-                        name="bhk_type"
-                        value={formData.bhk_type}
-                        onChange={handleChange}
-                        className="mt-1 w-full h-10 px-3 rounded-lg border border-input bg-background"
-                      >
-                        <option value="">Select</option>
-                        {FORM_OPTIONS.bhkOptions.map((bhk) => (
-                          <option key={bhk} value={bhk}>
-                            {bhk}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    {formData.property_category !== "residential" && (
+                      <div>
+                        <Label htmlFor="bhk_type">BHK Type</Label>
+                        <select
+                          id="bhk_type"
+                          name="bhk_type"
+                          value={formData.bhk_type}
+                          onChange={handleChange}
+                          className="mt-1 w-full h-10 px-3 rounded-lg border border-input bg-background"
+                        >
+                          <option value="">Select</option>
+                          {FORM_OPTIONS.bhkOptions.map((bhk) => (
+                            <option key={bhk} value={bhk}>
+                              {bhk}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                     <div>
                       <Label htmlFor="usage_type">Usage Type</Label>
                       <select
@@ -1195,23 +1265,228 @@ export default function EditProperty() {
                 </CardContent>
               </Card>
 
+              {formData.property_category === "residential" && (
+                <Card className="border-0 shadow-lg rounded-2xl overflow-hidden">
+                  <CardHeader className="bg-gradient-to-r from-purple-500 to-fuchsia-500 text-white">
+                    <CardTitle className="flex items-center gap-2">
+                      <Users className="h-5 w-5" /> Residential Project Details
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="p-6 space-y-4">
+                    <div>
+                      <Label>Builder</Label>
+                      {!newBuilderMode ? (
+                        <div className="flex gap-2 mt-1">
+                          <select
+                            name="builder_id"
+                            value={formData.builder_id}
+                            onChange={handleChange}
+                            className="flex h-10 w-full rounded-lg border border-input bg-background px-3 py-2 text-sm"
+                          >
+                            <option value="">Select a builder</option>
+                            {builders.map((b) => (
+                              <option key={b._id} value={b._id}>
+                                {b.name}
+                              </option>
+                            ))}
+                          </select>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => setNewBuilderMode(true)}
+                          >
+                            <Plus className="h-4 w-4 mr-1" /> New
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="space-y-2 border rounded-lg p-3 mt-1">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium">New Builder</span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                setNewBuilderMode(false);
+                                setNewBuilderName("");
+                                setNewBuilderLogo(null);
+                              }}
+                            >
+                              Cancel
+                            </Button>
+                          </div>
+                          <Input
+                            placeholder="Builder name"
+                            value={newBuilderName}
+                            onChange={(e) => setNewBuilderName(e.target.value)}
+                          />
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => setNewBuilderLogo(e.target.files?.[0] || null)}
+                          />
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="project_size">Project Size</Label>
+                        <Input
+                          id="project_size"
+                          name="project_size"
+                          value={formData.project_size}
+                          onChange={handleChange}
+                          placeholder="e.g., 5 Acres"
+                          className="mt-1 rounded-lg"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="launch_date">Launch Date</Label>
+                        <Input
+                          id="launch_date"
+                          name="launch_date"
+                          value={formData.launch_date}
+                          onChange={handleChange}
+                          placeholder="e.g., Dec 2024"
+                          className="mt-1 rounded-lg"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="price_text">Display Price</Label>
+                        <Input
+                          id="price_text"
+                          name="price_text"
+                          value={formData.price_text}
+                          onChange={handleChange}
+                          placeholder="e.g., 19 Lacs Onwards"
+                          className="mt-1 rounded-lg"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="rera_number">RERA Number</Label>
+                        <Input
+                          id="rera_number"
+                          name="rera_number"
+                          value={formData.rera_number}
+                          onChange={handleChange}
+                          placeholder="RERA registration number"
+                          className="mt-1 rounded-lg"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <Label htmlFor="google_maps_link">Google Maps Link</Label>
+                      <Input
+                        id="google_maps_link"
+                        name="google_maps_link"
+                        value={formData.google_maps_link}
+                        onChange={handleChange}
+                        placeholder="https://maps.google.com/..."
+                        className="mt-1 rounded-lg"
+                      />
+                    </div>
+
+                    <div>
+                      <Label className="flex items-center gap-2">
+                        <FileText className="h-4 w-4" /> Brochure (PDF)
+                      </Label>
+                      {existingBrochure && !removeBrochure && (
+                        <div className="flex items-center gap-3 mt-1 text-sm">
+                          <a
+                            href={existingBrochure.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary underline"
+                          >
+                            View current brochure
+                          </a>
+                          <button
+                            type="button"
+                            className="text-red-500"
+                            onClick={() => setRemoveBrochure(true)}
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      )}
+                      <Input
+                        type="file"
+                        accept="application/pdf"
+                        className="mt-1"
+                        onChange={(e) => setBrochureFile(e.target.files?.[0] || null)}
+                      />
+                      {brochureFile && (
+                        <p className="text-sm text-muted-foreground mt-1">{brochureFile.name}</p>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
               {/* Contact */}
               <Card className="border-0 shadow-lg rounded-2xl overflow-hidden">
                 <CardHeader className="bg-gradient-to-r from-cyan-500 to-sky-500 text-white">
-                  <CardTitle className="flex items-center gap-2">
-                    <Phone className="h-5 w-5" /> Contact Info
+                  <CardTitle className="flex items-center justify-between gap-2">
+                    <span className="flex items-center gap-2">
+                      <Phone className="h-5 w-5" /> Contact Info
+                    </span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="bg-white/10 border-white/40 text-white hover:bg-white/20 hover:text-white"
+                      onClick={() =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          contact_person_name: user?.username || prev.contact_person_name,
+                          contact_phone: user?.phone || prev.contact_phone,
+                          contact_email: user?.email || prev.contact_email,
+                        }))
+                      }
+                    >
+                      Use My Profile Info
+                    </Button>
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="p-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <CardContent className="p-6 space-y-4">
                   <div>
-                    <Label htmlFor="contact_phone">Contact Phone</Label>
+                    <Label htmlFor="contact_person_name">Contact Person Name</Label>
                     <Input
-                      id="contact_phone"
-                      name="contact_phone"
-                      value={formData.contact_phone}
+                      id="contact_person_name"
+                      name="contact_person_name"
+                      value={formData.contact_person_name}
                       onChange={handleChange}
+                      placeholder="Person buyers should contact"
                       className="mt-1 rounded-lg"
                     />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="contact_phone">Contact Phone</Label>
+                      <Input
+                        id="contact_phone"
+                        name="contact_phone"
+                        value={formData.contact_phone}
+                        onChange={handleChange}
+                        className="mt-1 rounded-lg"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="contact_whatsapp">WhatsApp Number</Label>
+                      <Input
+                        id="contact_whatsapp"
+                        name="contact_whatsapp"
+                        value={formData.contact_whatsapp}
+                        onChange={handleChange}
+                        placeholder="If different from phone"
+                        className="mt-1 rounded-lg"
+                      />
+                    </div>
                   </div>
                   <div>
                     <Label htmlFor="contact_email">Contact Email</Label>

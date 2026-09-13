@@ -1,5 +1,6 @@
 import { connectDB } from "@/lib/db";
 import { Property } from "@/models/propertyModel";
+import { Builder } from "@/models/builderModel";
 
 export default async function handler(req, res) {
   if (req.method !== "GET") {
@@ -26,7 +27,8 @@ export default async function handler(req, res) {
       .skip(skip)
       .limit(parsedLimit)
       .select("-description -amenities")
-      .populate("uploaded_by", "username phone");
+      .populate("uploaded_by", "username phone")
+      .populate("builder");
 
     res.status(200).json({
       success: true,

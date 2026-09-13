@@ -325,6 +325,38 @@ const propertySchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    builder: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Builder",
+    },
+    project_size: {
+      type: String,
+      trim: true,
+    },
+    launch_date: {
+      type: String,
+      trim: true,
+    },
+    price_text: {
+      type: String,
+      trim: true,
+    },
+    rera_number: {
+      type: String,
+      trim: true,
+    },
+    google_maps_link: {
+      type: String,
+      trim: true,
+    },
+    brochure: {
+      public_id: { type: String },
+      url: { type: String },
+    },
+    contact_person_name: {
+      type: String,
+      trim: true,
+    },
 
     // Description
     description: {
@@ -352,6 +384,10 @@ const propertySchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    contact_whatsapp: {
+      type: String,
+      trim: true,
+    },
     contact_email: {
       type: String,
       trim: true,
@@ -372,6 +408,7 @@ propertySchema.index({ possession_status: 1 });
 propertySchema.index({ is_featured: 1 });
 propertySchema.index({ is_project: 1 });
 propertySchema.index({ createdAt: -1 });
+propertySchema.index({ builder: 1 });
 
 export const Property =
   mongoose.models.Property || mongoose.model("Property", propertySchema);

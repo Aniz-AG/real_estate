@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Crown, MapPin, Sparkles } from "lucide-react";
+import { ArrowRight, Building2, Crown, MapPin, Sparkles } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 
@@ -10,6 +10,18 @@ const formatPrice = (price) => {
   if (price >= 100000) return `INR ${(price / 100000).toFixed(2)} Lac onwards`;
   return `INR ${price.toLocaleString("en-IN")} onwards`;
 };
+
+const BuilderLogo = ({ logoUrl, name, className = "" }) => (
+  <div
+    className={`w-6 h-6 rounded-full overflow-hidden bg-white/20 flex items-center justify-center flex-shrink-0 ${className}`}
+  >
+    {logoUrl ? (
+      <img src={logoUrl} alt={name} className="w-full h-full object-cover" />
+    ) : (
+      <Building2 className="h-3.5 w-3.5" />
+    )}
+  </div>
+);
 
 const formatStatus = (status) => {
   if (status === "ready_to_move") return "Ready to Move";
@@ -30,7 +42,9 @@ export default function ProjectCard({ project, variant = "row" }) {
     ? `${project.address.city}, ${project.address.state}`
     : "Location on request";
   const title = project.project_name || project.title || "Project";
-  const builder = project.builder_name || "Builder";
+  const builder = project.builder?.name || project.builder_name || "Builder";
+  const builderLogo = project.builder?.logo?.url;
+  const priceLabel = project.price_text || formatPrice(project.price);
   const statusLabel = formatStatus(project.possession_status);
   const typeLabel = getTypeLabel(project);
   const badgeLabel = project.is_premium
@@ -55,10 +69,13 @@ export default function ProjectCard({ project, variant = "row" }) {
           </div>
           <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between text-white">
             <div>
-              <p className="text-xs uppercase tracking-[0.2em] text-white/70">
-                {builder}
-              </p>
-              <h3 className="text-lg font-semibold leading-snug font-display">
+              <div className="flex items-center gap-1.5">
+                <BuilderLogo logoUrl={builderLogo} name={builder} />
+                <p className="text-xs uppercase tracking-[0.2em] text-white/70">
+                  {builder}
+                </p>
+              </div>
+              <h3 className="text-lg font-semibold leading-snug font-display mt-1">
                 {title}
               </h3>
             </div>
@@ -87,9 +104,7 @@ export default function ProjectCard({ project, variant = "row" }) {
               <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">
                 Starting from
               </p>
-              <p className="text-lg font-bold text-[#C4302B]">
-                {formatPrice(project.price)}
-              </p>
+              <p className="text-lg font-bold text-[#C4302B]">{priceLabel}</p>
             </div>
             <Link href={`/property/${project._id}`}>
               <Button className="rounded-full bg-[#C4302B] text-white hover:bg-[#A52521]">
@@ -126,9 +141,16 @@ export default function ProjectCard({ project, variant = "row" }) {
 
         <CardContent className="flex flex-col justify-between gap-4 p-6">
           <div>
-            <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
-              {builder}
-            </p>
+            <div className="flex items-center gap-1.5">
+              <BuilderLogo
+                logoUrl={builderLogo}
+                name={builder}
+                className="bg-slate-100 text-slate-500"
+              />
+              <p className="text-xs uppercase tracking-[0.2em] text-slate-500">
+                {builder}
+              </p>
+            </div>
             <div className="mt-2 flex items-center gap-3">
               <h3 className="text-xl font-semibold text-slate-900 font-display">
                 {title}
@@ -151,9 +173,7 @@ export default function ProjectCard({ project, variant = "row" }) {
               <p className="text-[11px] uppercase tracking-[0.2em] text-slate-500">
                 Starting from
               </p>
-              <p className="text-lg font-bold text-[#C4302B]">
-                {formatPrice(project.price)}
-              </p>
+              <p className="text-lg font-bold text-[#C4302B]">{priceLabel}</p>
             </div>
             <Link href={`/property/${project._id}`}>
               <Button className="rounded-full bg-[#C4302B] text-white hover:bg-[#A52521]">

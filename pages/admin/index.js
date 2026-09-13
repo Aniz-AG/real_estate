@@ -6,7 +6,7 @@ import Layout from '@/components/Layout';
 import SeoHead from '@/components/SeoHead';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Building2, Users, Mail, Plus, TrendingUp, ArrowRight, Sparkles, LayoutDashboard } from 'lucide-react';
+import { Building2, Users, Mail, Plus, TrendingUp, ArrowRight, Sparkles, LayoutDashboard, Settings } from 'lucide-react';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 
@@ -156,7 +156,8 @@ export default function AdminDashboard() {
     const quickActions = [
         { title: 'Properties', description: 'Manage all property listings', icon: Building2, href: '/admin/properties', color: 'blue' },
         { title: 'Users', description: 'Manage user accounts', icon: Users, href: '/admin/users', color: 'violet' },
-        { title: 'Contacts', description: 'View contact messages', icon: Mail, href: '/admin/contacts', color: 'orange' }
+        { title: 'Contacts', description: 'View contact messages', icon: Mail, href: '/admin/contacts', color: 'orange' },
+        { title: 'Site Settings', description: 'Address, contact info & social links', icon: Settings, href: '/admin/settings', color: 'emerald' }
     ];
 
     return (

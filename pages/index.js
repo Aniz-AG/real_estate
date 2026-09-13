@@ -222,6 +222,52 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
     ssrProperties.length,
   ]);
 
+  // Detect the visitor's city once, so it becomes the homepage's primary city
+  useEffect(() => {
+    const savedCity = localStorage.getItem("selectedCity");
+    if (savedCity) {
+      dispatch(setSelectedCity(savedCity));
+      return;
+    }
+
+    if (!navigator.geolocation) return;
+
+    navigator.geolocation.getCurrentPosition(
+      async (position) => {
+        try {
+          const { latitude, longitude } = position.coords;
+          const res = await fetch(
+            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`,
+          );
+          const data = await res.json();
+          const detected =
+            data?.address?.city ||
+            data?.address?.town ||
+            data?.address?.village ||
+            data?.address?.county ||
+            data?.address?.state_district;
+
+          if (!detected) return;
+
+          const match = INDIA_CITIES.find(
+            (c) => c.name.toLowerCase() === detected.toLowerCase(),
+          );
+          if (match) {
+            dispatch(setSelectedCity(match.name));
+            localStorage.setItem("selectedCity", match.name);
+          }
+        } catch (error) {
+          // Silently keep the default city if reverse geocoding fails
+        }
+      },
+      () => {
+        // Permission denied or unavailable — keep the default city
+      },
+      { timeout: 8000 },
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   // Fetch properties when city changes
   useEffect(() => {
     if (selectedCity) {

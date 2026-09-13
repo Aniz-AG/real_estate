@@ -1,6 +1,7 @@
 import { connectDB } from '@/lib/db';
 import { Property } from '@/models/propertyModel';
 import { User } from '@/models/userModel'; // Required for populate to work
+import { Builder } from '@/models/builderModel'; // Required for populate to work
 
 export default async function handler(req, res) {
     await connectDB();
@@ -19,7 +20,8 @@ export default async function handler(req, res) {
             const properties = await Property.find(filter)
                 .sort({ createdAt: -1 })
                 .limit(parseInt(limit))
-                .populate('uploaded_by', 'username email photo city state');
+                .populate('uploaded_by', 'username email photo city state')
+                .populate('builder');
 
             return res.status(200).json({
                 success: true,

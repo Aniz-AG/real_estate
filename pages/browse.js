@@ -747,6 +747,16 @@ export default function BrowseProperty() {
                     {property.address?.locality || property.address?.city}
                   </h3>
                 </Link>
+                <div className="flex items-baseline gap-2 mt-1">
+                  <span className="text-lg font-semibold text-gray-900">
+                    {property.price_text || formatPrice(property.price)}
+                  </span>
+                  {property.price_per_sqft && (
+                    <span className="text-xs text-gray-500">
+                      ₹{property.price_per_sqft.toLocaleString()}/sqft
+                    </span>
+                  )}
+                </div>
                 {property.project_name && (
                   <p className="text-sm text-primary mt-1">
                     {property.project_name}
@@ -858,44 +868,51 @@ export default function BrowseProperty() {
                     <Share2 className="h-5 w-5 text-gray-400 hover:text-green-600" />
                   </button>
                 </div>
-                <div className="text-xl font-bold text-gray-900">
-                  {formatPrice(property.price)}
-                </div>
-                {property.price_per_sqft && (
-                  <div className="text-sm text-gray-500">
-                    ₹{property.price_per_sqft.toLocaleString()} per sqft
+                <div className="flex items-center gap-2 md:justify-end">
+                  <div className="w-9 h-9 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    {property.builder?.logo?.url ? (
+                      <img
+                        src={property.builder.logo.url}
+                        alt={property.builder.name}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <Building2 className="h-5 w-5 text-primary" />
+                    )}
                   </div>
-                )}
+                  <div>
+                    <div className="text-sm font-medium">
+                      {property.builder?.name ||
+                        property.builder_name ||
+                        "Property Owner"}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      {property.posted_by_type?.replace(/\b\w/g, (l) =>
+                        l.toUpperCase(),
+                      ) || "Owner"}
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 mt-4 pt-4 border-t border-gray-100">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                  <Building2 className="h-5 w-5 text-primary" />
-                </div>
-                <div>
-                  <div className="text-sm font-medium">
-                    {property.builder_name || "Property Owner"}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    {property.posted_by_type?.replace(/\b\w/g, (l) =>
-                      l.toUpperCase(),
-                    ) || "Owner"}
-                  </div>
-                </div>
-              </div>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-end gap-3 mt-4 pt-4 border-t border-gray-100">
               <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
                 {isAuthenticated ? (
                   <Button
                     onClick={() => {
                       setSelectedPropertyContact({
                         name:
+                          property.contact_person_name ||
                           property.uploaded_by?.username ||
                           property.builder_name ||
                           "Sales Person",
                         phone:
                           property.contact_phone || property.uploaded_by?.phone,
+                        whatsapp:
+                          property.contact_whatsapp ||
+                          property.contact_phone ||
+                          property.uploaded_by?.phone,
                         city: property.uploaded_by?.city,
                         propertyTitle: `${property.bhk_type || ""} ${property.property_type?.replace(/_/g, " ")} in ${property.address?.city}`,
                         propertyId: property._id,
@@ -2746,7 +2763,7 @@ export default function BrowseProperty() {
                           Call Now
                         </a>
                         <a
-                          href={`https://wa.me/${selectedPropertyContact.phone?.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(`Hi, I'm interested in your property: ${selectedPropertyContact.propertyTitle}. Please share more details.`)}`}
+                          href={`https://wa.me/${(selectedPropertyContact.whatsapp || selectedPropertyContact.phone)?.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(`Hi, I'm interested in your property: ${selectedPropertyContact.propertyTitle}. Please share more details.`)}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex items-center justify-center gap-2 w-full py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-semibold transition-colors"
@@ -2759,7 +2776,7 @@ export default function BrowseProperty() {
                       {/* Action Button - Desktop View */}
                       <div className="hidden md:block">
                         <a
-                          href={`https://wa.me/${selectedPropertyContact.phone?.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(`Hi, I'm interested in your property: ${selectedPropertyContact.propertyTitle}. Please share more details.`)}`}
+                          href={`https://wa.me/${(selectedPropertyContact.whatsapp || selectedPropertyContact.phone)?.replace(/[^0-9]/g, "")}?text=${encodeURIComponent(`Hi, I'm interested in your property: ${selectedPropertyContact.propertyTitle}. Please share more details.`)}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="flex items-center justify-center gap-2 w-full py-3 bg-green-500 hover:bg-green-600 text-white rounded-lg font-semibold transition-colors"

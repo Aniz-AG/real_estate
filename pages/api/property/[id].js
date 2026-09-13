@@ -1,6 +1,7 @@
 import { connectDB } from '@/lib/db';
 import { Property } from '@/models/propertyModel';
 import { User } from '@/models/userModel'; // Required for populate
+import { Builder } from '@/models/builderModel'; // Required for populate
 import { asyncHandler } from '@/lib/helpers';
 
 export default async function handler(req, res) {
@@ -16,10 +17,9 @@ export default async function handler(req, res) {
 const getProperty = asyncHandler(async (req, res) => {
     const { id } = req.query;
 
-    const property = await Property.findById(id).populate(
-        'uploaded_by',
-        'username email photo city state phone'
-    );
+    const property = await Property.findById(id)
+        .populate('uploaded_by', 'username email photo city state phone')
+        .populate('builder');
 
     if (!property) {
         return res.status(404).json({

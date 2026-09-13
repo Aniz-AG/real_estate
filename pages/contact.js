@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 import Layout from "@/components/Layout";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,6 +8,17 @@ import { Button } from "@/components/ui/button";
 import { Mail, Phone, MapPin, Send, Loader2 } from "lucide-react";
 import toast from "react-hot-toast";
 
+const DEFAULT_SETTINGS = {
+  address_line: "123 Real Estate Street",
+  city: "Property City",
+  state: "",
+  pincode: "12345",
+  phone: "+1 (555) 123-4567",
+  email: "info@estatehub.com",
+  support_email: "",
+  office_hours: "Monday - Friday: 9:00 AM - 6:00 PM\nSaturday: 10:00 AM - 4:00 PM\nSunday: Closed",
+};
+
 export default function Contact() {
   const [formData, setFormData] = useState({
     name: "",
@@ -16,6 +27,21 @@ export default function Contact() {
     message: "",
   });
   const [loading, setLoading] = useState(false);
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+
+  useEffect(() => {
+    axios
+      .get("/api/settings")
+      .then(({ data }) => {
+        if (data.success && data.settings) {
+          const nonEmpty = Object.fromEntries(
+            Object.entries(data.settings).filter(([, v]) => v),
+          );
+          setSettings((prev) => ({ ...prev, ...nonEmpty }));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -160,8 +186,7 @@ export default function Contact() {
                     </div>
                     <div>
                       <h3 className="font-semibold text-lg mb-1">Phone</h3>
-                      <p className="text-muted-foreground">+1 (555) 123-4567</p>
-                      <p className="text-muted-foreground">Mon-Fri 9am-6pm</p>
+                      <p className="text-muted-foreground">{settings.phone}</p>
                     </div>
                   </div>
                 </CardContent>
@@ -175,12 +200,12 @@ export default function Contact() {
                     </div>
                     <div>
                       <h3 className="font-semibold text-lg mb-1">Email</h3>
-                      <p className="text-muted-foreground">
-                        info@vskholdings.com
-                      </p>
-                      <p className="text-muted-foreground">
-                        support@vskholdings.com
-                      </p>
+                      <p className="text-muted-foreground">{settings.email}</p>
+                      {settings.support_email && (
+                        <p className="text-muted-foreground">
+                          {settings.support_email}
+                        </p>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -195,10 +220,12 @@ export default function Contact() {
                     <div>
                       <h3 className="font-semibold text-lg mb-1">Office</h3>
                       <p className="text-muted-foreground">
-                        123 Real Estate Street
+                        {settings.address_line}
                       </p>
                       <p className="text-muted-foreground">
-                        Property City, PC 12345
+                        {[settings.city, settings.state, settings.pincode]
+                          .filter(Boolean)
+                          .join(", ")}
                       </p>
                     </div>
                   </div>
@@ -210,9 +237,9 @@ export default function Contact() {
               <CardContent className="p-6">
                 <h3 className="font-semibold text-lg mb-2">Office Hours</h3>
                 <div className="space-y-1 text-sm text-muted-foreground">
-                  <p>Monday - Friday: 9:00 AM - 6:00 PM</p>
-                  <p>Saturday: 10:00 AM - 4:00 PM</p>
-                  <p>Sunday: Closed</p>
+                  {settings.office_hours
+                    .split("\n")
+                    .map((line, i) => <p key={i}>{line}</p>)}
                 </div>
               </CardContent>
             </Card>

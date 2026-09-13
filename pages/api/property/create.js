@@ -1,5 +1,6 @@
 import { connectDB } from "@/lib/db";
 import { Property } from "@/models/propertyModel";
+import { Builder } from "@/models/builderModel";
 import { withAuth } from "@/lib/middleware";
 import { uploadToCloudinary } from "@/lib/helpers";
 import formidable from "formidable";
@@ -73,6 +74,34 @@ async function handler(req, res) {
       return res
         .status(400)
         .json({ success: false, message: "At least one image is required" });
+    }
+
+    // Resolve builder reference (if provided) and upload brochure (if provided)
+    const builderId = getField("builderId");
+    let builderName = "";
+    if (builderId) {
+      const builder = await Builder.findById(builderId);
+      if (builder) builderName = builder.name;
+    }
+
+    let brochure;
+    const brochureFile = Array.isArray(files.brochure)
+      ? files.brochure[0]
+      : files.brochure;
+    if (brochureFile && brochureFile.filepath) {
+      try {
+        const result = await uploadToCloudinary(
+          brochureFile.filepath,
+          "brochures",
+          "raw",
+        );
+        brochure = { public_id: result.public_id, url: result.url };
+        fs.unlink(brochureFile.filepath, (err) => {
+          if (err) console.error("Error deleting temp file:", err);
+        });
+      } catch (uploadError) {
+        console.error("Error uploading brochure:", uploadError);
+      }
     }
 
     // Parse amenities from form data
@@ -163,9 +192,18 @@ async function handler(req, res) {
       is_top_project: getField("isTopProject") === "true",
       is_premium: getField("isPremium") === "true",
       project_name: getField("projectName") || "",
-      builder_name: getField("builderName") || "",
+      builder_name: builderName || getField("builderName") || "",
+      builder: builderId || undefined,
+      project_size: getField("projectSize") || "",
+      launch_date: getField("launchDate") || "",
+      price_text: getField("priceText") || "",
+      rera_number: getField("reraNumber") || "",
+      google_maps_link: getField("googleMapsLink") || "",
+      brochure,
+      contact_person_name: getField("contactPersonName") || "",
       description: getField("description") || "No description provided.",
       contact_phone: getField("contactPhone") || "",
+      contact_whatsapp: getField("contactWhatsapp") || "",
       contact_email: getField("contactEmail") || "",
       uploaded_by: req.user._id.toString(),
     });

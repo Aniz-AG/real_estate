@@ -40,6 +40,12 @@ import {
   ArrowUpDown,
   Armchair,
   Check,
+  FileText,
+  Download,
+  ExternalLink,
+  BadgeCheck,
+  Ruler,
+  MessageCircle,
 } from "lucide-react";
 import Loader from "@/components/Loader";
 import toast from "react-hot-toast";
@@ -105,6 +111,17 @@ export default function PropertyDetails() {
       }
       toast.error("Could not update favorites. Try again.");
     }
+  };
+
+  const getEmbedVideoUrl = (url) => {
+    if (!url) return null;
+    const youtubeMatch = url.match(
+      /(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{11})/,
+    );
+    if (youtubeMatch) return `https://www.youtube.com/embed/${youtubeMatch[1]}`;
+    const vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
+    if (vimeoMatch) return `https://player.vimeo.com/video/${vimeoMatch[1]}`;
+    return null;
   };
 
   const formatPrice = (price) => {
@@ -221,6 +238,29 @@ export default function PropertyDetails() {
             <div>
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
                 <div>
+                  {property.builder && (
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="w-8 h-8 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center flex-shrink-0">
+                        {property.builder.logo?.url ? (
+                          <img
+                            src={property.builder.logo.url}
+                            alt={property.builder.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <Building2 className="h-4 w-4 text-primary" />
+                        )}
+                      </div>
+                      <span className="text-sm font-medium text-muted-foreground">
+                        By {property.builder.name}
+                      </span>
+                    </div>
+                  )}
+                  {property.project_name && (
+                    <p className="text-sm text-primary font-medium mb-1">
+                      {property.project_name}
+                    </p>
+                  )}
                   <h1 className="text-2xl sm:text-3xl font-bold mb-2">
                     {property.address.property_address}
                   </h1>
@@ -273,7 +313,7 @@ export default function PropertyDetails() {
               </div>
 
               <div className="text-3xl sm:text-4xl font-bold text-primary mb-6">
-                {formatPrice(property.price)}
+                {property.price_text || formatPrice(property.price)}
               </div>
 
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 mb-6">
@@ -315,6 +355,39 @@ export default function PropertyDetails() {
                 </p>
               </CardContent>
             </Card>
+
+            {/* Video Section */}
+            {property.video_url && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Property Video</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {getEmbedVideoUrl(property.video_url) ? (
+                    <div className="relative w-full aspect-video rounded-lg overflow-hidden">
+                      <iframe
+                        src={getEmbedVideoUrl(property.video_url)}
+                        title="Property Video"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowFullScreen
+                        className="absolute inset-0 w-full h-full"
+                      />
+                    </div>
+                  ) : (
+                    <a
+                      href={property.video_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <Button variant="outline">
+                        <ExternalLink className="h-4 w-4 mr-2" />
+                        Watch Video
+                      </Button>
+                    </a>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
             {/* Property Details Section */}
             <Card>
@@ -475,6 +548,109 @@ export default function PropertyDetails() {
                 </div>
               </CardContent>
             </Card>
+
+            {/* Project & Builder Details */}
+            {(property.builder ||
+              property.project_size ||
+              property.launch_date ||
+              property.rera_number ||
+              property.google_maps_link ||
+              property.brochure?.url) && (
+              <Card>
+                <CardHeader>
+                  <CardTitle>Project Details</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
+                    {property.builder?.name && (
+                      <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
+                        <Building2 className="h-5 w-5 text-primary" />
+                        <div>
+                          <p className="text-xs text-muted-foreground">
+                            Builder
+                          </p>
+                          <p className="font-medium">
+                            {property.builder.name}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    {property.project_size && (
+                      <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
+                        <Ruler className="h-5 w-5 text-primary" />
+                        <div>
+                          <p className="text-xs text-muted-foreground">
+                            Project Size
+                          </p>
+                          <p className="font-medium">
+                            {property.project_size}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    {property.launch_date && (
+                      <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
+                        <Calendar className="h-5 w-5 text-primary" />
+                        <div>
+                          <p className="text-xs text-muted-foreground">
+                            Launch Date
+                          </p>
+                          <p className="font-medium">
+                            {property.launch_date}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    {property.rera_number && (
+                      <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
+                        <BadgeCheck className="h-5 w-5 text-primary" />
+                        <div>
+                          <p className="text-xs text-muted-foreground">
+                            RERA Number
+                          </p>
+                          <p className="font-medium">
+                            {property.rera_number}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {(property.google_maps_link || property.brochure?.url) && (
+                    <div className="flex flex-wrap gap-3 pt-2 border-t">
+                      {property.google_maps_link && (
+                        <a
+                          href={property.google_maps_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-4"
+                        >
+                          <Button variant="outline">
+                            <MapPin className="h-4 w-4 mr-2" />
+                            View on Google Maps
+                            <ExternalLink className="h-3.5 w-3.5 ml-2" />
+                          </Button>
+                        </a>
+                      )}
+                      {property.brochure?.url && (
+                        <a
+                          href={property.brochure.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-4"
+                        >
+                          <Button variant="outline">
+                            <FileText className="h-4 w-4 mr-2" />
+                            Download Brochure
+                            <Download className="h-3.5 w-3.5 ml-2" />
+                          </Button>
+                        </a>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
 
             {/* Amenities Section */}
             {property.amenities && (
@@ -683,57 +859,114 @@ export default function PropertyDetails() {
                   <CardTitle>Contact Agent</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="flex items-center gap-4">
-                    <Avatar className="h-16 w-16">
-                      <AvatarImage src={property.uploaded_by?.photo?.url} />
-                      <AvatarFallback>
-                        {property.uploaded_by?.username
-                          ?.charAt(0)
-                          .toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <h3 className="font-bold text-lg">
-                        {property.uploaded_by?.username}
-                      </h3>
-                      <p className="text-sm text-muted-foreground">
-                        Property Agent
-                      </p>
-                    </div>
-                  </div>
+                  {(() => {
+                    const contactName =
+                      property.contact_person_name ||
+                      property.uploaded_by?.username;
+                    const contactPhone =
+                      property.contact_phone || property.uploaded_by?.phone;
+                    const contactEmail =
+                      property.contact_email || property.uploaded_by?.email;
+                    const contactWhatsapp =
+                      property.contact_whatsapp || contactPhone;
+                    return (
+                      <>
+                        <div className="flex items-center gap-4">
+                          <Avatar className="h-16 w-16">
+                            <AvatarImage
+                              src={property.uploaded_by?.photo?.url}
+                            />
+                            <AvatarFallback>
+                              {contactName?.charAt(0).toUpperCase()}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <h3 className="font-bold text-lg">
+                              {contactName}
+                            </h3>
+                            <p className="text-sm text-muted-foreground">
+                              {property.builder?.name || "Property Agent"}
+                            </p>
+                          </div>
+                        </div>
 
-                  <div className="space-y-3">
-                    <div className="flex items-center gap-3">
-                      <Phone className="h-5 w-5 text-primary" />
-                      <span className="text-sm">
-                        {property.uploaded_by?.phone}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <Mail className="h-5 w-5 text-primary" />
-                      <span className="text-sm">
-                        {property.uploaded_by?.email}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <MapPin className="h-5 w-5 text-primary" />
-                      <span className="text-sm">
-                        {property.uploaded_by?.city},{" "}
-                        {property.uploaded_by?.state}
-                      </span>
-                    </div>
-                  </div>
+                        <div className="space-y-3">
+                          {contactPhone && (
+                            <div className="flex items-center gap-3">
+                              <Phone className="h-5 w-5 text-primary" />
+                              <span className="text-sm">{contactPhone}</span>
+                            </div>
+                          )}
+                          {contactEmail && (
+                            <div className="flex items-center gap-3">
+                              <Mail className="h-5 w-5 text-primary" />
+                              <span className="text-sm">{contactEmail}</span>
+                            </div>
+                          )}
+                          {property.uploaded_by?.city && (
+                            <div className="flex items-center gap-3">
+                              <MapPin className="h-5 w-5 text-primary" />
+                              <span className="text-sm">
+                                {property.uploaded_by?.city},{" "}
+                                {property.uploaded_by?.state}
+                              </span>
+                            </div>
+                          )}
+                        </div>
 
-                  <div className="space-y-2 pt-4">
-                    <Button className="w-full" size="lg">
-                      <Phone className="h-5 w-5 mr-2" />
-                      Call Agent
-                    </Button>
-                    <Button variant="outline" className="w-full" size="lg">
-                      <Mail className="h-5 w-5 mr-2" />
-                      Email Agent
-                    </Button>
-                  </div>
+                        <div className="space-y-2 pt-4">
+                          <a
+                            href={contactPhone ? `tel:${contactPhone}` : undefined}
+                            className="block"
+                          >
+                            <Button
+                              className="w-full"
+                              size="lg"
+                              disabled={!contactPhone}
+                            >
+                              <Phone className="h-5 w-5 mr-2" />
+                              Call Agent
+                            </Button>
+                          </a>
+                          <a
+                            href={
+                              contactWhatsapp
+                                ? `https://wa.me/91${contactWhatsapp.replace(/\D/g, "").slice(-10)}?text=${encodeURIComponent(`Hi, I'm interested in ${property.address?.property_address}`)}`
+                                : undefined
+                            }
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block"
+                          >
+                            <Button
+                              className="w-full bg-green-600 hover:bg-green-700"
+                              size="lg"
+                              disabled={!contactWhatsapp}
+                            >
+                              <MessageCircle className="h-5 w-5 mr-2" />
+                              Chat on WhatsApp
+                            </Button>
+                          </a>
+                          <a
+                            href={
+                              contactEmail ? `mailto:${contactEmail}` : undefined
+                            }
+                            className="block"
+                          >
+                            <Button
+                              variant="outline"
+                              className="w-full"
+                              size="lg"
+                              disabled={!contactEmail}
+                            >
+                              <Mail className="h-5 w-5 mr-2" />
+                              Email Agent
+                            </Button>
+                          </a>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </CardContent>
               </Card>
             ) : (

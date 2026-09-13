@@ -28,6 +28,8 @@ import {
   Layers,
   Car,
   Check,
+  FileText,
+  Plus,
 } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
@@ -170,6 +172,13 @@ export default function AddProperty() {
   const [activeSection, setActiveSection] = useState(0);
   const [mounted, setMounted] = useState(false);
 
+  // Builder + Brochure (residential project details)
+  const [builders, setBuilders] = useState([]);
+  const [newBuilderMode, setNewBuilderMode] = useState(false);
+  const [newBuilderName, setNewBuilderName] = useState("");
+  const [newBuilderLogo, setNewBuilderLogo] = useState(null);
+  const [brochureFile, setBrochureFile] = useState(null);
+
   const [formData, setFormData] = useState({
     // Basic Info
     title: "",
@@ -221,9 +230,17 @@ export default function AddProperty() {
     // Project/Builder Info
     projectName: "",
     builderName: "",
+    builderId: "",
+    projectSize: "",
+    launchDate: "",
+    priceText: "",
+    reraNumber: "",
+    googleMapsLink: "",
 
     // Contact Info
+    contactPersonName: "",
     contactPhone: "",
+    contactWhatsapp: "",
     contactEmail: "",
 
     // Flags
@@ -242,6 +259,15 @@ export default function AddProperty() {
 
   useEffect(() => {
     setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    fetch("/api/admin/builders")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) setBuilders(data.builders || []);
+      })
+      .catch((err) => console.error("Error fetching builders:", err));
   }, []);
 
   useEffect(() => {
@@ -298,10 +324,37 @@ export default function AddProperty() {
       return;
     }
 
+    if (formData.propertyCategory === "residential" && newBuilderMode && !newBuilderName.trim()) {
+      showToast("Please enter the new builder's name", "error");
+      return;
+    }
+
     setLoading(true);
     setUploadProgress(10);
 
     try {
+      // If adding a brand new builder inline, create it first and use its id
+      let resolvedBuilderId = formData.builderId;
+      if (formData.propertyCategory === "residential" && newBuilderMode && newBuilderName.trim()) {
+        const builderForm = new FormData();
+        builderForm.append("name", newBuilderName.trim());
+        if (newBuilderLogo) builderForm.append("logo", newBuilderLogo);
+
+        const builderRes = await fetch("/api/admin/builders", {
+          method: "POST",
+          body: builderForm,
+        });
+        const builderData = await builderRes.json();
+        if (!builderData.success) {
+          showToast(builderData.message || "Failed to create builder", "error");
+          setLoading(false);
+          return;
+        }
+        resolvedBuilderId = builderData.builder._id;
+      }
+
+      setUploadProgress(20);
+
       const form = new FormData();
 
       // Append all form fields
@@ -311,10 +364,15 @@ export default function AddProperty() {
           Object.keys(formData.amenities).forEach((amenity) => {
             form.append(amenity, formData.amenities[amenity]);
           });
+        } else if (key === "builderId") {
+          if (resolvedBuilderId) form.append("builderId", resolvedBuilderId);
         } else if (formData[key] !== "" && formData[key] !== undefined) {
           form.append(key, formData[key]);
         }
       });
+
+      // Append brochure (residential projects)
+      if (brochureFile) form.append("brochure", brochureFile);
 
       setUploadProgress(30);
 
@@ -565,22 +623,24 @@ export default function AddProperty() {
                     </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                      <Label>BHK Type</Label>
-                      <select
-                        name="bhkType"
-                        value={formData.bhkType}
-                        onChange={handleInputChange}
-                        className="w-full px-3 py-2 border rounded-md"
-                      >
-                        <option value="">Select BHK</option>
-                        {FORM_OPTIONS.bhkOptions.map((opt) => (
-                          <option key={opt} value={opt}>
-                            {opt}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
+                    {formData.propertyCategory !== "residential" && (
+                      <div>
+                        <Label>BHK Type</Label>
+                        <select
+                          name="bhkType"
+                          value={formData.bhkType}
+                          onChange={handleInputChange}
+                          className="w-full px-3 py-2 border rounded-md"
+                        >
+                          <option value="">Select BHK</option>
+                          {FORM_OPTIONS.bhkOptions.map((opt) => (
+                            <option key={opt} value={opt}>
+                              {opt}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                     <div>
                       <Label>Posted By</Label>
                       <select
@@ -684,6 +744,140 @@ export default function AddProperty() {
                         placeholder="Builder/Developer name"
                       />
                     </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {activeSection === 1 && formData.propertyCategory === "residential" && (
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Building className="h-5 w-5 text-primary" />
+                    Residential Project Details
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label>Builder</Label>
+                    {!newBuilderMode ? (
+                      <div className="flex gap-2">
+                        <select
+                          name="builderId"
+                          value={formData.builderId}
+                          onChange={handleInputChange}
+                          className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                        >
+                          <option value="">Select a builder</option>
+                          {builders.map((b) => (
+                            <option key={b._id} value={b._id}>
+                              {b.name}
+                            </option>
+                          ))}
+                        </select>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setNewBuilderMode(true)}
+                        >
+                          <Plus className="h-4 w-4 mr-1" /> New
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="space-y-2 border rounded-lg p-3">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">New Builder</span>
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setNewBuilderMode(false);
+                              setNewBuilderName("");
+                              setNewBuilderLogo(null);
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                        </div>
+                        <Input
+                          placeholder="Builder name"
+                          value={newBuilderName}
+                          onChange={(e) => setNewBuilderName(e.target.value)}
+                        />
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          onChange={(e) => setNewBuilderLogo(e.target.files?.[0] || null)}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label>Project Size</Label>
+                      <Input
+                        name="projectSize"
+                        value={formData.projectSize}
+                        onChange={handleInputChange}
+                        placeholder="e.g., 5 Acres"
+                      />
+                    </div>
+                    <div>
+                      <Label>Launch Date</Label>
+                      <Input
+                        name="launchDate"
+                        value={formData.launchDate}
+                        onChange={handleInputChange}
+                        placeholder="e.g., Dec 2024"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label>Display Price</Label>
+                      <Input
+                        name="priceText"
+                        value={formData.priceText}
+                        onChange={handleInputChange}
+                        placeholder="e.g., 19 Lacs Onwards"
+                      />
+                    </div>
+                    <div>
+                      <Label>RERA Number</Label>
+                      <Input
+                        name="reraNumber"
+                        value={formData.reraNumber}
+                        onChange={handleInputChange}
+                        placeholder="RERA registration number"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label>Google Maps Link</Label>
+                    <Input
+                      name="googleMapsLink"
+                      value={formData.googleMapsLink}
+                      onChange={handleInputChange}
+                      placeholder="https://maps.google.com/..."
+                    />
+                  </div>
+
+                  <div>
+                    <Label className="flex items-center gap-2">
+                      <FileText className="h-4 w-4" /> Brochure (PDF)
+                    </Label>
+                    <Input
+                      type="file"
+                      accept="application/pdf"
+                      onChange={(e) => setBrochureFile(e.target.files?.[0] || null)}
+                    />
+                    {brochureFile && (
+                      <p className="text-sm text-muted-foreground mt-1">{brochureFile.name}</p>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -1018,6 +1212,75 @@ export default function AddProperty() {
                         Premium Listing
                       </Label>
                     </div>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {activeSection === 4 && (
+              <Card className="shadow-lg">
+                <CardHeader>
+                  <CardTitle className="flex items-center justify-between gap-2">
+                    <span className="flex items-center gap-2">
+                      <Users className="h-5 w-5 text-primary" />
+                      Contact Info
+                    </span>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() =>
+                        setFormData((prev) => ({
+                          ...prev,
+                          contactPersonName: user?.username || prev.contactPersonName,
+                          contactPhone: user?.phone || prev.contactPhone,
+                          contactEmail: user?.email || prev.contactEmail,
+                        }))
+                      }
+                    >
+                      Use My Profile Info
+                    </Button>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <Label>Contact Person Name</Label>
+                    <Input
+                      name="contactPersonName"
+                      value={formData.contactPersonName}
+                      onChange={handleInputChange}
+                      placeholder="Person buyers should contact"
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label>Contact Phone</Label>
+                      <Input
+                        name="contactPhone"
+                        value={formData.contactPhone}
+                        onChange={handleInputChange}
+                        placeholder="10-digit phone number"
+                      />
+                    </div>
+                    <div>
+                      <Label>WhatsApp Number</Label>
+                      <Input
+                        name="contactWhatsapp"
+                        value={formData.contactWhatsapp}
+                        onChange={handleInputChange}
+                        placeholder="If different from phone"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <Label>Contact Email</Label>
+                    <Input
+                      type="email"
+                      name="contactEmail"
+                      value={formData.contactEmail}
+                      onChange={handleInputChange}
+                      placeholder="contact@example.com"
+                    />
                   </div>
                 </CardContent>
               </Card>

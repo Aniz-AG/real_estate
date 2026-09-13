@@ -1,6 +1,7 @@
 import { connectDB } from "@/lib/db";
 import { Property } from "@/models/propertyModel";
 import { User } from "@/models/userModel";
+import { Builder } from "@/models/builderModel";
 import { asyncHandler, verifyToken } from "@/lib/helpers";
 import * as cookie from "cookie";
 
@@ -328,6 +329,7 @@ const searchProperties = asyncHandler(async (req, res) => {
 
   const results = await Property.find(filter)
     .populate("uploaded_by", "username email photo city state")
+    .populate("builder")
     .sort(sortOption)
     .skip(skip)
     .limit(perPage + 1); // Fetch one extra to determine hasMore

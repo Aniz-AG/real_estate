@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Building2,
@@ -9,11 +9,50 @@ import {
   Twitter,
   Instagram,
   Linkedin,
+  Youtube,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 
+const DEFAULT_SETTINGS = {
+  address_line: "123 Real Estate St, Property City, PC 12345",
+  phone: "+1 (555) 123-4567",
+  email: "info@estatehub.com",
+  social: {},
+};
+
 const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const [settings, setSettings] = useState(DEFAULT_SETTINGS);
+
+  useEffect(() => {
+    fetch("/api/settings")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.settings) {
+          const nonEmpty = Object.fromEntries(
+            Object.entries(data.settings).filter(([, v]) => v),
+          );
+          setSettings((prev) => ({ ...prev, ...nonEmpty }));
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const address =
+    [settings.address_line, settings.city, settings.state, settings.pincode]
+      .filter(Boolean)
+      .join(", ") || DEFAULT_SETTINGS.address_line;
+  const phone = settings.phone || DEFAULT_SETTINGS.phone;
+  const email = settings.email || DEFAULT_SETTINGS.email;
+  const social = settings.social || {};
+
+  const socialLinks = [
+    { key: "facebook", href: social.facebook, Icon: Facebook },
+    { key: "twitter", href: social.twitter, Icon: Twitter },
+    { key: "instagram", href: social.instagram, Icon: Instagram },
+    { key: "linkedin", href: social.linkedin, Icon: Linkedin },
+    { key: "youtube", href: social.youtube, Icon: Youtube },
+  ].filter((s) => s.href);
 
   return (
     <footer className="bg-slate-100 text-slate-900 mt-auto border-t border-slate-200">
@@ -23,42 +62,31 @@ const Footer = () => {
           <div className="space-y-4">
             <div className="flex items-center space-x-2">
               {/* <Building2 className="h-8 w-8 text-slate-900" /> */}
-              <img 
-                  src="/logo.png" 
-                  alt="EstateHub Logo" 
-                  className="h-16 w-auto object-contain" 
+              <img
+                  src="/logo.png"
+                  alt="EstateHub Logo"
+                  className="h-16 w-auto object-contain"
                 />
             </div>
             <p className="text-sm text-slate-600">
               Your trusted partner in finding the perfect property. We make real
               estate simple and accessible for everyone.
             </p>
-            <div className="flex space-x-3">
-              <a
-                href="#"
-                className="text-slate-500 hover:text-[#1D4ED8] transition-colors"
-              >
-                <Facebook className="h-5 w-5" />
-              </a>
-              <a
-                href="#"
-                className="text-slate-500 hover:text-[#1D4ED8] transition-colors"
-              >
-                <Twitter className="h-5 w-5" />
-              </a>
-              <a
-                href="#"
-                className="text-slate-500 hover:text-[#1D4ED8] transition-colors"
-              >
-                <Instagram className="h-5 w-5" />
-              </a>
-              {/* <a
-                href="#"
-                className="text-slate-500 hover:text-[#1D4ED8] transition-colors"
-              >
-                <Linkedin className="h-5 w-5" />
-              </a> */}
-            </div>
+            {socialLinks.length > 0 && (
+              <div className="flex space-x-3">
+                {socialLinks.map(({ key, href, Icon }) => (
+                  <a
+                    key={key}
+                    href={href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-slate-500 hover:text-[#1D4ED8] transition-colors"
+                  >
+                    <Icon className="h-5 w-5" />
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Quick Links */}
@@ -124,17 +152,15 @@ const Footer = () => {
             <ul className="space-y-3 text-sm">
               <li className="flex items-start gap-2">
                 <MapPin className="h-5 w-5 text-[#1D4ED8] flex-shrink-0 mt-0.5" />
-                <span className="text-slate-600">
-                  123 Real Estate St, Property City, PC 12345
-                </span>
+                <span className="text-slate-600">{address}</span>
               </li>
               <li className="flex items-center gap-2">
                 <Phone className="h-5 w-5 text-[#1D4ED8] flex-shrink-0" />
-                <span className="text-slate-600">+1 (555) 123-4567</span>
+                <span className="text-slate-600">{phone}</span>
               </li>
               <li className="flex items-center gap-2">
                 <Mail className="h-5 w-5 text-[#1D4ED8] flex-shrink-0" />
-                <span className="text-slate-600">info@estatehub.com</span>
+                <span className="text-slate-600">{email}</span>
               </li>
             </ul>
           </div>
