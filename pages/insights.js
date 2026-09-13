@@ -19,6 +19,16 @@ export default function Insights() {
   const [articles, setArticles] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [adminInsights, setAdminInsights] = useState([]);
+
+  useEffect(() => {
+    fetch("/api/insights")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success) setAdminInsights(data.insights || []);
+      })
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     const fetchNews = async () => {
@@ -89,6 +99,74 @@ export default function Insights() {
         </section>
 
         <section className="container mx-auto px-4 py-12">
+          {adminInsights.length > 0 && (
+            <div className="mb-12">
+              <h2
+                className={`${displayFont.className} text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2`}
+              >
+                Featured Insights
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {adminInsights.map((insight) => {
+                  const CardWrapper = ({ children }) =>
+                    insight.link ? (
+                      <Link
+                        href={insight.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {children}
+                      </Link>
+                    ) : (
+                      <>{children}</>
+                    );
+                  return (
+                    <Card
+                      key={insight._id}
+                      className="group border border-gray-200 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col overflow-hidden"
+                    >
+                      {insight.thumbnail?.url && (
+                        <div className="relative h-48 w-full overflow-hidden bg-gray-100">
+                          <img
+                            src={insight.thumbnail.url}
+                            alt={insight.title}
+                            className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
+                          />
+                        </div>
+                      )}
+                      <CardHeader className="flex-1">
+                        <div className="flex items-center gap-2 text-xs text-gray-500 mb-3">
+                          <Calendar className="h-3.5 w-3.5" />
+                          {formatDate(insight.createdAt)}
+                        </div>
+                        <CardTitle className="text-lg font-semibold text-gray-900 line-clamp-2 leading-snug group-hover:text-[#C4302B] transition-colors">
+                          <CardWrapper>{insight.title}</CardWrapper>
+                        </CardTitle>
+                      </CardHeader>
+                      {insight.description && (
+                        <CardContent>
+                          <p className="text-sm text-gray-600 line-clamp-3 mb-4">
+                            {insight.description}
+                          </p>
+                          {insight.link && (
+                            <Link
+                              href={insight.link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1.5 text-sm font-semibold text-[#C4302B] hover:text-[#A52521] transition-colors"
+                            >
+                              Read full article <ArrowRight className="h-4 w-4" />
+                            </Link>
+                          )}
+                        </CardContent>
+                      )}
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
           {loading && (
             <div className="flex flex-col items-center justify-center py-20 text-gray-500">
               <Loader2 className="h-8 w-8 animate-spin text-[#C4302B] mb-4" />
