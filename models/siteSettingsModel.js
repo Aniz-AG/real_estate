@@ -20,6 +20,8 @@ const siteSettingsSchema = new mongoose.Schema(
       linkedin: { type: String, trim: true, default: "" },
       youtube: { type: String, trim: true, default: "" },
     },
+
+    show_top_cities: { type: Boolean, default: true },
   },
   {
     timestamps: true,

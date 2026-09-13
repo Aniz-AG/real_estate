@@ -31,6 +31,7 @@ async function handler(req, res) {
         support_email,
         office_hours,
         social,
+        show_top_cities,
       } = req.body;
 
       const settings = await SiteSettings.findOneAndUpdate(
@@ -46,6 +47,7 @@ async function handler(req, res) {
           support_email,
           office_hours,
           social,
+          show_top_cities,
         },
         { upsert: true, new: true, setDefaultsOnInsert: true },
       );

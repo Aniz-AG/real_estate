@@ -12,8 +12,8 @@ export default async function handler(req, res) {
 
   try {
     const builders = await Builder.find({ "logo.url": { $exists: true, $ne: "" } })
-      .select("name logo website")
-      .sort({ name: 1 });
+      .select("name logo website is_premium")
+      .sort({ is_premium: -1, name: 1 });
 
     res.status(200).json({ success: true, builders });
   } catch (error) {

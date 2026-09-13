@@ -169,7 +169,7 @@ const Footer = () => {
         <Separator className="my-8 bg-slate-200" />
 
         <div className="flex flex-col md:flex-row justify-between items-center text-sm text-slate-600">
-          <p>&copy; {currentYear} VSK Holdings Real EstateHub. All rights reserved.</p>
+          <p>&copy; {currentYear} VSK Estates A Real Estate Hub. All rights reserved.</p>
           <div className="flex gap-6 mt-4 md:mt-0">
             <Link
               href="/privacy"

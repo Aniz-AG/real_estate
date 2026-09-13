@@ -28,6 +28,10 @@ const builderSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    is_premium: {
+      type: Boolean,
+      default: false,
+    },
   },
   {
     timestamps: true,

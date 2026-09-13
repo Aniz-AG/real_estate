@@ -18,6 +18,7 @@ import {
   AlertCircle,
   X,
   Settings as SettingsIcon,
+  LayoutGrid,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
@@ -68,6 +69,7 @@ export default function AdminSettings() {
       linkedin: "",
       youtube: "",
     },
+    show_top_cities: true,
   });
 
   const showToast = (message, type = "success") => {
@@ -115,6 +117,7 @@ export default function AdminSettings() {
           linkedin: s.social?.linkedin || "",
           youtube: s.social?.youtube || "",
         },
+        show_top_cities: s.show_top_cities !== false,
       });
     } catch (error) {
       showToast("Failed to load settings", "error");
@@ -364,6 +367,45 @@ export default function AdminSettings() {
                       placeholder="https://youtube.com/@yourchannel"
                     />
                   </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-lg">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <LayoutGrid className="h-5 w-5 text-primary" /> Homepage
+                  Sections
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="font-medium">Explore Top Cities</p>
+                    <p className="text-sm text-muted-foreground">
+                      Show the "Explore Top Cities" section on the homepage
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        show_top_cities: !prev.show_top_cities,
+                      }))
+                    }
+                    className={`relative inline-flex h-6 w-11 flex-shrink-0 items-center rounded-full transition-colors ${
+                      formData.show_top_cities ? "bg-primary" : "bg-gray-300"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                        formData.show_top_cities
+                          ? "translate-x-6"
+                          : "translate-x-1"
+                      }`}
+                    />
+                  </button>
                 </div>
               </CardContent>
             </Card>
