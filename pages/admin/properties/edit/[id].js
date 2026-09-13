@@ -212,6 +212,7 @@ export default function EditProperty() {
     builder_name: "",
     builder_id: "",
     project_size: "",
+    total_units: "",
     launch_date: "",
     price_text: "",
     rera_number: "",
@@ -327,6 +328,7 @@ export default function EditProperty() {
         builder_name: property.builder_name || "",
         builder_id: property.builder?._id || property.builder || "",
         project_size: property.project_size || "",
+        total_units: property.total_units?.toString() || "",
         launch_date: property.launch_date || "",
         price_text: property.price_text || "",
         rera_number: property.rera_number || "",
@@ -1329,7 +1331,7 @@ export default function EditProperty() {
                       )}
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <div>
                         <Label htmlFor="project_size">Project Size</Label>
                         <Input
@@ -1338,6 +1340,19 @@ export default function EditProperty() {
                           value={formData.project_size}
                           onChange={handleChange}
                           placeholder="e.g., 5 Acres"
+                          className="mt-1 rounded-lg"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="total_units">Total Units</Label>
+                        <Input
+                          type="number"
+                          min="0"
+                          id="total_units"
+                          name="total_units"
+                          value={formData.total_units}
+                          onChange={handleChange}
+                          placeholder="e.g., 240"
                           className="mt-1 rounded-lg"
                         />
                       </div>

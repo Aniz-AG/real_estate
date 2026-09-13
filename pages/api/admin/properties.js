@@ -205,6 +205,8 @@ const updateProperty = async (req, res) => {
 
       property.project_size =
         getValue(fields.project_size) || property.project_size;
+      const totalUnits = parseNumber(fields.total_units);
+      if (totalUnits !== undefined) property.total_units = totalUnits;
       property.launch_date =
         getValue(fields.launch_date) || property.launch_date;
       property.price_text =

@@ -333,6 +333,10 @@ const propertySchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    total_units: {
+      type: Number,
+      min: 0,
+    },
     launch_date: {
       type: String,
       trim: true,

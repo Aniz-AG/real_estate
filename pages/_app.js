@@ -3,7 +3,7 @@ import { Provider, useDispatch, useSelector } from 'react-redux';
 import { store } from '@/redux/store';
 import { Toaster } from 'react-hot-toast';
 import { getMyProfile } from '@/redux/slices/userSlice';
-import { setSelectedCity } from '@/redux/slices/propertySlice';
+import { setSelectedCity, INDIA_CITIES } from '@/redux/slices/propertySlice';
 import axios from 'axios';
 import '@/styles/globals.css';
 import 'slick-carousel/slick/slick.css';
@@ -45,6 +45,44 @@ function AuthWrapper({ children }) {
 
         if (!storedCity) {
             localStorage.setItem('selectedCity', preferredCity);
+        }
+
+        // First-time anonymous visitor: try to detect their real city via
+        // geolocation and override the 'Jaipur' fallback once/if it resolves.
+        if (!storedCity && !user?.city && navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    try {
+                        const { latitude, longitude } = position.coords;
+                        const res = await fetch(
+                            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`,
+                        );
+                        const data = await res.json();
+                        const detected =
+                            data?.address?.city ||
+                            data?.address?.town ||
+                            data?.address?.village ||
+                            data?.address?.county ||
+                            data?.address?.state_district;
+
+                        if (!detected) return;
+
+                        const match = INDIA_CITIES.find(
+                            (c) => c.name.toLowerCase() === detected.toLowerCase(),
+                        );
+                        if (match) {
+                            dispatch(setSelectedCity(match.name));
+                            localStorage.setItem('selectedCity', match.name);
+                        }
+                    } catch (error) {
+                        // Silently keep the 'Jaipur' fallback if reverse geocoding fails
+                    }
+                },
+                () => {
+                    // Permission denied or unavailable — keep the 'Jaipur' fallback
+                },
+                { timeout: 8000 },
+            );
         }
     }, [dispatch, isCheckingAuth, user]);
 

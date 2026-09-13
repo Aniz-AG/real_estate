@@ -46,6 +46,7 @@ import {
   BadgeCheck,
   Ruler,
   MessageCircle,
+  PlayCircle,
 } from "lucide-react";
 import Loader from "@/components/Loader";
 import toast from "react-hot-toast";
@@ -60,6 +61,7 @@ export default function PropertyDetails() {
   const [loading, setLoading] = useState(true);
   const [isLiked, setIsLiked] = useState(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+  const [videoPlaying, setVideoPlaying] = useState(false);
   const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
   useEffect(() => {
@@ -239,8 +241,8 @@ export default function PropertyDetails() {
               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-4">
                 <div>
                   {property.builder && (
-                    <div className="flex items-center gap-2 mb-2">
-                      <div className="w-8 h-8 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center flex-shrink-0">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="w-14 h-14 rounded-full overflow-hidden bg-primary/10 flex items-center justify-center flex-shrink-0">
                         {property.builder.logo?.url ? (
                           <img
                             src={property.builder.logo.url}
@@ -248,12 +250,17 @@ export default function PropertyDetails() {
                             className="w-full h-full object-cover"
                           />
                         ) : (
-                          <Building2 className="h-4 w-4 text-primary" />
+                          <Building2 className="h-7 w-7 text-primary" />
                         )}
                       </div>
-                      <span className="text-sm font-medium text-muted-foreground">
-                        By {property.builder.name}
-                      </span>
+                      <div>
+                        <p className="text-xs text-muted-foreground">
+                          By
+                        </p>
+                        <span className="text-lg font-semibold text-gray-800">
+                          {property.builder.name}
+                        </span>
+                      </div>
                     </div>
                   )}
                   {property.project_name && (
@@ -364,15 +371,26 @@ export default function PropertyDetails() {
                 </CardHeader>
                 <CardContent>
                   {getEmbedVideoUrl(property.video_url) ? (
-                    <div className="relative w-full aspect-video rounded-lg overflow-hidden">
-                      <iframe
-                        src={getEmbedVideoUrl(property.video_url)}
-                        title="Property Video"
-                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                        allowFullScreen
-                        className="absolute inset-0 w-full h-full"
-                      />
-                    </div>
+                    videoPlaying ? (
+                      <div className="relative w-full aspect-video rounded-lg overflow-hidden">
+                        <iframe
+                          src={`${getEmbedVideoUrl(property.video_url)}?autoplay=1`}
+                          title="Property Video"
+                          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                          allowFullScreen
+                          className="absolute inset-0 w-full h-full"
+                        />
+                      </div>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setVideoPlaying(true)}
+                        className="flex items-center gap-2 text-primary font-medium hover:underline"
+                      >
+                        <PlayCircle className="h-6 w-6" />
+                        Watch Video
+                      </button>
+                    )
                   ) : (
                     <a
                       href={property.video_url}
@@ -552,6 +570,7 @@ export default function PropertyDetails() {
             {/* Project & Builder Details */}
             {(property.builder ||
               property.project_size ||
+              property.total_units ||
               property.launch_date ||
               property.rera_number ||
               property.google_maps_link ||
@@ -584,6 +603,19 @@ export default function PropertyDetails() {
                           </p>
                           <p className="font-medium">
                             {property.project_size}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    {property.total_units && (
+                      <div className="flex items-center gap-3 p-3 bg-muted/30 rounded-lg">
+                        <Home className="h-5 w-5 text-primary" />
+                        <div>
+                          <p className="text-xs text-muted-foreground">
+                            Total Units
+                          </p>
+                          <p className="font-medium">
+                            {property.total_units}
                           </p>
                         </div>
                       </div>

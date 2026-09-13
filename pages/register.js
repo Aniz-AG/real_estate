@@ -9,14 +9,13 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { registerUser } from '@/redux/slices/userSlice';
 import { INDIA_CITIES } from '@/redux/slices/propertySlice';
-import { User, Mail, Phone, MapPin, Upload, Loader2 } from 'lucide-react';
+import { User, Phone, MapPin, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
 import { z } from 'zod';
 
 const registerSchema = z.object({
     username: z.string().min(2, 'Name must be at least 2 characters').max(50, 'Name is too long'),
-    email: z.string().email('Enter a valid email address'),
     phone: z.string().regex(/^\d{10}$/, 'Phone must be exactly 10 digits'),
     city: z.string().min(2, 'City must be at least 2 characters').max(50, 'City is too long'),
     state: z.string().min(2, 'State must be at least 2 characters').max(50, 'State is too long'),
@@ -36,13 +35,10 @@ export default function Register() {
 
     const [formData, setFormData] = useState({
         username: '',
-        email: '',
         phone: '',
         city: 'Jaipur',
         state: '',
     });
-    const [photo, setPhoto] = useState(null);
-    const [photoPreview, setPhotoPreview] = useState(null);
 
     // Don't render if authenticated
     if (isAuthenticated) {
@@ -51,14 +47,6 @@ export default function Register() {
 
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
-    };
-
-    const handlePhotoChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            setPhoto(file);
-            setPhotoPreview(URL.createObjectURL(file));
-        }
     };
 
     const handleSubmit = async (e) => {
@@ -71,19 +59,8 @@ export default function Register() {
             return;
         }
 
-        if (!photo) {
-            toast.error('Please upload your photo');
-            return;
-        }
-
-        const data = new FormData();
-        Object.keys(formData).forEach((key) => {
-            data.append(key, formData[key]);
-        });
-        data.append('photo', photo);
-
         try {
-            await dispatch(registerUser(data)).unwrap();
+            await dispatch(registerUser(formData)).unwrap();
             toast.success('Registration successful! Please login.');
             router.push('/login');
         } catch (error) {
@@ -117,23 +94,6 @@ export default function Register() {
                                                 type="text"
                                                 placeholder="John Doe"
                                                 value={formData.username}
-                                                onChange={handleChange}
-                                                className="pl-10"
-                                                required
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <Label htmlFor="email">Email</Label>
-                                        <div className="relative">
-                                            <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                                            <Input
-                                                id="email"
-                                                name="email"
-                                                type="email"
-                                                placeholder="john@example.com"
-                                                value={formData.email}
                                                 onChange={handleChange}
                                                 className="pl-10"
                                                 required
@@ -195,28 +155,6 @@ export default function Register() {
                                             onChange={handleChange}
                                             required
                                         />
-                                    </div>
-
-                                    <div className="space-y-2 md:col-span-2">
-                                        <Label htmlFor="photo">Profile Photo</Label>
-                                        <div className="flex items-center gap-4">
-                                            <div className="flex-1">
-                                                <Input
-                                                    id="photo"
-                                                    type="file"
-                                                    accept="image/*"
-                                                    onChange={handlePhotoChange}
-                                                    required
-                                                />
-                                            </div>
-                                            {photoPreview && (
-                                                <img
-                                                    src={photoPreview}
-                                                    alt="Preview"
-                                                    className="h-20 w-20 rounded-full object-cover border-2 border-primary"
-                                                />
-                                            )}
-                                        </div>
                                     </div>
                                 </div>
 

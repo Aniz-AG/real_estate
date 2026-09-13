@@ -195,6 +195,7 @@ async function handler(req, res) {
       builder_name: builderName || getField("builderName") || "",
       builder: builderId || undefined,
       project_size: getField("projectSize") || "",
+      total_units: getField("totalUnits") ? Number(getField("totalUnits")) : undefined,
       launch_date: getField("launchDate") || "",
       price_text: getField("priceText") || "",
       rera_number: getField("reraNumber") || "",

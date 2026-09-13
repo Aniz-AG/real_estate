@@ -232,6 +232,7 @@ export default function AddProperty() {
     builderName: "",
     builderId: "",
     projectSize: "",
+    totalUnits: "",
     launchDate: "",
     priceText: "",
     reraNumber: "",
@@ -814,7 +815,7 @@ export default function AddProperty() {
                     )}
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div>
                       <Label>Project Size</Label>
                       <Input
@@ -822,6 +823,17 @@ export default function AddProperty() {
                         value={formData.projectSize}
                         onChange={handleInputChange}
                         placeholder="e.g., 5 Acres"
+                      />
+                    </div>
+                    <div>
+                      <Label>Total Units</Label>
+                      <Input
+                        type="number"
+                        min="0"
+                        name="totalUnits"
+                        value={formData.totalUnits}
+                        onChange={handleInputChange}
+                        placeholder="e.g., 240"
                       />
                     </div>
                     <div>

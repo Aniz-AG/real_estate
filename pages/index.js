@@ -157,6 +157,7 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
     useSelector((state) => state.property);
   const [ssrProperties] = useState(latestProperties);
   const [topCities, setTopCities] = useState(initialTopCities);
+  const [builders, setBuilders] = useState([]);
   const [showLogo, setShowLogo] = useState(false);
 
   useEffect(() => {
@@ -215,58 +216,13 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
     if (!initialTopCities.length) {
       fetchTopCities();
     }
+    fetchBuilders();
   }, [
     dispatch,
     properties?.length,
     initialTopCities.length,
     ssrProperties.length,
   ]);
-
-  // Detect the visitor's city once, so it becomes the homepage's primary city
-  useEffect(() => {
-    const savedCity = localStorage.getItem("selectedCity");
-    if (savedCity) {
-      dispatch(setSelectedCity(savedCity));
-      return;
-    }
-
-    if (!navigator.geolocation) return;
-
-    navigator.geolocation.getCurrentPosition(
-      async (position) => {
-        try {
-          const { latitude, longitude } = position.coords;
-          const res = await fetch(
-            `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${latitude}&lon=${longitude}`,
-          );
-          const data = await res.json();
-          const detected =
-            data?.address?.city ||
-            data?.address?.town ||
-            data?.address?.village ||
-            data?.address?.county ||
-            data?.address?.state_district;
-
-          if (!detected) return;
-
-          const match = INDIA_CITIES.find(
-            (c) => c.name.toLowerCase() === detected.toLowerCase(),
-          );
-          if (match) {
-            dispatch(setSelectedCity(match.name));
-            localStorage.setItem("selectedCity", match.name);
-          }
-        } catch (error) {
-          // Silently keep the default city if reverse geocoding fails
-        }
-      },
-      () => {
-        // Permission denied or unavailable — keep the default city
-      },
-      { timeout: 8000 },
-    );
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   // Fetch properties when city changes
   useEffect(() => {
@@ -356,6 +312,15 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
       setTopCities(data.cities);
     } catch (error) {
       console.error("Failed to fetch cities");
+    }
+  };
+
+  const fetchBuilders = async () => {
+    try {
+      const { data } = await axios.get("/api/builders");
+      if (data.success) setBuilders(data.builders || []);
+    } catch (error) {
+      console.error("Failed to fetch builders");
     }
   };
 
@@ -1313,6 +1278,82 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
                 );
               })}
             </motion.div>
+          </div>
+        </section>
+      )}
+
+      {/* Trusted Builders Section */}
+      {builders.length > 0 && (
+        <section className="py-16 bg-white">
+          <div className="container mx-auto px-4">
+            <motion.div
+              className="text-center mb-12"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+            >
+              <span className="inline-flex items-center gap-2 bg-orange-50 text-orange-600 px-4 py-1.5 rounded-full text-sm font-medium mb-4">
+                <Building2 className="h-4 w-4" />
+                Our Partners
+              </span>
+              <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-800">
+                Trusted by Leading{" "}
+                <span className="text-[#C4302B]">Builders</span>
+              </h2>
+              <p className="text-lg text-gray-500">
+                Partnering with reputed developers to bring you verified,
+                quality projects
+              </p>
+            </motion.div>
+
+            {builders.length > 6 ? (
+              <Slider
+                infinite
+                autoplay
+                autoplaySpeed={0}
+                speed={5000}
+                cssEase="linear"
+                arrows={false}
+                pauseOnHover
+                slidesToShow={6}
+                slidesToScroll={1}
+                responsive={[
+                  { breakpoint: 1280, settings: { slidesToShow: 5 } },
+                  { breakpoint: 1024, settings: { slidesToShow: 4 } },
+                  { breakpoint: 768, settings: { slidesToShow: 3 } },
+                  { breakpoint: 480, settings: { slidesToShow: 2 } },
+                ]}
+              >
+                {builders.map((builder) => (
+                  <div key={builder._id} className="px-3">
+                    <div className="h-24 flex items-center justify-center bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-shadow p-4">
+                      <img
+                        src={builder.logo?.url}
+                        alt={builder.name}
+                        title={builder.name}
+                        className="max-h-14 max-w-full object-contain grayscale hover:grayscale-0 transition-all"
+                      />
+                    </div>
+                  </div>
+                ))}
+              </Slider>
+            ) : (
+              <div className="flex flex-wrap items-center justify-center gap-5">
+                {builders.map((builder) => (
+                  <div
+                    key={builder._id}
+                    className="h-24 w-44 flex items-center justify-center bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-shadow p-4"
+                  >
+                    <img
+                      src={builder.logo?.url}
+                      alt={builder.name}
+                      title={builder.name}
+                      className="max-h-14 max-w-full object-contain grayscale hover:grayscale-0 transition-all"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </section>
       )}
