@@ -49,7 +49,7 @@ import {
   MessageCircle,
   PlayCircle,
 } from "lucide-react";
-import Loader from "@/components/Loader";
+import PropertyDetailSkeleton from "@/components/skeletons/PropertyDetailSkeleton";
 import toast from "react-hot-toast";
 import { PRICE_UNIT_LABELS } from "@/lib/constants";
 import { userExist } from "@/redux/slices/userSlice";
@@ -139,7 +139,7 @@ export default function PropertyDetails() {
   if (loading) {
     return (
       <Layout>
-        <Loader />
+        <PropertyDetailSkeleton />
       </Layout>
     );
   }

@@ -3,6 +3,7 @@ import Layout from "@/components/Layout";
 import SeoHead from "@/components/SeoHead";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, ExternalLink, ArrowRight, Loader2 } from "lucide-react";
+import { InsightGridSkeleton } from "@/components/skeletons/InsightCardSkeleton";
 import { Playfair_Display, Space_Grotesk } from "next/font/google";
 import Link from "next/link";
 
@@ -168,9 +169,12 @@ export default function Insights() {
           )}
 
           {loading && (
-            <div className="flex flex-col items-center justify-center py-20 text-gray-500">
-              <Loader2 className="h-8 w-8 animate-spin text-[#C4302B] mb-4" />
-              <p>Fetching the latest market insights...</p>
+            <div>
+              <p className="text-sm text-gray-500 mb-4 flex items-center gap-2">
+                <Loader2 className="h-4 w-4 animate-spin text-[#C4302B]" />
+                Fetching the latest market insights...
+              </p>
+              <InsightGridSkeleton count={3} />
             </div>
           )}
 

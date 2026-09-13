@@ -4,6 +4,7 @@ import { store } from '@/redux/store';
 import { Toaster } from 'react-hot-toast';
 import { getMyProfile } from '@/redux/slices/userSlice';
 import { setSelectedCity, INDIA_CITIES } from '@/redux/slices/propertySlice';
+import RouteProgressBar from '@/components/RouteProgressBar';
 import axios from 'axios';
 import '@/styles/globals.css';
 import 'slick-carousel/slick/slick.css';
@@ -107,6 +108,7 @@ function AuthWrapper({ children }) {
 function AppContent({ Component, pageProps }) {
     return (
         <AuthWrapper>
+            <RouteProgressBar />
             <Component {...pageProps} />
             <Toaster
                 position="top-center"

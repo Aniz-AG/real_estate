@@ -11,6 +11,8 @@ import { useRouter } from "next/router";
 import Layout from "@/components/Layout";
 import SeoHead from "@/components/SeoHead";
 import ProjectCard from "@/components/ProjectCard";
+import { PropertyGridSkeleton } from "@/components/skeletons/PropertyCardSkeleton";
+import { ProjectGridSkeleton } from "@/components/skeletons/ProjectCardSkeleton";
 import { Button } from "@/components/ui/button";
 import { PRICE_UNIT_LABELS, formatPriceDisplay } from "@/lib/constants";
 import {
@@ -24,7 +26,6 @@ import {
   Maximize,
   MapPin,
   Search,
-  Loader2,
   X,
   ChevronDown,
   ChevronUp,
@@ -1936,9 +1937,11 @@ export default function BrowseProperty() {
               </div>
 
               {loading ? (
-                <div className="flex justify-center items-center py-20">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                </div>
+                activeTab === "projects" ? (
+                  <ProjectGridSkeleton variant="row" count={4} />
+                ) : (
+                  <PropertyGridSkeleton viewMode={viewMode} count={6} />
+                )
               ) : visibleCount === 0 ? (
                 <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
                   <Building2 className="h-16 w-16 text-gray-300 mx-auto mb-4" />

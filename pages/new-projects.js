@@ -3,6 +3,7 @@ import { useSelector } from "react-redux";
 import Layout from "@/components/Layout";
 import SeoHead from "@/components/SeoHead";
 import ProjectCard from "@/components/ProjectCard";
+import { ProjectGridSkeleton } from "@/components/skeletons/ProjectCardSkeleton";
 import { Crown, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -65,9 +66,7 @@ export default function NewProjects() {
       <section className="py-12 bg-slate-50">
         <div className="container mx-auto px-4">
           {loading ? (
-            <div className="text-center text-gray-500 py-12">
-              Loading projects...
-            </div>
+            <ProjectGridSkeleton variant="row" count={4} />
           ) : projects.length === 0 ? (
             <div className="text-center text-gray-500 py-12">
               No projects found in {selectedCity || "this region"}.

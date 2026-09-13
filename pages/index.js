@@ -4,6 +4,8 @@ import { useRouter } from "next/router";
 import Layout from "@/components/Layout";
 import SeoHead from "@/components/SeoHead";
 import ProjectCard from "@/components/ProjectCard";
+import { HomeCardSkeletonRow } from "@/components/skeletons/HomeCardSkeleton";
+import { ProjectGridSkeleton } from "@/components/skeletons/ProjectCardSkeleton";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -1077,13 +1079,7 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
             </div>
 
             {featuredLoading ? (
-              <div className="flex justify-center py-12">
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                  className="w-10 h-10 border-4 border-[#C4302B] border-t-transparent rounded-full"
-                />
-              </div>
+              <HomeCardSkeletonRow count={4} />
             ) : (
               <Slider ref={featuredSliderRef} {...sliderSettings}>
                 {featuredProperties.map((property, idx) => (
@@ -1127,13 +1123,7 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
           </div>
 
           {cityLoading ? (
-            <div className="flex justify-center py-12">
-              <motion.div
-                animate={{ rotate: 360 }}
-                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                className="w-10 h-10 border-4 border-[#C4302B] border-t-transparent rounded-full"
-              />
-            </div>
+            <HomeCardSkeletonRow count={4} />
           ) : latestCityProperties.length > 0 ? (
             <Slider ref={latestSliderRef} {...sliderSettings}>
               {latestCityProperties.map((property, idx) => (
@@ -1188,13 +1178,7 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
             </div>
 
             {featuredLoading ? (
-              <div className="flex justify-center py-12">
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                  className="w-10 h-10 border-4 border-[#C4302B] border-t-transparent rounded-full"
-                />
-              </div>
+              <ProjectGridSkeleton variant="tile" count={4} />
             ) : (
               <Slider ref={topProjectsSliderRef} {...sliderSettings}>
                 {topProjects.map((property, idx) => (

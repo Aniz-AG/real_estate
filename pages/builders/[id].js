@@ -19,6 +19,7 @@ import {
   MapPin,
 } from "lucide-react";
 import { formatPriceDisplay } from "@/lib/constants";
+import BuilderStorefrontSkeleton from "@/components/skeletons/BuilderStorefrontSkeleton";
 
 function PropertyTile({ property }) {
   const mainImage = property.photos?.[0]?.url || "/placeholder-property.jpg";
@@ -98,9 +99,7 @@ export default function BuilderStorefront() {
   if (loading) {
     return (
       <Layout>
-        <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="h-8 w-8 animate-spin text-primary" />
-        </div>
+        <BuilderStorefrontSkeleton />
       </Layout>
     );
   }
