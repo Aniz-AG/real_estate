@@ -341,10 +341,12 @@ export default function ManageProperties() {
                         </div>
                         <div className="absolute top-3 left-3">
                           <span
-                            className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                              property.usage_type === "Sale"
+                            className={`px-3 py-1 rounded-full text-xs font-semibold capitalize ${
+                              property.usage_type === "sale"
                                 ? "bg-emerald-500 text-white"
-                                : "bg-blue-500 text-white"
+                                : property.usage_type === "lease"
+                                  ? "bg-amber-500 text-white"
+                                  : "bg-blue-500 text-white"
                             }`}
                           >
                             For {property.usage_type}

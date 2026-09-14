@@ -201,12 +201,12 @@ const propertySchema = new mongoose.Schema(
     },
     status: {
       type: String,
-      enum: ["available", "sold", "rented"],
+      enum: ["available", "sold", "rented", "leased"],
       default: "available",
     },
     usage_type: {
       type: String,
-      enum: ["rent", "sale"],
+      enum: ["rent", "sale", "lease"],
       default: "sale",
     },
 

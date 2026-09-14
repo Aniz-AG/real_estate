@@ -291,7 +291,13 @@ export default function PropertyDetails() {
                     size="icon"
                     onClick={() => {
                       const propertyUrl = `${baseUrl}/property/${id}`;
-                      const title = `${property.bhk_type || ""} ${property.property_type?.replace(/_/g, " ")} for ${property.usage_type === "rent" ? "Rent" : "Sale"} in ${property.address?.city}`;
+                      const usageLabel =
+                        property.usage_type === "rent"
+                          ? "Rent"
+                          : property.usage_type === "lease"
+                            ? "Lease"
+                            : "Sale";
+                      const title = `${property.bhk_type || ""} ${property.property_type?.replace(/_/g, " ")} for ${usageLabel} in ${property.address?.city}`;
                       const price = formatPrice(property.price);
                       const message = `Check out this property: ${title}\nPrice: ${price}\nArea: ${property.square_feet || property.covered_area} sqft\nLocation: ${property.address?.property_address}\n\n${propertyUrl}`;
                       const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;

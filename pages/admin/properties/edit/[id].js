@@ -821,6 +821,7 @@ export default function EditProperty() {
                       >
                         <option value="sale">Sale</option>
                         <option value="rent">Rent</option>
+                        <option value="lease">Lease</option>
                       </select>
                     </div>
                   </div>
@@ -1152,6 +1153,7 @@ export default function EditProperty() {
                       <option value="available">Available</option>
                       <option value="sold">Sold</option>
                       <option value="rented">Rented</option>
+                      <option value="leased">Leased</option>
                     </select>
                   </div>
                 </CardContent>

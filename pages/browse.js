@@ -315,7 +315,13 @@ function PropertyCard({
     e.preventDefault();
     e.stopPropagation();
     const propertyUrl = `${baseUrl}/property/${property._id}`;
-    const title = `${property.bhk_type || ""} ${property.property_type?.replace(/_/g, " ")} for ${property.usage_type === "rent" ? "Rent" : "Sale"} in ${property.address?.city}`;
+    const usageLabel =
+      property.usage_type === "rent"
+        ? "Rent"
+        : property.usage_type === "lease"
+          ? "Lease"
+          : "Sale";
+    const title = `${property.bhk_type || ""} ${property.property_type?.replace(/_/g, " ")} for ${usageLabel} in ${property.address?.city}`;
     const price =
       property.price >= 10000000
         ? `₹${(property.price / 10000000).toFixed(2)} Cr`
@@ -365,7 +371,13 @@ function PropertyCard({
                   {property.property_type
                     ?.replace(/_/g, " ")
                     .replace(/\b\w/g, (l) => l.toUpperCase())}{" "}
-                  for {property.usage_type === "rent" ? "Rent" : "Sale"} in{" "}
+                  for{" "}
+                  {property.usage_type === "rent"
+                    ? "Rent"
+                    : property.usage_type === "lease"
+                      ? "Lease"
+                      : "Sale"}{" "}
+                  in{" "}
                   {property.address?.locality || property.address?.city}
                 </h3>
               </Link>
@@ -1113,7 +1125,11 @@ export default function BrowseProperty() {
                 }
                 className="flex items-center justify-between md:justify-start gap-2 text-sm font-medium text-gray-700 hover:text-primary px-3 py-2 rounded-xl md:rounded-full w-full md:w-auto"
               >
-                {filters.usageType === "rent" ? "Rent" : "Buy"}{" "}
+                {filters.usageType === "rent"
+                  ? "Rent"
+                  : filters.usageType === "lease"
+                    ? "Lease"
+                    : "Buy"}{" "}
                 <ChevronDown className="h-4 w-4" />
               </button>
               <DropdownPortal
@@ -1128,6 +1144,7 @@ export default function BrowseProperty() {
                   {[
                     { label: "Buy", value: "sale" },
                     { label: "Rent", value: "rent" },
+                    { label: "Lease", value: "lease" },
                   ].map((option) => (
                     <button
                       type="button"

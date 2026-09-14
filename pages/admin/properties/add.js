@@ -649,6 +649,7 @@ export default function AddProperty() {
                       >
                         <option value="sale">For Sale</option>
                         <option value="rent">For Rent</option>
+                        <option value="lease">For Lease</option>
                       </select>
                     </div>
                   </div>
