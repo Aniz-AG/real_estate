@@ -14,6 +14,11 @@
 /.next/
 /out/
 
+# next-sitemap (regenerated on every `next build` via the postbuild script,
+# using NEXT_PUBLIC_SITE_URL from that environment — never hand-commit these)
+/public/sitemap*.xml
+/public/robots.txt
+
 # production
 /build
 /dist
