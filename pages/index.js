@@ -1295,7 +1295,7 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
               </span>
               <h2 className="text-3xl md:text-4xl font-bold mb-4 text-gray-800">
                 Trusted by Leading{" "}
-                <span className="text-[#C4302B]">Builders</span>
+                <span className="text-[#C4302B]">Real Estate Ventures</span>
               </h2>
               <p className="text-lg text-gray-500">
                 Partnering with reputed developers to bring you verified,
@@ -1331,24 +1331,11 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
                   {marqueeBuilders.map((builder) => (
                     <div key={builder._key} className="px-3">
                       <Link href={`/builders/${builder._id}`}>
-                        <div
-                          className={`relative flex items-center justify-center bg-white border rounded-xl shadow-sm hover:shadow-md transition-shadow p-4 cursor-pointer ${
-                            builder.is_premium
-                              ? "h-28 border-amber-300 ring-1 ring-amber-200"
-                              : "h-24 border-gray-100"
-                          }`}
-                        >
-                          {builder.is_premium && (
-                            <span className="absolute -top-2 -right-2 inline-flex items-center gap-1 rounded-full bg-amber-400 px-2 py-0.5 text-[10px] font-semibold text-slate-900 shadow">
-                              <Sparkles className="h-2.5 w-2.5" /> Featured
-                            </span>
-                          )}
+                        <div className="h-24 flex items-center justify-center bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-shadow p-4 cursor-pointer">
                           <img
                             src={builder.logo?.url}
                             alt={builder.name}
-                            className={`max-w-full object-contain grayscale hover:grayscale-0 transition-all ${
-                              builder.is_premium ? "max-h-16" : "max-h-14"
-                            }`}
+                            className="max-w-full max-h-14 object-contain grayscale hover:grayscale-0 transition-all"
                           />
                         </div>
                         <p className="text-center text-sm font-medium text-gray-700 mt-2 truncate hover:text-primary">
