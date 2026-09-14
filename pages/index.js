@@ -1281,8 +1281,9 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
 
       {/* Trusted Builders Section */}
       {builders.length > 0 && (
-        <section className="py-16 bg-white">
-          <div className="container mx-auto px-4">
+        <section className="py-16 bg-gradient-to-b from-orange-50/40 via-white to-white relative overflow-hidden">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[#C4302B]/5 rounded-full blur-3xl pointer-events-none" />
+          <div className="container mx-auto px-4 relative">
             <motion.div
               className="text-center mb-12"
               initial={{ opacity: 0, y: 20 }}
@@ -1311,40 +1312,42 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
               ).flat();
 
               return (
-                <Slider
-                  infinite
-                  autoplay
-                  autoplaySpeed={0}
-                  speed={5000}
-                  cssEase="linear"
-                  arrows={false}
-                  pauseOnHover
-                  slidesToShow={Math.min(6, marqueeBuilders.length)}
-                  slidesToScroll={1}
-                  responsive={[
-                    { breakpoint: 1280, settings: { slidesToShow: Math.min(5, marqueeBuilders.length) } },
-                    { breakpoint: 1024, settings: { slidesToShow: Math.min(4, marqueeBuilders.length) } },
-                    { breakpoint: 768, settings: { slidesToShow: Math.min(3, marqueeBuilders.length) } },
-                    { breakpoint: 480, settings: { slidesToShow: Math.min(2, marqueeBuilders.length) } },
-                  ]}
-                >
-                  {marqueeBuilders.map((builder) => (
-                    <div key={builder._key} className="px-3">
-                      <Link href={`/builders/${builder._id}`}>
-                        <div className="h-24 flex items-center justify-center bg-white border border-gray-100 rounded-xl shadow-sm hover:shadow-md transition-shadow p-4 cursor-pointer">
-                          <img
-                            src={builder.logo?.url}
-                            alt={builder.name}
-                            className="max-w-full max-h-14 object-contain grayscale hover:grayscale-0 transition-all"
-                          />
-                        </div>
-                        <p className="text-center text-sm font-medium text-gray-700 mt-2 truncate hover:text-primary">
-                          {builder.name}
-                        </p>
-                      </Link>
-                    </div>
-                  ))}
-                </Slider>
+                <div className="[mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)] [-webkit-mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]">
+                  <Slider
+                    infinite
+                    autoplay
+                    autoplaySpeed={0}
+                    speed={5000}
+                    cssEase="linear"
+                    arrows={false}
+                    pauseOnHover
+                    slidesToShow={Math.min(6, marqueeBuilders.length)}
+                    slidesToScroll={1}
+                    responsive={[
+                      { breakpoint: 1280, settings: { slidesToShow: Math.min(5, marqueeBuilders.length) } },
+                      { breakpoint: 1024, settings: { slidesToShow: Math.min(4, marqueeBuilders.length) } },
+                      { breakpoint: 768, settings: { slidesToShow: Math.min(3, marqueeBuilders.length) } },
+                      { breakpoint: 480, settings: { slidesToShow: Math.min(2, marqueeBuilders.length) } },
+                    ]}
+                  >
+                    {marqueeBuilders.map((builder) => (
+                      <div key={builder._key} className="px-3 py-2">
+                        <Link href={`/builders/${builder._id}`} className="group block">
+                          <div className="h-28 flex items-center justify-center bg-white border border-gray-100 rounded-2xl shadow-sm group-hover:shadow-xl group-hover:border-[#C4302B]/30 group-hover:-translate-y-1 transition-all duration-300 p-5">
+                            <img
+                              src={builder.logo?.url}
+                              alt={builder.name}
+                              className="max-w-full max-h-16 object-contain transition-transform duration-300 group-hover:scale-105"
+                            />
+                          </div>
+                          <p className="text-center text-sm font-medium text-gray-700 mt-3 truncate group-hover:text-[#C4302B] transition-colors">
+                            {builder.name}
+                          </p>
+                        </Link>
+                      </div>
+                    ))}
+                  </Slider>
+                </div>
               );
             })()}
           </div>
