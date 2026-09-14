@@ -139,6 +139,10 @@ export default function PropertyDetails() {
   if (loading) {
     return (
       <Layout>
+        <SeoHead
+          title="Property Details"
+          description="View property details, photos, pricing, and contact information."
+        />
         <PropertyDetailSkeleton />
       </Layout>
     );

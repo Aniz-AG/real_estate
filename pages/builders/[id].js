@@ -99,6 +99,10 @@ export default function BuilderStorefront() {
   if (loading) {
     return (
       <Layout>
+        <SeoHead
+          title="Builder Profile"
+          description="Explore projects and listings from this builder."
+        />
         <BuilderStorefrontSkeleton />
       </Layout>
     );

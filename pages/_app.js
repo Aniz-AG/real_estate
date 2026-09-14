@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/router';
 import { Provider, useDispatch, useSelector } from 'react-redux';
 import { store } from '@/redux/store';
 import { Toaster } from 'react-hot-toast';
@@ -14,10 +15,20 @@ import 'slick-carousel/slick/slick-theme.css';
 axios.defaults.withCredentials = true;
 
 // Auth wrapper component that checks for existing session
+// Routes that gate their content on the resolved auth state (redirecting to
+// /login or bouncing non-admins away) — these must wait for the auth check
+// before mounting, otherwise they'd redirect based on the default
+// logged-out Redux state and bounce a genuinely logged-in user.
+const AUTH_GATED_ROUTE_PREFIXES = ['/admin', '/profile'];
+
 function AuthWrapper({ children }) {
     const dispatch = useDispatch();
+    const router = useRouter();
     const [isCheckingAuth, setIsCheckingAuth] = useState(true);
     const { user } = useSelector((state) => state.user);
+    const isAuthGatedRoute = AUTH_GATED_ROUTE_PREFIXES.some(
+        (prefix) => router.pathname === prefix || router.pathname.startsWith(`${prefix}/`),
+    );
 
     useEffect(() => {
         // Check if user is already logged in via cookies
@@ -87,8 +98,12 @@ function AuthWrapper({ children }) {
         }
     }, [dispatch, isCheckingAuth, user]);
 
-    // Show loading spinner while checking auth
-    if (isCheckingAuth) {
+    // Only block rendering on routes that make access-control decisions from
+    // auth state (admin/profile) — everywhere else, render immediately so the
+    // page's own title/meta/JSON-LD are present in the server-rendered HTML
+    // for search engines and link-preview crawlers instead of being hidden
+    // behind this spinner until client-side auth resolves.
+    if (isCheckingAuth && isAuthGatedRoute) {
         return (
             <div className="fixed inset-0 flex items-center justify-center bg-white z-50">
                 <div className="flex flex-col items-center gap-4">

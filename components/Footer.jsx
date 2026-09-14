@@ -64,7 +64,7 @@ const Footer = () => {
               {/* <Building2 className="h-8 w-8 text-slate-900" /> */}
               <img
                   src="/logo.png"
-                  alt="EstateHub Logo"
+                  alt="VSK Estates Logo"
                   className="h-16 w-auto object-contain"
                 />
             </div>

@@ -41,7 +41,7 @@ export default function NewProjects() {
   return (
     <Layout>
       <SeoHead
-        title="New Projects | VSK Holdings Real EstateHub"
+        title="New Projects"
         description="Explore premium new projects curated for elite buyers."
       />
 

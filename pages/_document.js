@@ -5,7 +5,6 @@ export default function Document() {
         <Html lang="en">
             <Head>
                 <link rel="icon" href="/favicon.ico" />
-                <meta name="description" content="Find your dream property" />
             </Head>
             <body>
                 <Main />

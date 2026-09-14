@@ -487,8 +487,7 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
   return (
     <Layout>
       <SeoHead
-        title="Find Your Dream Home | VSK Holdings Real EstateHub"
-        description="Browse the latest apartments, villas, and homes across top cities. Find your dream property today."
+        description="VSK Estates — browse the latest apartments, villas, and homes across top cities. Find your dream property today."
       />
 
       {/* Hero Search Section - Magic Bricks Style */}

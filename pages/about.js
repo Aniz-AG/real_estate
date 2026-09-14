@@ -299,7 +299,7 @@ export default function About({ initialTestimonials = [] }) {
       year: "2020",
       title: "Founded",
       description:
-        "VSK Holdings Real EstateHub was born with a vision to revolutionize real estate",
+        "VSK Estates was born with a vision to revolutionize real estate",
     },
     {
       year: "2021",
@@ -326,8 +326,8 @@ export default function About({ initialTestimonials = [] }) {
   return (
     <Layout>
       <SeoHead
-        title="About Us - VSK Holdings Real EstateHub"
-        description="Learn about VSK Holdings Real EstateHub - your trusted partner in finding the perfect property. Discover our mission, values, and the team behind India's leading real estate platform."
+        title="About Us"
+        description="Learn about VSK Estates - your trusted partner in finding the perfect property. Discover our mission, values, and the team behind India's leading real estate platform."
       />
 
       {/* Toast */}
@@ -364,7 +364,7 @@ export default function About({ initialTestimonials = [] }) {
               transition={{ delay: 0.2 }}
             >
               <Sparkles className="h-4 w-4 text-amber-800" />
-              About VSK Holdings Real EstateHub
+              About VSK Estates
             </motion.span>
 
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
@@ -462,7 +462,7 @@ export default function About({ initialTestimonials = [] }) {
               whileHover={{ scale: 1.05 }}
             >
               <CheckCircle className="h-4 w-4" />
-              Why VSK Holdings Real EstateHub
+              Why VSK Estates
             </motion.span>
             <h2 className="text-4xl md:text-5xl font-bold mb-4 bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent">
               Why Choose Us

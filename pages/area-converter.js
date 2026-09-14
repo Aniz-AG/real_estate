@@ -80,7 +80,7 @@ export default function AreaConverter() {
   return (
     <Layout>
       <SeoHead
-        title="Area Converter | VSK Holdings Real EstateHub"
+        title="Area Converter"
         description="Convert land and property area units used across India."
       />
       <div

@@ -1106,7 +1106,7 @@ export default function BrowseProperty() {
   return (
     <Layout>
       <SeoHead
-        title={`Properties for Sale in ${displayCity} | VSK Holdings Real EstateHub`}
+        title={`Properties for Sale in ${displayCity}`}
         description={`Find ${visibleCount}+ properties for sale in ${displayCity}.`}
       />
 

@@ -189,7 +189,7 @@ const Navbar = () => {
               >
                 <img 
                   src="/logo.png" 
-                  alt="EstateHub Logo" 
+                  alt="VSK Estates Logo"
                   className="w-24 h-auto object-contain" 
                 />
               </Link>
