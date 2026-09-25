@@ -1242,6 +1242,7 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
                         dispatch(setSelectedCity(city.city));
                         if (typeof window !== "undefined") {
                           localStorage.setItem("selectedCity", city.city);
+                          localStorage.removeItem("cityIsAutoFallback");
                         }
                       }}
                     >

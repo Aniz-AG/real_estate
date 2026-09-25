@@ -51,17 +51,30 @@ function AuthWrapper({ children }) {
         if (typeof window === 'undefined') return;
 
         const storedCity = localStorage.getItem('selectedCity');
-        const preferredCity = storedCity || user?.city || 'Jaipur';
+        // Distinguishes a city the user actually chose (or that geolocation
+        // actually detected) from the synchronous 'Jaipur' placeholder written
+        // below — without this, the very first visit permanently "locks in"
+        // Jaipur in localStorage and geolocation never gets a chance to run
+        // again on later visits, even after the user grants permission.
+        // Also treat a bare stored 'Jaipur' with no flag either way as
+        // unconfirmed — that's exactly what browsers stuck on the old,
+        // pre-fix logic have cached, so this lets them self-heal with one
+        // more geolocation attempt instead of staying stuck forever.
+        const isUnconfirmedFallback =
+            localStorage.getItem('cityIsAutoFallback') === 'true' || storedCity === 'Jaipur';
+        const hasConfirmedCity = storedCity && !isUnconfirmedFallback;
 
+        const preferredCity = storedCity || user?.city || 'Jaipur';
         dispatch(setSelectedCity(preferredCity));
 
         if (!storedCity) {
             localStorage.setItem('selectedCity', preferredCity);
+            localStorage.setItem('cityIsAutoFallback', 'true');
         }
 
-        // First-time anonymous visitor: try to detect their real city via
-        // geolocation and override the 'Jaipur' fallback once/if it resolves.
-        if (!storedCity && !user?.city && navigator.geolocation) {
+        // Try to detect the visitor's real city via geolocation whenever we
+        // don't yet have a confirmed (user-picked or previously-detected) city.
+        if (!hasConfirmedCity && !user?.city && navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 async (position) => {
                     try {
@@ -85,13 +98,17 @@ function AuthWrapper({ children }) {
                         if (match) {
                             dispatch(setSelectedCity(match.name));
                             localStorage.setItem('selectedCity', match.name);
+                            localStorage.removeItem('cityIsAutoFallback');
                         }
                     } catch (error) {
-                        // Silently keep the 'Jaipur' fallback if reverse geocoding fails
+                        // Silently keep the 'Jaipur' fallback if reverse geocoding fails —
+                        // cityIsAutoFallback stays set, so this is retried next visit.
                     }
                 },
                 () => {
-                    // Permission denied or unavailable — keep the 'Jaipur' fallback
+                    // Permission denied or unavailable — keep the 'Jaipur' fallback.
+                    // cityIsAutoFallback stays set, so this is retried next visit
+                    // (e.g. once the user grants location permission).
                 },
                 { timeout: 8000 },
             );

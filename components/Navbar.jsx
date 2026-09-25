@@ -64,6 +64,9 @@ const Navbar = () => {
     dispatch(setSelectedCity(cityName));
     if (typeof window !== "undefined") {
       localStorage.setItem("selectedCity", cityName);
+      // This is a deliberate user choice, not the automatic fallback —
+      // don't let geolocation override it on a later visit.
+      localStorage.removeItem("cityIsAutoFallback");
     }
     setActiveDropdown(null);
     setCitySearch("");
