@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { registerUser } from '@/redux/slices/userSlice';
 import { INDIA_CITIES } from '@/redux/slices/propertySlice';
+import { getStateForCity } from '@/lib/indiaCities';
 import { User, Phone, MapPin, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import toast from 'react-hot-toast';
@@ -37,7 +38,7 @@ export default function Register() {
         username: '',
         phone: '',
         city: 'Jaipur',
-        state: '',
+        state: getStateForCity('Jaipur') || '',
     });
 
     // Don't render if authenticated
@@ -46,7 +47,14 @@ export default function Register() {
     }
 
     const handleChange = (e) => {
-        setFormData({ ...formData, [e.target.name]: e.target.value });
+        const { name, value } = e.target;
+        if (name === 'city') {
+            // City is a fixed dropdown of known Indian cities, so the state
+            // can always be derived automatically instead of typed manually.
+            setFormData((prev) => ({ ...prev, city: value, state: getStateForCity(value) || prev.state }));
+            return;
+        }
+        setFormData({ ...formData, [name]: value });
     };
 
     const handleSubmit = async (e) => {
@@ -152,8 +160,9 @@ export default function Register() {
                                             type="text"
                                             placeholder="Your state"
                                             value={formData.state}
-                                            onChange={handleChange}
+                                            readOnly
                                             required
+                                            className="bg-muted cursor-not-allowed"
                                         />
                                     </div>
                                 </div>

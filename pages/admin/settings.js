@@ -22,6 +22,7 @@ import {
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
+import { INDIA_CITIES, getStateForCity } from "@/lib/indiaCities";
 
 const Toast = ({ message, type, onClose }) => (
   <motion.div
@@ -128,6 +129,15 @@ export default function AdminSettings() {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
+    if (name === "city") {
+      const matchedState = getStateForCity(value);
+      setFormData((prev) => ({
+        ...prev,
+        city: value,
+        state: matchedState || prev.state,
+      }));
+      return;
+    }
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -229,9 +239,15 @@ export default function AdminSettings() {
                     <Label>City</Label>
                     <Input
                       name="city"
+                      list="india-cities-datalist"
                       value={formData.city}
                       onChange={handleChange}
                     />
+                    <datalist id="india-cities-datalist">
+                      {INDIA_CITIES.map((c) => (
+                        <option key={c.name} value={c.name} />
+                      ))}
+                    </datalist>
                   </div>
                   <div>
                     <Label>State</Label>

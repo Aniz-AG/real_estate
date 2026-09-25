@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import { PRICE_UNITS } from "@/lib/constants";
+import { INDIA_CITIES, INDIA_STATES, getStateForCity } from "@/lib/indiaCities";
 import {
   compressImage,
   compressImages,
@@ -370,6 +371,15 @@ export default function EditProperty() {
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+    if (name === "city") {
+      const matchedState = getStateForCity(value);
+      setFormData((prev) => ({
+        ...prev,
+        city: value,
+        state: matchedState || prev.state,
+      }));
+      return;
+    }
     setFormData((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
@@ -457,6 +467,8 @@ export default function EditProperty() {
       if (formData.property_category === "residential" && newBuilderMode && newBuilderName.trim()) {
         const builderForm = new FormData();
         builderForm.append("name", newBuilderName.trim());
+        if (formData.city) builderForm.append("city", formData.city);
+        if (formData.state) builderForm.append("state", formData.state);
         if (newBuilderLogo) builderForm.append("logo", newBuilderLogo);
 
         const builderRes = await axios.post("/api/admin/builders", builderForm, {
@@ -873,22 +885,38 @@ export default function EditProperty() {
                     <Input
                       id="city"
                       name="city"
+                      list="india-cities-datalist"
                       value={formData.city}
                       onChange={handleChange}
                       className="mt-1 rounded-lg"
                       required
                     />
+                    <datalist id="india-cities-datalist">
+                      {INDIA_CITIES.map((c) => (
+                        <option key={c.name} value={c.name} />
+                      ))}
+                    </datalist>
                   </div>
                   <div>
                     <Label htmlFor="state">State *</Label>
-                    <Input
+                    <select
                       id="state"
                       name="state"
                       value={formData.state}
                       onChange={handleChange}
-                      className="mt-1 rounded-lg"
+                      className="mt-1 w-full h-10 px-3 rounded-lg border border-input bg-background text-sm"
                       required
-                    />
+                    >
+                      <option value="">Select State</option>
+                      {formData.state && !INDIA_STATES.includes(formData.state) && (
+                        <option value={formData.state}>{formData.state}</option>
+                      )}
+                      {INDIA_STATES.map((s) => (
+                        <option key={s} value={s}>
+                          {s}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <Label htmlFor="pincode">Pincode</Label>

@@ -10,6 +10,7 @@ import { Loader2, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { z } from 'zod';
 import { compressImage } from '@/lib/imageCompression';
+import { INDIA_CITIES, getStateForCity } from '@/lib/indiaCities';
 
 const profileSchema = z.object({
     username: z.string().min(2, 'Username must be at least 2 characters').max(50, 'Username is too long'),
@@ -46,6 +47,15 @@ export default function EditProfileModal({ isOpen, onClose }) {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
+        if (name === 'city') {
+            const matchedState = getStateForCity(value);
+            setFormData((prev) => ({
+                ...prev,
+                city: value,
+                state: matchedState || prev.state,
+            }));
+            return;
+        }
         setFormData((prev) => ({
             ...prev,
             [name]: value,
@@ -191,11 +201,17 @@ export default function EditProfileModal({ isOpen, onClose }) {
                             <Input
                                 id="city"
                                 name="city"
+                                list="india-cities-datalist"
                                 value={formData.city}
                                 onChange={handleInputChange}
                                 placeholder="Enter city"
                                 required
                             />
+                            <datalist id="india-cities-datalist">
+                                {INDIA_CITIES.map((c) => (
+                                    <option key={c.name} value={c.name} />
+                                ))}
+                            </datalist>
                         </div>
                         <div>
                             <Label htmlFor="state">State *</Label>

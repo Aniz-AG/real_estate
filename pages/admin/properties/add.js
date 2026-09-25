@@ -34,6 +34,7 @@ import {
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import { PRICE_UNITS } from "@/lib/constants";
+import { INDIA_CITIES, INDIA_STATES, getStateForCity } from "@/lib/indiaCities";
 import {
   compressImage,
   compressImages,
@@ -293,6 +294,15 @@ export default function AddProperty() {
 
   const handleInputChange = (e) => {
     const { name, value, type, checked } = e.target;
+    if (name === "city") {
+      const matchedState = getStateForCity(value);
+      setFormData((prev) => ({
+        ...prev,
+        city: value,
+        state: matchedState || prev.state,
+      }));
+      return;
+    }
     setFormData((prev) => ({
       ...prev,
       [name]: type === "checkbox" ? checked : value,
@@ -368,6 +378,8 @@ export default function AddProperty() {
       if (formData.propertyCategory === "residential" && newBuilderMode && newBuilderName.trim()) {
         const builderForm = new FormData();
         builderForm.append("name", newBuilderName.trim());
+        if (formData.city) builderForm.append("city", formData.city);
+        if (formData.state) builderForm.append("state", formData.state);
         if (newBuilderLogo) builderForm.append("logo", newBuilderLogo);
 
         const builderRes = await fetch("/api/admin/builders", {
@@ -726,23 +738,36 @@ export default function AddProperty() {
                       <Label>City *</Label>
                       <Input
                         name="city"
+                        list="india-cities-datalist"
                         value={formData.city}
                         onChange={handleInputChange}
                         placeholder="City"
                         required
                       />
+                      <datalist id="india-cities-datalist">
+                        {INDIA_CITIES.map((c) => (
+                          <option key={c.name} value={c.name} />
+                        ))}
+                      </datalist>
                     </div>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                       <Label>State *</Label>
-                      <Input
+                      <select
                         name="state"
                         value={formData.state}
                         onChange={handleInputChange}
-                        placeholder="State"
                         required
-                      />
+                        className="w-full h-10 px-3 rounded-md border border-input bg-background text-sm"
+                      >
+                        <option value="">Select State</option>
+                        {INDIA_STATES.map((s) => (
+                          <option key={s} value={s}>
+                            {s}
+                          </option>
+                        ))}
+                      </select>
                     </div>
                     <div>
                       <Label>Pincode *</Label>
