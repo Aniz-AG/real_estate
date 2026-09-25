@@ -26,6 +26,27 @@ export default function SeoHead({
     const metaDescription = description || defaultMeta.description;
     const metaImage = image || defaultMeta.image;
 
+    // Site-identity structured data, present on every page — this is one of
+    // the signals Google uses to display "VSK Estates" instead of the bare
+    // domain in search results (alongside a consistent title/og:site_name).
+    // It's not a guarantee for a brand-new site, but it's a required input.
+    const siteJsonLd = {
+        '@context': 'https://schema.org',
+        '@graph': [
+            {
+                '@type': 'WebSite',
+                name: defaultMeta.siteName,
+                url: baseUrl,
+            },
+            {
+                '@type': 'Organization',
+                name: defaultMeta.siteName,
+                url: baseUrl,
+                logo: `${baseUrl}/logo.png`,
+            },
+        ],
+    };
+
     return (
         <Head>
             <title>{metaTitle}</title>
@@ -42,6 +63,10 @@ export default function SeoHead({
             <meta name="twitter:image" content={metaImage} />
             <link rel="canonical" href={url} />
             {noIndex && <meta name="robots" content="noindex,nofollow" />}
+            <script
+                type="application/ld+json"
+                dangerouslySetInnerHTML={{ __html: JSON.stringify(siteJsonLd) }}
+            />
             {jsonLd && (
                 <script
                     type="application/ld+json"
