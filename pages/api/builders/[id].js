@@ -26,7 +26,7 @@ export default async function handler(req, res) {
     const cacheKey = `builder:${id}:page:${pageNumber}`;
     const payload = await cached(cacheKey, TTL_MS, async () => {
       const builder = await Builder.findById(id).select(
-        "name logo website description phone email is_premium",
+        "name logo website description phone email is_premium city state",
       );
       if (!builder) return null;
 

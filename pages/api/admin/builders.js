@@ -57,6 +57,8 @@ async function createBuilder(req, res) {
     description: getField("description") || "",
     phone: getField("phone") || "",
     email: getField("email") || "",
+    city: getField("city") || "",
+    state: getField("state") || "",
   });
 
   res.status(201).json({

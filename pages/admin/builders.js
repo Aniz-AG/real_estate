@@ -22,6 +22,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import axios from "axios";
 import { compressImage } from "@/lib/imageCompression";
+import { INDIA_CITIES, getStateForCity } from "@/lib/indiaCities";
 
 const Toast = ({ message, type, onClose }) => (
   <motion.div
@@ -55,6 +56,7 @@ export default function AdminBuilders() {
 
   const [showAddForm, setShowAddForm] = useState(false);
   const [newName, setNewName] = useState("");
+  const [newCity, setNewCity] = useState("");
   const [newLogo, setNewLogo] = useState(null);
   const [creating, setCreating] = useState(false);
 
@@ -140,12 +142,18 @@ export default function AdminBuilders() {
     try {
       const form = new FormData();
       form.append("name", newName.trim());
+      if (newCity.trim()) {
+        form.append("city", newCity.trim());
+        const matchedState = getStateForCity(newCity.trim());
+        if (matchedState) form.append("state", matchedState);
+      }
       if (newLogo) form.append("logo", newLogo);
       const { data } = await axios.post("/api/admin/builders", form);
       setBuilders((prev) =>
         [...prev, data.builder].sort((a, b) => a.name.localeCompare(b.name)),
       );
       setNewName("");
+      setNewCity("");
       setNewLogo(null);
       setShowAddForm(false);
       showToast("Builder created successfully");
@@ -227,6 +235,20 @@ export default function AdminBuilders() {
                   />
                 </div>
                 <div>
+                  <Label>Location (City)</Label>
+                  <Input
+                    list="india-cities-datalist"
+                    value={newCity}
+                    onChange={(e) => setNewCity(e.target.value)}
+                    placeholder="e.g., Jaipur"
+                  />
+                  <datalist id="india-cities-datalist">
+                    {INDIA_CITIES.map((c) => (
+                      <option key={c.name} value={c.name} />
+                    ))}
+                  </datalist>
+                </div>
+                <div>
                   <Label>Logo</Label>
                   <Input
                     type="file"
@@ -290,6 +312,11 @@ export default function AdminBuilders() {
                     {builder.website && (
                       <p className="text-xs text-muted-foreground truncate">
                         {builder.website}
+                      </p>
+                    )}
+                    {builder.city && (
+                      <p className="text-xs text-muted-foreground truncate">
+                        📍 {builder.city}
                       </p>
                     )}
                   </div>

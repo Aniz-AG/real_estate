@@ -161,6 +161,11 @@ export default function BuilderStorefront() {
               )}
               <div className="flex items-center justify-center sm:justify-start flex-wrap gap-4 mt-4 text-sm text-slate-300">
                 <span>{total} Active Listing{total !== 1 ? "s" : ""}</span>
+                {builder.city && (
+                  <span className="inline-flex items-center gap-1">
+                    <MapPin className="h-4 w-4" /> {builder.city}
+                  </span>
+                )}
                 {builder.website && (
                   <a
                     href={builder.website}

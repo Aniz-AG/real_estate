@@ -160,6 +160,7 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
   const [ssrProperties] = useState(latestProperties);
   const [topCities, setTopCities] = useState(initialTopCities);
   const [builders, setBuilders] = useState([]);
+  const [buildersScopedToCity, setBuildersScopedToCity] = useState(false);
   const [showTopCities, setShowTopCities] = useState(true);
   const [showLogo, setShowLogo] = useState(false);
 
@@ -219,7 +220,6 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
     if (!initialTopCities.length) {
       fetchTopCities();
     }
-    fetchBuilders();
     fetchSiteSettings();
   }, [
     dispatch,
@@ -233,6 +233,7 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
     if (selectedCity) {
       dispatch(getPropertiesByCity(selectedCity));
       fetchFeaturedProperties(selectedCity);
+      fetchBuilders(selectedCity);
     }
   }, [selectedCity, dispatch]);
 
@@ -319,10 +320,15 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
     }
   };
 
-  const fetchBuilders = async () => {
+  const fetchBuilders = async (city) => {
     try {
-      const { data } = await axios.get("/api/builders");
-      if (data.success) setBuilders(data.builders || []);
+      const { data } = await axios.get("/api/builders", {
+        params: city ? { city } : {},
+      });
+      if (data.success) {
+        setBuilders(data.builders || []);
+        setBuildersScopedToCity(Boolean(data.scoped));
+      }
     } catch (error) {
       console.error("Failed to fetch builders");
     }
@@ -1298,8 +1304,9 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
                 <span className="text-[#C4302B]">Real Estate Ventures</span>
               </h2>
               <p className="text-lg text-gray-500">
-                Partnering with reputed developers to bring you verified,
-                quality projects
+                {buildersScopedToCity && selectedCity
+                  ? `Reputed developers building in ${selectedCity}`
+                  : "Partnering with reputed developers to bring you verified, quality projects"}
               </p>
             </motion.div>
 

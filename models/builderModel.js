@@ -28,6 +28,14 @@ const builderSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
+    city: {
+      type: String,
+      trim: true,
+    },
+    state: {
+      type: String,
+      trim: true,
+    },
     is_premium: {
       type: Boolean,
       default: false,

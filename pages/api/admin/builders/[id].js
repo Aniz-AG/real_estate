@@ -39,6 +39,8 @@ async function updateBuilder(req, res, id) {
   if (getField("description") !== undefined) builder.description = getField("description");
   if (getField("phone") !== undefined) builder.phone = getField("phone");
   if (getField("email") !== undefined) builder.email = getField("email");
+  if (getField("city") !== undefined) builder.city = getField("city");
+  if (getField("state") !== undefined) builder.state = getField("state");
   if (getField("is_premium") !== undefined) {
     builder.is_premium = getField("is_premium") === "true";
   }
