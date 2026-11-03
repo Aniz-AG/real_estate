@@ -33,7 +33,7 @@ Use this checklist to ensure everything is set up correctly after migration.
 
 ### Fast2SMS
 - [ ] API key added
-- [ ] OTP DLT template approved and otp_id added
+- [ ] API key added (using the Quick SMS route, no DLT template needed)
 
 ### Application
 - [ ] NEXT_PUBLIC_API_URL set correctly

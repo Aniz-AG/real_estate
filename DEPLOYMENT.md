@@ -44,7 +44,6 @@ git push -u origin main
    CLOUDINARY_API_KEY
    CLOUDINARY_API_SECRET
    FAST2SMS_API_KEY
-   FAST2SMS_OTP_TEMPLATE_ID
    NEXT_PUBLIC_API_URL
    ```
 
@@ -212,7 +211,6 @@ CLOUDINARY_API_SECRET=prod_api_secret
 
 # Production Fast2SMS
 FAST2SMS_API_KEY=prod_fast2sms_api_key
-FAST2SMS_OTP_TEMPLATE_ID=prod_fast2sms_otp_template_id
 ```
 
 ## Database Setup for Production

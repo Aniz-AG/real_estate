@@ -69,7 +69,6 @@ CLOUDINARY_API_SECRET=your_api_secret
 
 # Fast2SMS (for OTP)
 FAST2SMS_API_KEY=your_fast2sms_api_key
-FAST2SMS_OTP_TEMPLATE_ID=your_fast2sms_otp_template_id
 
 # Redis (optional)
 REDIS_URI=redis://localhost:6379

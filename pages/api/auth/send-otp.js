@@ -32,7 +32,7 @@ const sendOtp = async (req, res) => {
         }
 
         // Check if Fast2SMS credentials are configured
-        if (!process.env.FAST2SMS_API_KEY || !process.env.FAST2SMS_OTP_TEMPLATE_ID) {
+        if (!process.env.FAST2SMS_API_KEY) {
             console.error('Fast2SMS credentials not configured');
 
             // For development: Generate OTP without sending SMS
@@ -55,21 +55,19 @@ const sendOtp = async (req, res) => {
 
         const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
-        // Send OTP using Fast2SMS's OTP route — https://docs.fast2sms.com/reference/send-otp
-        const fast2smsRes = await fetch('https://www.fast2sms.com/dev/otp/send', {
-            method: 'POST',
+        // Send OTP using Fast2SMS's Quick SMS route (route=q) — no DLT-approved
+        // OTP template required, just the API key.
+        // https://docs.fast2sms.com/reference/quick-sms
+        const fast2smsUrl = new URL('https://www.fast2sms.com/dev/bulkV2');
+        fast2smsUrl.searchParams.set('route', 'q');
+        fast2smsUrl.searchParams.set('message', `Your OTP code is: ${otp}. Valid for 5 minutes.`);
+        fast2smsUrl.searchParams.set('numbers', phone);
+
+        const fast2smsRes = await fetch(fast2smsUrl.toString(), {
+            method: 'GET',
             headers: {
                 Authorization: process.env.FAST2SMS_API_KEY,
-                'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                mobile: phone,
-                otp_id: process.env.FAST2SMS_OTP_TEMPLATE_ID,
-                otp,
-                otp_expiry: 5,
-                otp_length: 6,
-                variables_values: '{otp}',
-            }),
         });
         const fast2smsData = await fast2smsRes.json();
 

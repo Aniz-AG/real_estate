@@ -51,8 +51,7 @@ sudo systemctl start mongodb
 
 1. Go to https://www.fast2sms.com
 2. Sign up and get your API key from the Dev API section
-3. Create and get approval for an OTP DLT template to get your `otp_id`
-4. Add to `.env`
+3. Add to `.env`
 
 ## Installation Steps
 
@@ -86,7 +85,6 @@ CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
 FAST2SMS_API_KEY=your_fast2sms_api_key
-FAST2SMS_OTP_TEMPLATE_ID=your_fast2sms_otp_template_id
 NEXT_PUBLIC_API_URL=http://localhost:3000
 ```
 
@@ -172,7 +170,7 @@ npm install
 
 ### Issue: "Fast2SMS authentication failed"
 **Solution:**
-- Verify Fast2SMS credentials (API key and otp_id)
+- Verify your Fast2SMS API key
 - Check phone number format
 - Ensure trial account has verified numbers
 

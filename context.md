@@ -141,7 +141,7 @@ This workspace is a Next.js 15 app (React 19) with integrated API routes under p
 
 - MONGO_URI, JWT_SECRET
 - CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET
-- FAST2SMS_API_KEY, FAST2SMS_OTP_TEMPLATE_ID
+- FAST2SMS_API_KEY
 - REDIS_URI (optional)
 - NEXT_PUBLIC_SITE_URL (for canonical URLs)
 
