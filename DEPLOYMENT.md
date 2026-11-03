@@ -43,9 +43,8 @@ git push -u origin main
    CLOUDINARY_CLOUD_NAME
    CLOUDINARY_API_KEY
    CLOUDINARY_API_SECRET
-   TWILIO_ACCOUNT_SID
-   TWILIO_AUTH_TOKEN
-   TWILIO_PHONE_NUMBER
+   FAST2SMS_API_KEY
+   FAST2SMS_OTP_TEMPLATE_ID
    NEXT_PUBLIC_API_URL
    ```
 
@@ -211,10 +210,9 @@ CLOUDINARY_CLOUD_NAME=prod_cloud_name
 CLOUDINARY_API_KEY=prod_api_key
 CLOUDINARY_API_SECRET=prod_api_secret
 
-# Production Twilio (remove trial restrictions)
-TWILIO_ACCOUNT_SID=prod_account_sid
-TWILIO_AUTH_TOKEN=prod_auth_token
-TWILIO_PHONE_NUMBER=+1234567890
+# Production Fast2SMS
+FAST2SMS_API_KEY=prod_fast2sms_api_key
+FAST2SMS_OTP_TEMPLATE_ID=prod_fast2sms_otp_template_id
 ```
 
 ## Database Setup for Production

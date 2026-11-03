@@ -8,7 +8,7 @@ Use this checklist to ensure everything is set up correctly after migration.
 - [ ] Node.js v18+ installed
 - [ ] MongoDB installed or Atlas account created
 - [ ] Cloudinary account created
-- [ ] Twilio account created (with trial or paid)
+- [ ] Fast2SMS account created
 - [ ] Redis installed (optional)
 
 ### Project Setup
@@ -31,11 +31,9 @@ Use this checklist to ensure everything is set up correctly after migration.
 - [ ] API secret added
 - [ ] Upload presets configured (optional)
 
-### Twilio
-- [ ] Account SID added
-- [ ] Auth token added
-- [ ] Phone number added (with country code)
-- [ ] Phone number verified (for trial accounts)
+### Fast2SMS
+- [ ] API key added
+- [ ] OTP DLT template approved and otp_id added
 
 ### Application
 - [ ] NEXT_PUBLIC_API_URL set correctly

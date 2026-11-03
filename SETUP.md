@@ -47,11 +47,11 @@ sudo systemctl start mongodb
 3. Get Cloud Name, API Key, API Secret from Dashboard
 4. Add to `.env`
 
-### 4. Set up Twilio (for SMS/OTP)
+### 4. Set up Fast2SMS (for SMS/OTP)
 
-1. Go to https://www.twilio.com
-2. Sign up for free trial
-3. Get Account SID, Auth Token, Phone Number
+1. Go to https://www.fast2sms.com
+2. Sign up and get your API key from the Dev API section
+3. Create and get approval for an OTP DLT template to get your `otp_id`
 4. Add to `.env`
 
 ## Installation Steps
@@ -85,9 +85,8 @@ JWT_SECRET=your_random_secret_key_minimum_32_characters
 CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
-TWILIO_ACCOUNT_SID=ACxxxxxxxxxxxxxxxxxxxx
-TWILIO_AUTH_TOKEN=your_auth_token
-TWILIO_PHONE_NUMBER=+1234567890
+FAST2SMS_API_KEY=your_fast2sms_api_key
+FAST2SMS_OTP_TEMPLATE_ID=your_fast2sms_otp_template_id
 NEXT_PUBLIC_API_URL=http://localhost:3000
 ```
 
@@ -171,9 +170,9 @@ npm install
 - Verify MONGO_URI in `.env`
 - Check network/firewall settings
 
-### Issue: "Twilio authentication failed"
+### Issue: "Fast2SMS authentication failed"
 **Solution:**
-- Verify Twilio credentials
+- Verify Fast2SMS credentials (API key and otp_id)
 - Check phone number format
 - Ensure trial account has verified numbers
 
@@ -224,7 +223,7 @@ npm run lint
 - 🎨 [shadcn/ui Documentation](https://ui.shadcn.com)
 - 🗄️ [MongoDB Documentation](https://docs.mongodb.com)
 - ☁️ [Cloudinary Documentation](https://cloudinary.com/documentation)
-- 📱 [Twilio Documentation](https://www.twilio.com/docs)
+- 📱 [Fast2SMS Documentation](https://docs.fast2sms.com)
 
 ## Support
 

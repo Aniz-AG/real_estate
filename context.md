@@ -8,7 +8,7 @@ This workspace is a Next.js 15 app (React 19) with integrated API routes under p
 - API routes in /pages/api provide auth, property search/listing, contact, and admin functions.
 - MongoDB via Mongoose for data models. Auth via JWT stored in HTTP-only cookie.
 - Redux Toolkit manages client state (user auth/profile, property lists/search, admin slices).
-- Media uploads go to Cloudinary; OTP via Twilio; optional Redis URI in env.
+- Media uploads go to Cloudinary; OTP via Fast2SMS; optional Redis URI in env.
 
 ## Key User Flows
 
@@ -72,7 +72,7 @@ This workspace is a Next.js 15 app (React 19) with integrated API routes under p
 ### Auth
 
 - POST /api/auth/register - multipart form, creates user, Cloudinary photo upload.
-- POST /api/auth/send-otp - Twilio OTP (or dev mode).
+- POST /api/auth/send-otp - Fast2SMS OTP (or dev mode).
 - POST /api/auth/verify-otp - verify OTP, set cookie token.
 - POST /api/auth/logout - clears auth cookie.
 
@@ -141,7 +141,7 @@ This workspace is a Next.js 15 app (React 19) with integrated API routes under p
 
 - MONGO_URI, JWT_SECRET
 - CLOUDINARY_CLOUD_NAME, CLOUDINARY_API_KEY, CLOUDINARY_API_SECRET
-- TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_PHONE_NUMBER
+- FAST2SMS_API_KEY, FAST2SMS_OTP_TEMPLATE_ID
 - REDIS_URI (optional)
 - NEXT_PUBLIC_SITE_URL (for canonical URLs)
 

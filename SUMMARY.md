@@ -18,7 +18,7 @@ Successfully migrated a full-stack real estate application from **React (Vite) +
 ### 2. **Backend Migration** ✓
 - ✅ **Authentication API**
   - `POST /api/auth/register` - User registration with Cloudinary upload
-  - `POST /api/auth/send-otp` - Send OTP via Twilio
+  - `POST /api/auth/send-otp` - Send OTP via Fast2SMS
   - `POST /api/auth/verify-otp` - Verify OTP and login
 
 - ✅ **Property API**
@@ -178,7 +178,6 @@ Custom components:
 - `mongoose` - 8.9.5
 - `jsonwebtoken` - 9.0.2
 - `cloudinary` - 2.5.1
-- `twilio` - 5.4.2
 - `cookie` - 1.0.2
 
 ### Utilities
@@ -221,7 +220,7 @@ npm start
 ### Required Services
 1. **MongoDB** - Database (Atlas or local)
 2. **Cloudinary** - Image hosting
-3. **Twilio** - SMS/OTP service
+3. **Fast2SMS** - SMS/OTP service
 
 ---
 
@@ -272,7 +271,7 @@ All sensitive data is in `.env` file (not committed to git). Use `.env.example` 
 Models are configured with proper indexes and validation. Run migrations if needed.
 
 ### Authentication
-Uses JWT tokens with HTTP-only cookies for security. OTP sent via Twilio SMS.
+Uses JWT tokens with HTTP-only cookies for security. OTP sent via Fast2SMS.
 
 ### File Uploads
 Images uploaded to Cloudinary. Configure upload presets in Cloudinary dashboard.
@@ -296,7 +295,7 @@ Images uploaded to Cloudinary. Configure upload presets in Cloudinary dashboard.
 - [Tailwind CSS](https://tailwindcss.com)
 - [MongoDB Atlas](https://www.mongodb.com/cloud/atlas)
 - [Cloudinary Docs](https://cloudinary.com/documentation)
-- [Twilio Docs](https://www.twilio.com/docs)
+- [Fast2SMS Docs](https://docs.fast2sms.com)
 
 ---
 
@@ -317,7 +316,7 @@ Images uploaded to Cloudinary. Configure upload presets in Cloudinary dashboard.
 - Vercel for deployment platform
 - MongoDB for the database
 - Cloudinary for image hosting
-- Twilio for SMS services
+- Fast2SMS for SMS services
 
 ---
 

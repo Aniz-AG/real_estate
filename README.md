@@ -5,7 +5,7 @@ A modern, full-stack real estate platform built with **Next.js**, featuring prop
 ## ✨ Features
 
 ### User Features
-- 🔐 **Authentication System** - OTP-based login via Twilio SMS
+- 🔐 **Authentication System** - OTP-based login via Fast2SMS
 - 🏠 **Property Browsing** - Advanced search and filtering
 - ❤️ **Favorites** - Save and manage favorite properties
 - 📱 **Responsive Design** - Works seamlessly on all devices
@@ -23,7 +23,7 @@ A modern, full-stack real estate platform built with **Next.js**, featuring prop
 - 🗄️ **MongoDB** - NoSQL database with Mongoose ODM
 - 🔄 **Redux Toolkit** - State management
 - ☁️ **Cloudinary** - Image hosting and optimization
-- 📱 **Twilio** - SMS/OTP authentication
+- 📱 **Fast2SMS** - SMS/OTP authentication
 - 🎯 **TypeScript Ready** - Type-safe development
 
 ## 🚀 Getting Started
@@ -33,7 +33,7 @@ A modern, full-stack real estate platform built with **Next.js**, featuring prop
 - Node.js 18.x or higher
 - MongoDB (local or Atlas)
 - Cloudinary account
-- Twilio account (for SMS/OTP)
+- Fast2SMS account (for SMS/OTP)
 - Redis (optional, for OTP caching)
 
 ### Installation
@@ -67,10 +67,9 @@ CLOUDINARY_CLOUD_NAME=your_cloud_name
 CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
 
-# Twilio (for OTP)
-TWILIO_ACCOUNT_SID=your_account_sid
-TWILIO_AUTH_TOKEN=your_auth_token
-TWILIO_PHONE_NUMBER=+1234567890
+# Fast2SMS (for OTP)
+FAST2SMS_API_KEY=your_fast2sms_api_key
+FAST2SMS_OTP_TEMPLATE_ID=your_fast2sms_otp_template_id
 
 # Redis (optional)
 REDIS_URI=redis://localhost:6379
@@ -168,7 +167,7 @@ The project uses shadcn/ui components for a consistent, accessible UI:
 ## 🔒 Authentication Flow
 
 1. User enters phone number
-2. OTP sent via Twilio SMS
+2. OTP sent via Fast2SMS
 3. User enters OTP
 4. JWT token generated and stored
 5. Protected routes accessible
@@ -241,7 +240,7 @@ Copy `.env.example` to `.env` and fill in your values:
 - **MONGO_URI**: MongoDB connection string
 - **JWT_SECRET**: Secret key for JWT tokens
 - **CLOUDINARY_***: Cloudinary credentials
-- **TWILIO_***: Twilio credentials for SMS
+- **FAST2SMS_***: Fast2SMS credentials for SMS/OTP
 - **REDIS_URI**: Redis connection (optional)
 
 ## 🤝 Contributing
