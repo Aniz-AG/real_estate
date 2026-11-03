@@ -21,11 +21,14 @@ export default async function handler(req, res) {
       .select("name logo website is_premium city")
       .sort({ is_premium: -1, name: 1 });
 
-    // Fall back to all builders if none are set to this city yet — avoids the
-    // homepage carousel silently disappearing while city data is still being
-    // filled in for existing builders.
+    // Fall back to all builders if too few are set to this city yet — avoids
+    // the homepage carousel collapsing down to one repeated builder (or
+    // disappearing entirely) while city data is still being filled in for
+    // existing builders. A single city match isn't enough for a carousel to
+    // look intentional rather than broken.
+    const MIN_CITY_MATCHES = 4;
     let scoped = Boolean(city);
-    if (city && builders.length === 0) {
+    if (city && builders.length < MIN_CITY_MATCHES) {
       scoped = false;
       builders = await Builder.find({ "logo.url": { $exists: true, $ne: "" } })
         .select("name logo website is_premium city")

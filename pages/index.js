@@ -1321,6 +1321,10 @@ export default function Home({ latestProperties = [], initialTopCities = [] }) {
               return (
                 <div className="[mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)] [-webkit-mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]">
                   <Slider
+                    // Force a clean remount whenever the underlying builder
+                    // list changes, so react-slick never carries over stale
+                    // internal slide state from a previous list.
+                    key={builders.map((b) => b._id).join(",")}
                     infinite
                     autoplay
                     autoplaySpeed={0}
