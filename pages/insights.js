@@ -4,17 +4,7 @@ import SeoHead from "@/components/SeoHead";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, ExternalLink, ArrowRight, Loader2 } from "lucide-react";
 import { InsightGridSkeleton } from "@/components/skeletons/InsightCardSkeleton";
-import { Playfair_Display, Space_Grotesk } from "next/font/google";
 import Link from "next/link";
-
-const displayFont = Playfair_Display({
-  subsets: ["latin"],
-  weight: ["600", "700"],
-});
-const bodyFont = Space_Grotesk({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-});
 
 export default function Insights() {
   const [articles, setArticles] = useState([]);
@@ -81,14 +71,14 @@ export default function Insights() {
         title="Real Estate Insights"
         description="Latest news, trends, and market insights for the Indian real estate sector."
       />
-      <div className={`${bodyFont.className} min-h-screen bg-[#F7F7F7]`}>
+      <div className="font-grotesk min-h-screen bg-[#F7F7F7]">
         {/* Header Section */}
         <section className="relative overflow-hidden bg-white border-b border-gray-200">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(196,48,43,0.05),_transparent_60%)]" />
           <div className="container mx-auto px-4 py-16 relative">
             <div className="max-w-3xl">
               <h1
-                className={`${displayFont.className} text-4xl md:text-5xl font-bold text-gray-900`}
+                className={`font-displaytext-4xl md:text-5xl font-bold text-gray-900`}
               >
                 Market Insights & News
               </h1>
@@ -103,7 +93,7 @@ export default function Insights() {
           {adminInsights.length > 0 && (
             <div className="mb-12">
               <h2
-                className={`${displayFont.className} text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2`}
+                className={`font-displaytext-2xl font-bold text-gray-900 mb-6 flex items-center gap-2`}
               >
                 Featured Insights
               </h2>
@@ -189,7 +179,7 @@ export default function Insights() {
             <>
               {/* Top 3 Stories */}
               <div className="mb-12">
-                <h2 className={`${displayFont.className} text-2xl font-bold text-gray-900 mb-6 flex items-center gap-2`}>
+                <h2 className={`font-displaytext-2xl font-bold text-gray-900 mb-6 flex items-center gap-2`}>
                   Top Stories
                 </h2>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -239,7 +229,7 @@ export default function Insights() {
               {/* Remaining List */}
               {otherStories.length > 0 && (
                 <div>
-                  <h2 className={`${displayFont.className} text-2xl font-bold text-gray-900 mb-6 border-b border-gray-200 pb-2`}>
+                  <h2 className={`font-displaytext-2xl font-bold text-gray-900 mb-6 border-b border-gray-200 pb-2`}>
                     More Market Updates
                   </h2>
                   <div className="flex flex-col gap-4">

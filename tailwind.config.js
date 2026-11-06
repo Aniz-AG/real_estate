@@ -18,6 +18,7 @@ module.exports = {
       fontFamily: {
         display: ['"Playfair Display"', "serif"],
         body: ['"Manrope"', "sans-serif"],
+        grotesk: ['"Space Grotesk"', "sans-serif"],
       },
       colors: {
         border: "hsl(var(--border))",

@@ -1,19 +1,9 @@
 import { connectDB } from '@/lib/db';
 import { Testimonial } from '@/models/testimonialModel';
-import { authMiddleware } from '@/lib/middleware';
+import { withAuth } from '@/lib/middleware';
 
-export default async function handler(req, res) {
+async function handler(req, res) {
     await connectDB();
-
-    // Check authentication
-    const authResult = await authMiddleware(req);
-    if (!authResult.success) {
-        return res.status(401).json({ success: false, message: 'Unauthorized' });
-    }
-
-    if (authResult.user.role !== 'admin') {
-        return res.status(403).json({ success: false, message: 'Admin access required' });
-    }
 
     if (req.method === 'GET') {
         try {
@@ -103,3 +93,5 @@ export default async function handler(req, res) {
         res.status(405).json({ success: false, message: `Method ${req.method} not allowed` });
     }
 }
+
+export default withAuth(handler, true); // Admin only

@@ -4,16 +4,6 @@ import Layout from "@/components/Layout";
 import SeoHead from "@/components/SeoHead";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Playfair_Display, Space_Grotesk } from "next/font/google";
-
-const displayFont = Playfair_Display({
-  subsets: ["latin"],
-  weight: ["600", "700"],
-});
-const bodyFont = Space_Grotesk({
-  subsets: ["latin"],
-  weight: ["400", "500", "600"],
-});
 
 // Comprehensive list of Indian and International land units sorted alphabetically
 const ALL_UNITS = [
@@ -84,7 +74,7 @@ export default function AreaConverter() {
         description="Convert land and property area units used across India."
       />
       <div
-        className={`${bodyFont.className} min-h-screen bg-gradient-to-br from-[#FFF7F4] via-white to-[#F2F2F2]`}
+        className="font-grotesk min-h-screen bg-gradient-to-br from-[#FFF7F4] via-white to-[#F2F2F2]"
       >
         <div className="relative">
           <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(196,48,43,0.15),_transparent_55%)]" />
@@ -96,7 +86,7 @@ export default function AreaConverter() {
                 Comprehensive Indian Land Units
               </div>
               <h1
-                className={`${displayFont.className} text-4xl md:text-5xl font-bold text-gray-900 mb-4`}
+                className="font-display text-4xl md:text-5xl font-bold text-gray-900 mb-4"
               >
                 Area Converter
               </h1>
