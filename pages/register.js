@@ -63,7 +63,7 @@ export default function Register() {
         // Validate form data with Zod
         const validation = registerSchema.safeParse(formData);
         if (!validation.success) {
-            toast.error(validation.error.errors[0]?.message || 'Invalid form data');
+            toast.error(validation.error.issues[0]?.message || 'Invalid form data');
             return;
         }
 

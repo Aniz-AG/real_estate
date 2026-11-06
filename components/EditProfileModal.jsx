@@ -89,7 +89,7 @@ export default function EditProfileModal({ isOpen, onClose }) {
             state: formData.state,
         });
         if (!validation.success) {
-            toast.error(validation.error.errors[0]?.message || 'Invalid profile details');
+            toast.error(validation.error.issues[0]?.message || 'Invalid profile details');
             return;
         }
 
